@@ -6,16 +6,16 @@ This screen checks whether crypto is aligned with or diverging from broad risk a
 
 | name | status | side | score | reason |
 | --- | --- | --- | ---: | --- |
-| crypto_risk_off_lagged_short | watch | none | 0.2418 | risk-off pressure is visible, but crypto already repriced; btc5d=-0.0746, eth5d=-0.1256 |
-| eth_btc_macro_rotation | watch | none | 0.0510 | ETH/BTC relative move is not aligned with a strong macro regime |
-| crypto_risk_on_catchup | watch | none | 0.0461 | risk-on catch-up condition is not strong enough |
+| crypto_risk_off_lagged_short | watch | none | 0.2155 | risk-off pressure is visible, but crypto already repriced; btc5d=-0.0536, eth5d=-0.0940 |
+| eth_btc_macro_rotation | watch | none | 0.0404 | ETH/BTC relative move is not aligned with a strong macro regime |
+| crypto_risk_on_catchup | watch | none | 0.0198 | risk-on catch-up condition is not strong enough |
 
 ## Asset Context
 
 | symbol | group | close | 1d | 5d | 20d | risk score |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| BTC-USD | crypto | 61728.5703 | 0.0141 | -0.0746 | -0.1979 | -0.0746 |
-| ETH-USD | crypto | 1624.4200 | 0.0355 | -0.1256 | -0.2368 | -0.1256 |
+| BTC-USD | crypto | 63127.8516 | 0.0371 | -0.0536 | -0.1797 | -0.0536 |
+| ETH-USD | crypto | 1683.1100 | 0.0729 | -0.0940 | -0.2093 | -0.0940 |
 | QQQ | equity_growth | 705.0600 | -0.0480 | -0.0450 | 0.0146 | -0.0450 |
 | SPY | equity_broad | 737.5500 | -0.0258 | -0.0250 | 0.0082 | -0.0250 |
 | IWM | equity_small_cap | 281.6500 | -0.0355 | -0.0302 | -0.0022 | -0.0302 |

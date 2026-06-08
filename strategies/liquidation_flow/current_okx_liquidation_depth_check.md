@@ -4,16 +4,16 @@ This checks visible OKX book depth for liquidation-monitor candidates. It is not
 
 | asset | action | spread bps | bid depth 5bps | ask depth 5bps | bid depth 10bps | ask depth 10bps | monitor score | depth score |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| LTC | long_liquidation_cascade_watch | 2.3824 | 33473 | 26234 | 92199 | 95779 | 0.035068 | 0.029440 |
-| ONDO | short_liquidation_squeeze_watch | 2.8806 | 14318 | 13968 | 29835 | 26141 | 0.016723 | 0.011611 |
-| ZEC | mixed_liquidation_flow_watch | 0.2362 | 16507 | 56008 | 82299 | 135785 | 0.050522 | 0.008747 |
-| JTO | long_liquidation_cascade_watch | 1.6149 | 2916 | 2208 | 9749 | 7819 | 0.094599 | 0.003139 |
-| H | short_liquidation_squeeze_watch | 1.7710 | 1565 | 767 | 8137 | 4446 | 0.021281 | 0.002300 |
-| XLM | long_liquidation_cascade_watch | 4.9444 | 11465 | 532 | 50850 | 27992 | 0.023186 | 0.000753 |
-| BEAT | short_liquidation_squeeze_watch | 2.1265 | 846 | 1778 | 9304 | 7679 | 0.127525 | 0.000291 |
-| WLD | short_liquidation_squeeze_watch | 2.0728 | 2430 | 2900 | 19616 | 10034 | 0.117841 | 0.000265 |
-| BSB | mixed_liquidation_flow_watch | 2.7728 | 1968 | 1230 | 3406 | 4948 | 0.109096 | 0.000081 |
-| HOME | mixed_liquidation_flow_watch | 6.5898 | 85 | 197 | 373 | 993 | 0.018062 | 0.000014 |
+| XAU | short_liquidation_squeeze_watch | 0.2300 | 1043633 | 1271560 | 1887060 | 1618238 | 0.113368 | 0.985931 |
+| ETH | short_liquidation_squeeze_watch | 0.0594 | 590417 | 1002205 | 590417 | 1002205 | 0.027553 | 0.551069 |
+| BTC | short_liquidation_squeeze_watch | 0.0158 | 537296 | 182429 | 537296 | 182429 | 0.024579 | 0.227416 |
+| ZEC | short_liquidation_squeeze_watch | 0.2292 | 14794 | 40879 | 79384 | 88222 | 0.015398 | 0.032663 |
+| MU | long_liquidation_cascade_watch | 2.3528 | 16525 | 18303 | 39389 | 38972 | 0.261991 | 0.009137 |
+| ALLO | mixed_liquidation_flow_watch | 0.3061 | 1150 | 1618 | 5488 | 6826 | 0.022347 | 0.002734 |
+| WLD | mixed_liquidation_flow_watch | 2.1261 | 11044 | 8017 | 49033 | 36730 | 0.017785 | 0.001974 |
+| BSB | short_liquidation_squeeze_watch | 3.0161 | 928 | 1410 | 1975 | 2793 | 0.015270 | 0.000264 |
+| BEAT | long_liquidation_cascade_watch | 2.0376 | 1614 | 1993 | 7038 | 5534 | 0.069987 | 0.000232 |
+| HOME | short_liquidation_squeeze_watch | 3.4194 | 494 | 18 | 3618 | 2637 | 0.047642 | 0.000028 |
 
 ## Interpretation
 

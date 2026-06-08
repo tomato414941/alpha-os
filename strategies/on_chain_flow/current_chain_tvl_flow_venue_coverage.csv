@@ -1,36 +1,36 @@
 timestamp,chain,token_symbol,action,week_change_pct,day_change_pct,hyperliquid_perp,okx_swap,venue_count,followup
-2026-06-07T18:20:55.974186+00:00,Avalanche,AVAX,chain_outflow_stress_watch,-0.20589052,-0.01320027,True,True,2,label AVAX short stress on covered venues
-2026-06-07T18:20:55.974186+00:00,Starknet,STRK,chain_outflow_stress_watch,-0.06113409,-0.00216559,True,True,2,label STRK short stress on covered venues
-2026-06-07T18:20:55.974186+00:00,Cardano,ADA,chain_flow_reversal_watch,-0.28093521,0.01375909,True,True,2,label ADA rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,MegaETH,MEGA,chain_flow_reversal_watch,-0.19849608,0.00377992,True,True,2,label MEGA rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Movement,MOVE,chain_flow_reversal_watch,-0.18346188,0.01327768,True,True,2,label MOVE rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Berachain,BERA,chain_flow_reversal_watch,-0.17083192,0.00904813,True,True,2,label BERA rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Stacks,STX,chain_flow_reversal_watch,-0.16625494,0.01402866,True,True,2,label STX rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Sui,SUI,chain_flow_reversal_watch,-0.16325224,0.02809872,True,True,2,label SUI rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Arbitrum,ARB,chain_flow_reversal_watch,-0.15847595,0.01672449,True,True,2,label ARB rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Bitcoin,BTC,chain_flow_reversal_watch,-0.15061095,0.01769102,True,True,2,label BTC rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Ethereum,ETH,chain_flow_reversal_watch,-0.12012262,0.01905174,True,True,2,label ETH rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Aptos,APT,chain_flow_reversal_watch,-0.11860802,0.00932334,True,True,2,label APT rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Sei,SEI,chain_flow_reversal_watch,-0.10937574,0.01657652,True,True,2,label SEI rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Hyperliquid L1,HYPE,chain_flow_reversal_watch,-0.10918929,0.01344607,True,True,2,label HYPE rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Solana,SOL,chain_flow_reversal_watch,-0.10736001,0.02147299,True,True,2,label SOL rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,BSC,BNB,chain_flow_reversal_watch,-0.10695110,0.02667470,True,True,2,label BNB rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,OP Mainnet,OP,chain_flow_reversal_watch,-0.09601113,0.03088199,True,True,2,label OP rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Near,NEAR,chain_flow_reversal_watch,-0.09104003,0.02466927,True,True,2,label NEAR rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Monad,MON,chain_flow_reversal_watch,-0.08301867,0.00759790,True,True,2,label MON rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Polygon,POL,chain_flow_reversal_watch,-0.07569621,0.01542307,True,True,2,label POL rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Stellar,XLM,chain_flow_reversal_watch,-0.06192787,0.01245518,True,True,2,label XLM rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,TON,TON,chain_flow_context,-0.04195285,0.06156140,True,True,2,keep TON as context
-2026-06-07T18:20:55.974186+00:00,Plasma,XPL,chain_flow_context,-0.00228009,0.00553052,True,True,2,keep XPL as context
-2026-06-07T18:20:55.974186+00:00,Katana,KAT,chain_flow_reversal_watch,-0.31371426,0.03459953,False,True,1,label KAT rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Mantle,MNT,chain_flow_reversal_watch,-0.31127411,0.01594499,True,False,1,label MNT rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,Cronos,CRO,chain_flow_reversal_watch,-0.05782576,0.01354501,False,True,1,label CRO rebound continuation on covered venues
-2026-06-07T18:20:55.974186+00:00,ENI,ENI,chain_inflow_momentum_watch,0.23258611,0.02379273,False,False,0,keep as context until a perp venue exists
-2026-06-07T18:20:55.974186+00:00,Hydration,HDX,chain_outflow_stress_watch,-0.18587646,-0.00066906,False,False,0,keep as context until a perp venue exists
-2026-06-07T18:20:55.974186+00:00,Flare,FLR,chain_flow_reversal_watch,-0.19310751,0.03162386,False,False,0,keep as context until a perp venue exists
-2026-06-07T18:20:55.974186+00:00,Rootstock,RBTC,chain_flow_reversal_watch,-0.13360859,0.00459451,False,False,0,keep as context until a perp venue exists
-2026-06-07T18:20:55.974186+00:00,Mixin,XIN,chain_flow_reversal_watch,-0.12580150,0.01371704,False,False,0,keep as context until a perp venue exists
-2026-06-07T18:20:55.974186+00:00,Tron,TRON,chain_flow_reversal_watch,-0.09511500,0.00850695,False,False,0,keep as context until a perp venue exists
-2026-06-07T18:20:55.974186+00:00,Gnosis,GNO,chain_flow_reversal_watch,-0.05494824,0.01920423,False,False,0,keep as context until a perp venue exists
-2026-06-07T18:20:55.974186+00:00,Provenance,HASH,chain_flow_context,0.04809618,0.00133228,False,False,0,keep as context until a perp venue exists
-2026-06-07T18:20:55.974186+00:00,dYdX,dYdX,chain_flow_context,0.01462188,0.00821307,False,False,0,keep as context until a perp venue exists
+2026-06-08T00:05:42.042449+00:00,MegaETH,MEGA,chain_outflow_stress_watch,-0.20778186,-0.00784932,True,True,2,label MEGA short stress on covered venues
+2026-06-08T00:05:42.042449+00:00,Avalanche,AVAX,chain_outflow_stress_watch,-0.19789763,-0.00326791,True,True,2,label AVAX short stress on covered venues
+2026-06-08T00:05:42.042449+00:00,Stellar,XLM,chain_outflow_stress_watch,-0.07403581,-0.00061284,True,True,2,label XLM short stress on covered venues
+2026-06-08T00:05:42.042449+00:00,Cardano,ADA,chain_flow_reversal_watch,-0.27789356,0.01804730,True,True,2,label ADA rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Movement,MOVE,chain_flow_reversal_watch,-0.16552329,0.03553845,True,True,2,label MOVE rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Berachain,BERA,chain_flow_reversal_watch,-0.16490039,0.01626645,True,True,2,label BERA rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Sui,SUI,chain_flow_reversal_watch,-0.16099489,0.03087229,True,True,2,label SUI rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Stacks,STX,chain_flow_reversal_watch,-0.15757066,0.02459078,True,True,2,label STX rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Arbitrum,ARB,chain_flow_reversal_watch,-0.14835023,0.02895832,True,True,2,label ARB rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Bitcoin,BTC,chain_flow_reversal_watch,-0.14277826,0.02707571,True,True,2,label BTC rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Ethereum,ETH,chain_flow_reversal_watch,-0.12100974,0.01802430,True,True,2,label ETH rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Aptos,APT,chain_flow_reversal_watch,-0.12051855,0.00713550,True,True,2,label APT rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Solana,SOL,chain_flow_reversal_watch,-0.11581714,0.01179526,True,True,2,label SOL rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Near,NEAR,chain_flow_reversal_watch,-0.10944571,0.00392057,True,True,2,label NEAR rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Sei,SEI,chain_flow_reversal_watch,-0.10749605,0.01872204,True,True,2,label SEI rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,BSC,BNB,chain_flow_reversal_watch,-0.10378689,0.03031237,True,True,2,label BNB rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Hyperliquid L1,HYPE,chain_flow_reversal_watch,-0.10240552,0.02116374,True,True,2,label HYPE rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,OP Mainnet,OP,chain_flow_reversal_watch,-0.08760298,0.04047040,True,True,2,label OP rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Monad,MON,chain_flow_reversal_watch,-0.08500326,0.00541719,True,True,2,label MON rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Polygon,POL,chain_flow_reversal_watch,-0.08309487,0.00729504,True,True,2,label POL rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Starknet,STRK,chain_flow_reversal_watch,-0.05602141,0.00326821,True,True,2,label STRK rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,TON,TON,chain_flow_context,-0.04730577,0.05563012,True,True,2,keep TON as context
+2026-06-08T00:05:42.042449+00:00,Plasma,XPL,chain_flow_context,0.00751571,0.01540300,True,True,2,keep XPL as context
+2026-06-08T00:05:42.042449+00:00,Mantle,MNT,chain_flow_reversal_watch,-0.30604799,0.02365409,True,False,1,label MNT rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Katana,KAT,chain_flow_reversal_watch,-0.29998441,0.05529775,False,True,1,label KAT rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,Cronos,CRO,chain_flow_reversal_watch,-0.05496982,0.01661729,False,True,1,label CRO rebound continuation on covered venues
+2026-06-08T00:05:42.042449+00:00,ENI,ENI,chain_inflow_momentum_watch,0.23301649,0.02415020,False,False,0,keep as context until a perp venue exists
+2026-06-08T00:05:42.042449+00:00,Flare,FLR,chain_flow_reversal_watch,-0.18204340,0.04576949,False,False,0,keep as context until a perp venue exists
+2026-06-08T00:05:42.042449+00:00,Hydration,HDX,chain_flow_reversal_watch,-0.18083588,0.00551821,False,False,0,keep as context until a perp venue exists
+2026-06-08T00:05:42.042449+00:00,Rootstock,RBTC,chain_flow_reversal_watch,-0.13555592,0.00233654,False,False,0,keep as context until a perp venue exists
+2026-06-08T00:05:42.042449+00:00,Mixin,XIN,chain_flow_reversal_watch,-0.11746185,0.02338766,False,False,0,keep as context until a perp venue exists
+2026-06-08T00:05:42.042449+00:00,Tron,TRON,chain_flow_reversal_watch,-0.09005098,0.01415087,False,False,0,keep as context until a perp venue exists
+2026-06-08T00:05:42.042449+00:00,Provenance,HASH,chain_flow_context,0.04815681,0.00139020,False,False,0,keep as context until a perp venue exists
+2026-06-08T00:05:42.042449+00:00,Gnosis,GNO,chain_flow_context,-0.04066506,0.03460812,False,False,0,keep as context until a perp venue exists
+2026-06-08T00:05:42.042449+00:00,dYdX,dYdX,chain_flow_context,0.01394378,0.00753924,False,False,0,keep as context until a perp venue exists

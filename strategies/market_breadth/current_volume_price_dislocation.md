@@ -4,56 +4,56 @@ This scans broad CoinGecko market data for volume-backed reversal, continuation,
 
 | symbol | name | status | side | score | rank | vol/mcap | 24h | 7d | 30d | next step |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| JTO | Jito | breakout_continuation_watch | long_momentum_watch | 59.8226 | 133 | 0.2745 | 24.06 | 21.53 | 8.02 | paper-label JTO breakout continuation and stop behavior |
-| ZEC | Zcash | volume_reversal_candidate | long_reversal | 58.9356 | 15 | 0.1742 | 26.48 | -19.23 | -25.36 | paper-label ZEC volume-backed reversal over 1h, 4h, 12h, and 24h |
-| XPL | Plasma | volume_reversal_candidate | long_reversal | 54.0283 | 181 | 0.3686 | 8.25 | -21.82 | -35.53 | paper-label XPL volume-backed reversal over 1h, 4h, 12h, and 24h |
-| FET | Artificial Superintelligence Alliance | volume_reversal_candidate | long_reversal | 53.7949 | 107 | 0.2220 | 8.47 | -22.35 | -9.89 | paper-label FET volume-backed reversal over 1h, 4h, 12h, and 24h |
-| FARTCOIN | Fartcoin | volume_reversal_candidate | long_reversal | 53.3557 | 246 | 0.2641 | 9.81 | -27.34 | -54.33 | paper-label FARTCOIN volume-backed reversal over 1h, 4h, 12h, and 24h |
-| UB | Unibase | volume_reversal_candidate | long_reversal | 51.8906 | 130 | 0.0615 | 14.70 | -35.36 | 10.92 | paper-label UB volume-backed reversal over 1h, 4h, 12h, and 24h |
-| AAVE | Aave | volume_reversal_candidate | long_reversal | 51.7467 | 71 | 0.2093 | 6.37 | -21.37 | -33.30 | paper-label AAVE volume-backed reversal over 1h, 4h, 12h, and 24h |
-| SIREN | Siren | chase_risk | wait_or_fade_watch | 50.9758 | 73 | 0.1604 | 51.34 | 157.50 | 9.86 | avoid chasing SIREN; label pullback or fade setup first |
-| ADA | Cardano | volume_reversal_candidate | long_reversal | 50.5194 | 18 | 0.0924 | 5.88 | -29.50 | -39.02 | paper-label ADA volume-backed reversal over 1h, 4h, 12h, and 24h |
-| SEI | Sei | volume_reversal_candidate | long_reversal | 50.4308 | 128 | 0.1569 | 7.44 | -24.98 | -22.58 | paper-label SEI volume-backed reversal over 1h, 4h, 12h, and 24h |
-| SAHARA | Sahara AI | breakout_continuation_watch | long_momentum_watch | 50.3669 | 231 | 0.4005 | 14.98 | 13.93 | 23.25 | paper-label SAHARA breakout continuation and stop behavior |
-| PENGU | Pudgy Penguins | volume_reversal_candidate | long_reversal | 49.4189 | 112 | 0.2934 | 10.80 | -11.62 | -33.63 | paper-label PENGU volume-backed reversal over 1h, 4h, 12h, and 24h |
-| WLD | Worldcoin | chase_risk | wait_or_fade_watch | 49.2176 | 50 | 0.3895 | 15.22 | 41.74 | 74.87 | avoid chasing WLD; label pullback or fade setup first |
-| HOME | HOME | chase_risk | wait_or_fade_watch | 47.2764 | 241 | 0.8337 | -41.94 | -17.21 | 105.31 | avoid chasing HOME; label pullback or fade setup first |
-| BTW | Bitway | chase_risk | wait_or_fade_watch | 46.6169 | 197 | 0.1911 | 30.59 | 474.97 | 416.10 | avoid chasing BTW; label pullback or fade setup first |
-| LUNC | Terra Luna Classic | volume_reversal_candidate | long_reversal | 46.2909 | 122 | 0.1050 | 10.11 | -20.98 | -27.16 | paper-label LUNC volume-backed reversal over 1h, 4h, 12h, and 24h |
-| SUI | Sui | volume_reversal_candidate | long_reversal | 46.1065 | 31 | 0.2013 | 7.11 | -13.46 | -25.41 | paper-label SUI volume-backed reversal over 1h, 4h, 12h, and 24h |
-| SOL | Solana | volume_reversal_candidate | long_reversal | 45.9708 | 7 | 0.0805 | 7.59 | -18.90 | -28.03 | paper-label SOL volume-backed reversal over 1h, 4h, 12h, and 24h |
-| VIRTUAL | Virtuals Protocol | volume_reversal_candidate | long_reversal | 45.9446 | 121 | 0.1948 | 6.88 | -18.43 | -36.96 | paper-label VIRTUAL volume-backed reversal over 1h, 4h, 12h, and 24h |
-| OP | Optimism | volume_reversal_candidate | long_reversal | 45.8103 | 170 | 0.2776 | 5.62 | -17.03 | -44.35 | paper-label OP volume-backed reversal over 1h, 4h, 12h, and 24h |
-| APT | Aptos | volume_reversal_candidate | long_reversal | 45.7623 | 94 | 0.1132 | 3.67 | -28.13 | -40.66 | paper-label APT volume-backed reversal over 1h, 4h, 12h, and 24h |
-| TAO | Bittensor | volume_reversal_candidate | long_reversal | 45.2720 | 42 | 0.0962 | 10.89 | -15.71 | -31.79 | paper-label TAO volume-backed reversal over 1h, 4h, 12h, and 24h |
-| PEPE | Pepe | volume_reversal_candidate | long_reversal | 44.9453 | 62 | 0.1757 | 6.06 | -16.44 | -35.02 | paper-label PEPE volume-backed reversal over 1h, 4h, 12h, and 24h |
-| INJ | Injective | volume_reversal_candidate | long_reversal | 44.2667 | 96 | 0.1808 | 6.80 | -16.42 | 28.64 | paper-label INJ volume-backed reversal over 1h, 4h, 12h, and 24h |
-| TRUMP | Official Trump | volume_reversal_candidate | long_reversal | 44.1704 | 117 | 0.1887 | 5.95 | -17.75 | -32.59 | paper-label TRUMP volume-backed reversal over 1h, 4h, 12h, and 24h |
-| ETH | Ethereum | volume_reversal_candidate | long_reversal | 43.6377 | 2 | 0.0790 | 8.01 | -15.98 | -27.00 | paper-label ETH volume-backed reversal over 1h, 4h, 12h, and 24h |
-| FIL | Filecoin | volume_reversal_candidate | long_reversal | 42.0123 | 89 | 0.1343 | 7.17 | -16.23 | -35.90 | paper-label FIL volume-backed reversal over 1h, 4h, 12h, and 24h |
-| ARB | Arbitrum | volume_reversal_candidate | long_reversal | 41.8474 | 101 | 0.1456 | 5.00 | -18.17 | -42.10 | paper-label ARB volume-backed reversal over 1h, 4h, 12h, and 24h |
-| ALGO | Algorand | volume_reversal_candidate | long_reversal | 41.8332 | 80 | 0.0413 | 3.40 | -24.96 | -28.33 | paper-label ALGO volume-backed reversal over 1h, 4h, 12h, and 24h |
-| LTC | Litecoin | volume_reversal_candidate | long_reversal | 41.7664 | 30 | 0.1075 | 4.67 | -17.15 | -26.14 | paper-label LTC volume-backed reversal over 1h, 4h, 12h, and 24h |
-| EIGEN | EigenCloud (prev. EigenLayer) | volume_reversal_candidate | long_reversal | 41.5203 | 217 | 0.1765 | 14.50 | -12.28 | -16.28 | paper-label EIGEN volume-backed reversal over 1h, 4h, 12h, and 24h |
-| TIA | Celestia | volume_reversal_candidate | long_reversal | 41.5108 | 134 | 0.1298 | 7.18 | -18.25 | -27.74 | paper-label TIA volume-backed reversal over 1h, 4h, 12h, and 24h |
-| WIF | dogwifhat | volume_reversal_candidate | long_reversal | 41.1913 | 196 | 0.2232 | 6.74 | -15.86 | -28.48 | paper-label WIF volume-backed reversal over 1h, 4h, 12h, and 24h |
-| BAT | Basic Attention | volume_reversal_candidate | long_reversal | 40.6916 | 223 | 0.0929 | 6.27 | -26.44 | -21.34 | paper-label BAT volume-backed reversal over 1h, 4h, 12h, and 24h |
-| RENDER | Render | volume_reversal_candidate | long_reversal | 40.2166 | 77 | 0.0838 | 5.32 | -18.72 | -17.32 | paper-label RENDER volume-backed reversal over 1h, 4h, 12h, and 24h |
-| VELVET | Velvet | chase_risk | wait_or_fade_watch | 39.7294 | 260 | 0.1288 | 38.48 | 158.62 | 180.04 | avoid chasing VELVET; label pullback or fade setup first |
-| DYDX | dYdX | volume_reversal_candidate | long_reversal | 39.4870 | 234 | 0.0622 | 11.63 | -20.82 | -16.76 | paper-label DYDX volume-backed reversal over 1h, 4h, 12h, and 24h |
-| PUMP | Pump.fun | volume_reversal_candidate | long_reversal | 39.0625 | 97 | 0.0969 | 9.00 | -14.10 | -29.28 | paper-label PUMP volume-backed reversal over 1h, 4h, 12h, and 24h |
-| BONK | Bonk | volume_reversal_candidate | long_reversal | 38.7008 | 118 | 0.0796 | 5.56 | -19.26 | -39.55 | paper-label BONK volume-backed reversal over 1h, 4h, 12h, and 24h |
-| DOT | Polkadot | volume_reversal_candidate | long_reversal | 38.2349 | 48 | 0.0665 | 4.22 | -17.42 | -29.68 | paper-label DOT volume-backed reversal over 1h, 4h, 12h, and 24h |
-| HYPE | Hyperliquid | volume_reversal_candidate | long_reversal | 38.1134 | 11 | 0.0516 | 5.75 | -14.82 | 37.85 | paper-label HYPE volume-backed reversal over 1h, 4h, 12h, and 24h |
-| UNI | Uniswap | volume_reversal_candidate | long_reversal | 37.9328 | 51 | 0.0904 | 5.38 | -14.68 | -30.14 | paper-label UNI volume-backed reversal over 1h, 4h, 12h, and 24h |
-| DOGE | Dogecoin | volume_reversal_candidate | long_reversal | 37.6861 | 10 | 0.0607 | 5.78 | -13.76 | -21.01 | paper-label DOGE volume-backed reversal over 1h, 4h, 12h, and 24h |
-| CFG | Centrifuge | volume_reversal_candidate | long_reversal | 37.5489 | 240 | 0.0662 | 7.01 | -23.57 | -29.20 | paper-label CFG volume-backed reversal over 1h, 4h, 12h, and 24h |
-| LINK | Chainlink | volume_reversal_candidate | long_reversal | 37.4519 | 19 | 0.0514 | 7.46 | -12.86 | -23.28 | paper-label LINK volume-backed reversal over 1h, 4h, 12h, and 24h |
-| LDO | Lido DAO | volume_reversal_candidate | long_reversal | 37.2890 | 159 | 0.1220 | 7.02 | -15.90 | -33.10 | paper-label LDO volume-backed reversal over 1h, 4h, 12h, and 24h |
-| SAND | The Sandbox | volume_reversal_candidate | long_reversal | 36.8992 | 214 | 0.1015 | 3.43 | -23.08 | -34.82 | paper-label SAND volume-backed reversal over 1h, 4h, 12h, and 24h |
-| RAY | Raydium | volume_reversal_candidate | long_reversal | 36.7946 | 201 | 0.1313 | 6.08 | -17.89 | -31.03 | paper-label RAY volume-backed reversal over 1h, 4h, 12h, and 24h |
-| ETHFI | Ether.fi | volume_reversal_candidate | long_reversal | 36.6077 | 142 | 0.1033 | 5.26 | -17.25 | -32.98 | paper-label ETHFI volume-backed reversal over 1h, 4h, 12h, and 24h |
-| ZK | ZKsync | volume_reversal_candidate | long_reversal | 35.5911 | 269 | 0.0969 | 3.23 | -26.41 | -46.88 | paper-label ZK volume-backed reversal over 1h, 4h, 12h, and 24h |
+| ZEC | Zcash | volume_reversal_candidate | long_reversal | 63.3433 | 15 | 0.1823 | 19.87 | -23.15 | -28.54 | paper-label ZEC volume-backed reversal over 1h, 4h, 12h, and 24h |
+| JTO | Jito | breakout_continuation_watch | long_momentum_watch | 60.1703 | 133 | 0.2803 | 23.26 | 18.88 | 8.03 | paper-label JTO breakout continuation and stop behavior |
+| FARTCOIN | Fartcoin | volume_reversal_candidate | long_reversal | 52.4656 | 244 | 0.2626 | 8.91 | -27.74 | -54.48 | paper-label FARTCOIN volume-backed reversal over 1h, 4h, 12h, and 24h |
+| XPL | Plasma | volume_reversal_candidate | long_reversal | 52.2201 | 181 | 0.3718 | 5.16 | -23.11 | -37.22 | paper-label XPL volume-backed reversal over 1h, 4h, 12h, and 24h |
+| AAVE | Aave | volume_reversal_candidate | long_reversal | 50.9449 | 70 | 0.2098 | 4.34 | -22.52 | -33.47 | paper-label AAVE volume-backed reversal over 1h, 4h, 12h, and 24h |
+| SIREN | Siren | chase_risk | wait_or_fade_watch | 50.7700 | 73 | 0.1570 | 50.72 | 162.19 | 16.98 | avoid chasing SIREN; label pullback or fade setup first |
+| PENGU | Pudgy Penguins | volume_reversal_candidate | long_reversal | 50.3684 | 112 | 0.3127 | 10.89 | -12.07 | -33.40 | paper-label PENGU volume-backed reversal over 1h, 4h, 12h, and 24h |
+| FET | Artificial Superintelligence Alliance | volume_reversal_candidate | long_reversal | 50.0619 | 107 | 0.2227 | 6.23 | -20.82 | -8.91 | paper-label FET volume-backed reversal over 1h, 4h, 12h, and 24h |
+| ADA | Cardano | volume_reversal_candidate | long_reversal | 49.6354 | 18 | 0.0940 | 4.90 | -29.83 | -39.49 | paper-label ADA volume-backed reversal over 1h, 4h, 12h, and 24h |
+| HOME | HOME | chase_risk | wait_or_fade_watch | 49.5828 | 238 | 0.7319 | -40.04 | -17.15 | 113.93 | avoid chasing HOME; label pullback or fade setup first |
+| NEAR | NEAR Protocol | volume_reversal_candidate | long_reversal | 49.1003 | 37 | 0.2451 | 10.09 | -11.15 | 28.77 | paper-label NEAR volume-backed reversal over 1h, 4h, 12h, and 24h |
+| SAHARA | Sahara AI | breakout_continuation_watch | long_momentum_watch | 48.9376 | 229 | 0.5205 | 14.79 | 12.59 | 22.31 | paper-label SAHARA breakout continuation and stop behavior |
+| SEI | Sei | volume_reversal_candidate | long_reversal | 48.2817 | 129 | 0.1577 | 5.27 | -27.13 | -24.89 | paper-label SEI volume-backed reversal over 1h, 4h, 12h, and 24h |
+| UB | Unibase | volume_reversal_candidate | long_reversal | 48.1271 | 131 | 0.0639 | 10.85 | -35.08 | 6.84 | paper-label UB volume-backed reversal over 1h, 4h, 12h, and 24h |
+| BTW | Bitway | chase_risk | wait_or_fade_watch | 47.3086 | 214 | 0.2168 | 17.16 | 412.70 | 346.10 | avoid chasing BTW; label pullback or fade setup first |
+| VIRTUAL | Virtuals Protocol | volume_reversal_candidate | long_reversal | 46.7936 | 121 | 0.2011 | 6.07 | -19.71 | -38.30 | paper-label VIRTUAL volume-backed reversal over 1h, 4h, 12h, and 24h |
+| SUI | Sui | volume_reversal_candidate | long_reversal | 46.5064 | 31 | 0.2081 | 5.34 | -15.23 | -25.94 | paper-label SUI volume-backed reversal over 1h, 4h, 12h, and 24h |
+| SOL | Solana | volume_reversal_candidate | long_reversal | 45.8349 | 7 | 0.0845 | 6.84 | -19.28 | -27.78 | paper-label SOL volume-backed reversal over 1h, 4h, 12h, and 24h |
+| PEPE | Pepe | volume_reversal_candidate | long_reversal | 45.5958 | 62 | 0.1820 | 4.89 | -17.89 | -34.71 | paper-label PEPE volume-backed reversal over 1h, 4h, 12h, and 24h |
+| TAO | Bittensor | volume_reversal_candidate | long_reversal | 45.4786 | 42 | 0.0987 | 10.48 | -16.18 | -32.17 | paper-label TAO volume-backed reversal over 1h, 4h, 12h, and 24h |
+| CHZ | Chiliz | capitulation_reversal_watch | watch_reversal_trigger | 45.3976 | 145 | 0.1983 | -0.10 | -25.75 | -44.36 | wait for CHZ reversal trigger, then label capitulation rebound |
+| LUNC | Terra Luna Classic | volume_reversal_candidate | long_reversal | 44.9005 | 122 | 0.1013 | 6.66 | -23.26 | -27.95 | paper-label LUNC volume-backed reversal over 1h, 4h, 12h, and 24h |
+| INJ | Injective | volume_reversal_candidate | long_reversal | 44.8070 | 96 | 0.2020 | 5.05 | -17.44 | 28.25 | paper-label INJ volume-backed reversal over 1h, 4h, 12h, and 24h |
+| OP | Optimism | volume_reversal_candidate | long_reversal | 44.7491 | 171 | 0.2829 | 3.62 | -17.70 | -43.66 | paper-label OP volume-backed reversal over 1h, 4h, 12h, and 24h |
+| TRUMP | Official Trump | volume_reversal_candidate | long_reversal | 43.4184 | 117 | 0.1933 | 5.53 | -17.14 | -32.55 | paper-label TRUMP volume-backed reversal over 1h, 4h, 12h, and 24h |
+| ETH | Ethereum | volume_reversal_candidate | long_reversal | 42.6992 | 2 | 0.0756 | 7.34 | -15.92 | -26.95 | paper-label ETH volume-backed reversal over 1h, 4h, 12h, and 24h |
+| ARB | Arbitrum | volume_reversal_candidate | long_reversal | 42.3990 | 101 | 0.1480 | 3.71 | -19.86 | -42.50 | paper-label ARB volume-backed reversal over 1h, 4h, 12h, and 24h |
+| TIA | Celestia | volume_reversal_candidate | long_reversal | 41.7967 | 135 | 0.1322 | 5.03 | -20.59 | -28.43 | paper-label TIA volume-backed reversal over 1h, 4h, 12h, and 24h |
+| LTC | Litecoin | volume_reversal_candidate | long_reversal | 41.5198 | 30 | 0.1135 | 3.32 | -17.89 | -26.49 | paper-label LTC volume-backed reversal over 1h, 4h, 12h, and 24h |
+| FIL | Filecoin | volume_reversal_candidate | long_reversal | 41.4579 | 91 | 0.1341 | 5.31 | -17.65 | -40.15 | paper-label FIL volume-backed reversal over 1h, 4h, 12h, and 24h |
+| RENDER | Render | volume_reversal_candidate | long_reversal | 41.1807 | 77 | 0.0856 | 4.93 | -19.97 | -17.78 | paper-label RENDER volume-backed reversal over 1h, 4h, 12h, and 24h |
+| HYPE | Hyperliquid | volume_reversal_candidate | long_reversal | 40.4779 | 11 | 0.0523 | 5.12 | -17.77 | 37.74 | paper-label HYPE volume-backed reversal over 1h, 4h, 12h, and 24h |
+| WIF | dogwifhat | volume_reversal_candidate | long_reversal | 40.1391 | 199 | 0.2346 | 4.00 | -17.01 | -29.97 | paper-label WIF volume-backed reversal over 1h, 4h, 12h, and 24h |
+| VELVET | Velvet | chase_risk | wait_or_fade_watch | 39.9447 | 264 | 0.1357 | 34.71 | 153.35 | 173.62 | avoid chasing VELVET; label pullback or fade setup first |
+| EIGEN | EigenCloud (prev. EigenLayer) | volume_reversal_candidate | long_reversal | 39.4730 | 218 | 0.1766 | 11.06 | -13.72 | -18.15 | paper-label EIGEN volume-backed reversal over 1h, 4h, 12h, and 24h |
+| DYDX | dYdX | volume_reversal_candidate | long_reversal | 38.9851 | 235 | 0.0658 | 7.86 | -23.92 | -18.75 | paper-label DYDX volume-backed reversal over 1h, 4h, 12h, and 24h |
+| BAT | Basic Attention | volume_reversal_candidate | long_reversal | 38.6537 | 222 | 0.0926 | 4.20 | -25.80 | -21.51 | paper-label BAT volume-backed reversal over 1h, 4h, 12h, and 24h |
+| PUMP | Pump.fun | volume_reversal_candidate | long_reversal | 38.2424 | 97 | 0.1004 | 6.92 | -15.15 | -28.79 | paper-label PUMP volume-backed reversal over 1h, 4h, 12h, and 24h |
+| CFG | Centrifuge | volume_reversal_candidate | long_reversal | 38.1825 | 240 | 0.0688 | 7.25 | -23.81 | -30.94 | paper-label CFG volume-backed reversal over 1h, 4h, 12h, and 24h |
+| BONK | Bonk | volume_reversal_candidate | long_reversal | 37.9470 | 118 | 0.0815 | 4.54 | -19.41 | -38.32 | paper-label BONK volume-backed reversal over 1h, 4h, 12h, and 24h |
+| DOT | Polkadot | volume_reversal_candidate | long_reversal | 37.6236 | 48 | 0.0679 | 3.05 | -17.90 | -29.10 | paper-label DOT volume-backed reversal over 1h, 4h, 12h, and 24h |
+| LINK | Chainlink | volume_reversal_candidate | long_reversal | 37.5384 | 19 | 0.0538 | 7.01 | -13.25 | -23.38 | paper-label LINK volume-backed reversal over 1h, 4h, 12h, and 24h |
+| DOGE | Dogecoin | volume_reversal_candidate | long_reversal | 37.5167 | 10 | 0.0637 | 5.21 | -13.99 | -21.28 | paper-label DOGE volume-backed reversal over 1h, 4h, 12h, and 24h |
+| LDO | Lido DAO | volume_reversal_candidate | long_reversal | 37.4835 | 158 | 0.1237 | 5.79 | -17.18 | -33.63 | paper-label LDO volume-backed reversal over 1h, 4h, 12h, and 24h |
+| ZRO | LayerZero | capitulation_reversal_watch | watch_reversal_trigger | 37.0452 | 159 | 0.1413 | -0.90 | -21.52 | -38.30 | wait for ZRO reversal trigger, then label capitulation rebound |
+| UNI | Uniswap | volume_reversal_candidate | long_reversal | 37.0444 | 51 | 0.0918 | 4.02 | -15.07 | -30.61 | paper-label UNI volume-backed reversal over 1h, 4h, 12h, and 24h |
+| SAND | The Sandbox | volume_reversal_candidate | long_reversal | 37.0124 | 213 | 0.0849 | 3.25 | -24.32 | -34.85 | paper-label SAND volume-backed reversal over 1h, 4h, 12h, and 24h |
+| ETHFI | Ether.fi | volume_reversal_candidate | long_reversal | 36.9271 | 143 | 0.0943 | 4.04 | -19.38 | -33.48 | paper-label ETHFI volume-backed reversal over 1h, 4h, 12h, and 24h |
+| RAY | Raydium | volume_reversal_candidate | long_reversal | 35.9395 | 201 | 0.1324 | 4.88 | -18.17 | -31.62 | paper-label RAY volume-backed reversal over 1h, 4h, 12h, and 24h |
+| TWT | Trust Wallet | volume_reversal_candidate | long_reversal | 35.2550 | 205 | 0.0606 | 8.37 | -18.50 | -21.01 | paper-label TWT volume-backed reversal over 1h, 4h, 12h, and 24h |
 
 ## Interpretation
 

@@ -1,2 +1,3 @@
 timestamp,symbol,action,direction,score,raw_return_15m,raw_return_1h,directional_return_15m,directional_return_1h
-2026-06-07T15:06:22.302882+00:00,AERO,attention_carry_reversion_watch,1,20.60542420,0.00188033,-0.00115246,0.00188033,-0.00115246
+2026-06-08T00:05:05.198765+00:00,ZEC,attention_funding_watch,1,19.13069288,,,,
+2026-06-08T00:05:05.198765+00:00,AAVE,attention_carry_reversion_watch,1,18.49538305,,,,

@@ -1,4 +1,4 @@
 name,status,side,score,reason
-crypto_risk_off_lagged_short,watch,none,0.24182513,"risk-off pressure is visible, but crypto already repriced; btc5d=-0.0746, eth5d=-0.1256"
-eth_btc_macro_rotation,watch,none,0.05099738,ETH/BTC relative move is not aligned with a strong macro regime
-crypto_risk_on_catchup,watch,none,0.04607255,risk-on catch-up condition is not strong enough
+crypto_risk_off_lagged_short,watch,none,0.21554008,"risk-off pressure is visible, but crypto already repriced; btc5d=-0.0536, eth5d=-0.0940"
+eth_btc_macro_rotation,watch,none,0.04038244,ETH/BTC relative move is not aligned with a strong macro regime
+crypto_risk_on_catchup,watch,none,0.01978750,risk-on catch-up condition is not strong enough

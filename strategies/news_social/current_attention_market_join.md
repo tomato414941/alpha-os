@@ -4,7 +4,8 @@ This joins CoinGecko trending attention to current Hyperliquid perp market state
 
 | symbol | name | rank | 24h change | funding | mark/oracle | carry action | obs | score | reason |
 | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |
-| ZEC | Zcash | 3 | 18.1214 | -0.331449 | -0.001489 |  | 0 | 17.245085 | trending asset has material price move and large funding state |
+| ZEC | Zcash | 2 | 21.6197 | -0.437120 | -0.001005 |  | 0 | 19.130693 | trending asset has material price move and large funding state |
+| AAVE | Aave | 14 | 4.2581 | 0.109500 | -0.000707 | long_carry_reversion_watch | 6 | 18.495383 | trending asset overlaps with persistent carry/reversion perp state |
 
 ## Interpretation
 

@@ -4,7 +4,6 @@ This joins paper-gate rows to monitor forward labels. It measures the paper resu
 
 | event | asset | action | dir | size USD | cost bps | net15 bps | out15 | net1h bps | out1h |
 | --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- |
-| 2026-06-07T15:26:20.101000+00:00 | ONDO | short_liquidation_squeeze_watch | long | 100 | 12.95 | 61.57 | paper_15m_win | 7.11 | paper_1h_win |
 
 ## Interpretation
 

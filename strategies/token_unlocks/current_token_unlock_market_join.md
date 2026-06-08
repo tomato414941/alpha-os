@@ -4,31 +4,31 @@ This joins scheduled unlock events to current Hyperliquid perp context. It is no
 
 | symbol | name | unlock action | in | value USD | % supply | funding | OI notional | action | score |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
-| ME | Magic Eden | unlock_supply_shock_watch | 2 | 10430000.00 | 30.8000 | -0.37705405 | 170443.71424800 | unlock_supply_shock_crowded_short_overlap | 53.429777 |
-| PYTH | Pyth Network | unlock_context | 346 | 93650000.00 | 37.0000 | 0.10950000 | 609511.70142000 | unlock_context | 49.933617 |
-| ZRO | LayerZero | unlock_supply_shock_watch | 12 | 34450000.00 | 10.2000 | 0.25601012 | 25232698.36429400 | unlock_short_pressure_funding_overlap | 29.179543 |
-| KAITO | KAITO | unlock_supply_shock_watch | 12 | 7950000.00 | 7.3000 | 0.10880971 | 852772.11230000 | unlock_short_pressure_funding_overlap | 23.186711 |
+| ME | Magic Eden | unlock_supply_shock_watch | 2 | 10430000.00 | 30.8000 | -0.41118827 | 174131.77059600 | unlock_supply_shock_crowded_short_overlap | 53.444060 |
+| PYTH | Pyth Network | unlock_context | 346 | 93650000.00 | 37.0000 | 0.10950000 | 608523.61833000 | unlock_context | 49.893296 |
+| ZRO | LayerZero | unlock_supply_shock_watch | 12 | 34450000.00 | 10.2000 | 0.28941638 | 25363778.97362399 | unlock_short_pressure_funding_overlap | 29.212949 |
+| KAITO | KAITO | unlock_supply_shock_watch | 12 | 7950000.00 | 7.3000 | 0.10950000 | 855983.20232000 | unlock_short_pressure_funding_overlap | 23.187401 |
+| MOVE | Movement | unlock_context | 1 | 1950000.00 | 4.3000 | 0.05697592 | 260669.37342800 | unlock_context | 22.621916 |
 | PIXEL | Pixels | unlock_supply_shock_watch | 11 | 630970.00 | 11.8000 | 0.00000000 | 0.00000000 | unlock_supply_shock_watch | 21.583991 |
-| HYPE | Hyperliquid | large_unlock_watch | 28 | 594900000.00 | 4.5000 | 0.10950000 | 1256835665.19535875 | large_unlock_watch | 21.448286 |
+| HYPE | Hyperliquid | large_unlock_watch | 28 | 594900000.00 | 4.5000 | 0.10950000 | 1264511699.04617977 | large_unlock_watch | 21.435101 |
 | AI | Sleepless AI | unlock_supply_shock_watch | 23 | 444360.00 | 12.7000 | 0.00000000 | 0.00000000 | unlock_supply_shock_watch | 20.965486 |
-| MOVE | Movement | unlock_context | 2 | 1950000.00 | 4.3000 | 0.10950000 | 264694.64965200 | unlock_context | 20.500558 |
-| EIGEN | EigenCloud (prev. EigenLayer) | unlock_supply_shock_watch | 23 | 7750000.00 | 5.0000 | 0.10950000 | 3859619.84269400 | unlock_short_pressure_funding_overlap | 19.156320 |
-| LINEA | Linea | unlock_context | 3 | 2690000.00 | 3.6000 | 0.10950000 | 1505262.97787400 | unlock_context | 18.358996 |
-| SOPH | Sophon | unlock_supply_shock_watch | 21 | 1210000.00 | 5.2000 | 0.10950000 | 87080.56491400 | unlock_short_pressure_funding_overlap | 17.610880 |
+| LINEA | Linea | unlock_context | 2 | 2690000.00 | 3.6000 | 0.10950000 | 1518558.93819200 | unlock_context | 19.375630 |
+| EIGEN | EigenCloud (prev. EigenLayer) | unlock_supply_shock_watch | 23 | 7750000.00 | 5.0000 | 0.10950000 | 3932436.09989600 | unlock_short_pressure_funding_overlap | 19.156320 |
+| BABY | Babylon | unlock_context | 2 | 2140000.00 | 3.7000 | -1.61873500 | 563700.25206600 | unlock_context | 17.666608 |
+| SOPH | Sophon | unlock_supply_shock_watch | 21 | 1210000.00 | 5.2000 | 0.10950000 | 87703.14517200 | unlock_short_pressure_funding_overlap | 17.610880 |
 | CYBER | CYBER | unlock_supply_shock_watch | 7 | 2780000.00 | 5.9000 | 0.00000000 | 0.00000000 | unlock_supply_shock_watch | 17.609097 |
-| BABY | Babylon | unlock_context | 2 | 2140000.00 | 3.7000 | -0.06606179 | 571762.89475000 | unlock_context | 16.644659 |
-| IO | io.net | unlock_context | 4 | 1830000.00 | 3.8000 | -0.50639545 | 415886.54704800 | unlock_context | 16.190576 |
-| NIL | Nillion | unlock_context | 17 | 1250000.00 | 4.3000 | -0.83217284 | 817484.95296000 | unlock_context | 15.835848 |
-| ZORA | Zora | unlock_context | 22 | 1660000.00 | 3.7000 | -0.11055032 | 597091.29398800 | unlock_context | 15.595368 |
-| XPL | Plasma | unlock_context | 18 | 7310000.00 | 3.4000 | 0.10950000 | 14679954.81435000 | unlock_context | 15.465501 |
-| ALT | AltLayer | unlock_context | 17 | 1820000.00 | 3.9000 | -0.72024370 | 217446.32368800 | unlock_context | 15.362045 |
-| ZETA | ZetaChain | unlock_context | 23 | 2210000.00 | 3.1000 | 0.10950000 | 375002.04976200 | unlock_context | 14.745391 |
-| APT | Aptos | unlock_context | 4 | 7610000.00 | 1.4000 | 0.10950000 | 4222668.94414400 | unlock_context | 12.712547 |
-| ZK | ZKsync | unlock_context | 11 | 2750000.00 | 1.8000 | 0.10950000 | 725764.73280000 | unlock_context | 12.468711 |
-| OP | Optimism | unlock_context | 22 | 3780000.00 | 1.5000 | 0.07523526 | 2954254.76997200 | unlock_context | 11.481235 |
-| ACE | Fusionist | unlock_context | 10 | 161390.00 | 1.8000 | 0.10950000 | 160707.45878400 | unlock_context | 10.731791 |
-| W | Wormhole | unlock_context | 5 | 483600.00 | 0.8000 | 0.03643810 | 745090.62928400 | unlock_context | 8.968190 |
-| IOTA | IOTA | unlock_context | 2 | 559600.00 | 0.3000 | 0.08794164 | 247018.66140000 | unlock_context | 7.285598 |
+| ZORA | Zora | unlock_context | 22 | 1660000.00 | 3.7000 | -0.94787054 | 595003.80017200 | unlock_context | 16.432688 |
+| IO | io.net | unlock_context | 3 | 1830000.00 | 3.8000 | -0.16649782 | 427220.77030000 | unlock_context | 16.296701 |
+| XPL | Plasma | unlock_context | 18 | 7310000.00 | 3.4000 | 0.10950000 | 14678565.31500000 | unlock_context | 15.303847 |
+| NIL | Nillion | unlock_context | 17 | 1250000.00 | 4.3000 | -0.24722735 | 814734.98032800 | unlock_context | 15.129775 |
+| ZETA | ZetaChain | unlock_context | 23 | 2210000.00 | 3.1000 | 0.10950000 | 379782.17848000 | unlock_context | 14.745391 |
+| ALT | AltLayer | unlock_context | 17 | 1820000.00 | 3.9000 | -0.11283668 | 222689.30312200 | unlock_context | 14.566031 |
+| ZK | ZKsync | unlock_context | 11 | 2750000.00 | 1.8000 | -1.02033414 | 783574.42020000 | unlock_context | 12.737701 |
+| APT | Aptos | unlock_context | 4 | 7610000.00 | 1.4000 | 0.10950000 | 4174824.25878400 | unlock_context | 12.253367 |
+| OP | Optimism | unlock_context | 22 | 3780000.00 | 1.5000 | 0.10950000 | 3085003.80896000 | unlock_context | 11.515499 |
+| ACE | Fusionist | unlock_context | 10 | 161390.00 | 1.8000 | 0.10950000 | 160148.85069800 | unlock_context | 10.703332 |
+| W | Wormhole | unlock_context | 4 | 483600.00 | 0.8000 | 0.10950000 | 743322.09100800 | unlock_context | 9.210731 |
+| IOTA | IOTA | unlock_context | 2 | 559600.00 | 0.3000 | 0.10950000 | 245490.44656400 | unlock_context | 7.307156 |
 
 ## Interpretation
 

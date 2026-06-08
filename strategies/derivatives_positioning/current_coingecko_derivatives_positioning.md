@@ -4,33 +4,33 @@ This screen scores multi-venue derivatives open interest, volume, funding, basis
 
 | market | symbol | status | OI USD | volume 24h | OI/vol | funding | basis | spread | chg 24h | score | reason |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| WhiteBIT Futures | ZEC_PERP | paper_oi_funding_crowding_watch | 56744186 | 16136095 | 3.5166 | -0.239346 | 1.060395 | 0.0700 | 20.6453 | 53.1102 | high OI/volume with material funding |
-| CoinUp.io (Futures) | SOL-USDT | paper_oi_funding_crowding_watch | 184023179 | 63673867 | 2.8901 | -0.038879 | 0.092851 | 0.0200 | 4.0412 | 45.1209 | high OI/volume with material funding |
-| KuCoin Futures | SOLUSDTM | paper_oi_funding_crowding_watch | 316827927 | 117418336 | 2.6983 | -0.035900 | 0.123820 | 0.0200 | 4.0318 | 43.7657 | high OI/volume with material funding |
-| Hyperliquid (Futures) | XYZ:SKHX-USD | paper_oi_funding_crowding_watch | 84180720 | 48473578 | 1.7366 | -0.051522 | 2.012039 | 0.0200 | 0.0082 | 43.0849 | high OI/volume with material funding |
-| LBank (Futures) | ATOMUSDT | paper_oi_funding_crowding_watch | 51814069 | 11978268 | 4.3257 | -0.035754 | 0.178465 | 0.0600 | 3.6375 | 42.7282 | high OI/volume with material funding |
-| Bybit (Futures) | TRXUSDT | paper_oi_funding_crowding_watch | 53539842 | 11455506 | 4.6737 | -0.036051 | 0.126034 | 0.0100 | 0.7932 | 42.2006 | high OI/volume with material funding |
-| CoinW (Futures) | TRX/USDT | paper_oi_funding_crowding_watch | 67096911 | 32505308 | 2.0642 | -0.057342 | 0.000000 | 0.0100 | 0.7992 | 41.9024 | high OI/volume with material funding |
-| KuCoin Futures | HUSDTM | paper_oi_funding_crowding_watch | 88693828 | 13328880 | 6.6543 | 0.026100 | 0.282424 | 0.0200 | 16.4246 | 41.2563 | high OI/volume with material funding |
-| Binance (Futures) | TRXUSDT | paper_oi_funding_crowding_watch | 110321385 | 53292283 | 2.0701 | -0.039380 | 0.115125 | 0.0100 | 0.7553 | 40.9230 | high OI/volume with material funding |
-| Hyperliquid (Futures) | XYZ:BRENTOIL-USD | paper_oi_funding_crowding_watch | 352409978 | 67175474 | 5.2461 | -0.032557 | 0.075254 | 0.0300 | 0.7975 | 40.6132 | high OI/volume with material funding |
-| OKX (Futures) | ZEC-USDT-SWAP | paper_derivatives_momentum_risk_watch | 545280183 | 1078095489 | 0.5058 | -0.104889 | 0.070064 | 0.0100 | 21.3181 | 38.7785 | large move with meaningful OI |
-| OrangeX Futures | BSB-USDT-PERPETUAL | derivatives_positioning_context | 75182005 | 197529117 | 0.3806 | 0.106300 | -0.332502 | 0.0000 | 68.4874 | 38.2553 | positioning context is visible but not actionable yet |
-| Binance (Futures) | ETHUSDT | derivatives_positioning_context | 3789923306 | 8504525519 | 0.4456 | -0.017205 | 0.117919 | 0.0100 | 4.0921 | 37.8814 | positioning context is visible but not actionable yet |
-| BingX (Futures) | ZEC-USDT | paper_derivatives_momentum_risk_watch | 115660148 | 153251560 | 0.7547 | -0.153400 | 0.068239 | 0.0200 | 20.2751 | 37.6945 | large move with meaningful OI |
-| Antarctic  | ETH_USDT | paper_oi_funding_crowding_watch | 64398356 | 46192311 | 1.3941 | 0.045300 | -0.004852 | 0.0100 | 4.2385 | 37.6055 | high OI/volume with material funding |
-| Antarctic  | BTC_USDT | paper_oi_funding_crowding_watch | 119480896 | 81649598 | 1.4633 | 0.043400 | 0.004388 | 0.0100 | 1.4075 | 37.4900 | high OI/volume with material funding |
-| Binance (Futures) | ZECUSDT | derivatives_positioning_context | 251437912 | 2488972050 | 0.1010 | -0.124616 | 0.263408 | 0.0100 | 18.6848 | 37.3713 | positioning context is visible but not actionable yet |
-| OrangeX Futures | ALLO-USDT-PERPETUAL | derivatives_positioning_context | 88012078 | 288877120 | 0.3047 | 1.538600 | 0.000000 | 0.0000 | -32.4608 | 37.1911 | positioning context is visible but not actionable yet |
-| Aster (Futures) | SOL-USDT | paper_oi_funding_crowding_watch | 205927152 | 109584446 | 1.8792 | -0.033466 | 0.108593 | 0.0300 | 4.0908 | 37.0384 | high OI/volume with material funding |
-| Variational Omni | ETH-PERP | paper_oi_funding_crowding_watch | 138078756 | 118269793 | 1.1675 | -16.570000 | 0.052870 | 0.0000 | 4.1277 | 36.1967 | high OI/volume with material funding |
-| KuCoin Futures | ZECUSDTM | derivatives_positioning_context | 85855930 | 182893149 | 0.4694 | -0.090000 | 0.279205 | 0.0100 | 20.9278 | 36.0797 | positioning context is visible but not actionable yet |
-| Bybit (Futures) | ZECUSDT | paper_basis_funding_dislocation_watch | 98031169 | 450956385 | 0.2174 | -0.167035 | 0.722442 | 0.0100 | 21.6856 | 35.7376 | basis and funding are both stretched |
-| BVOX (Futures) | ZEC-SWAP-USDT | derivatives_positioning_context | 265368151 | 944019169 | 0.2811 | 0.343581 | 0.000549 | 0.0200 | 20.2273 | 35.6369 | positioning context is visible but not actionable yet |
-| Bybit (Futures) | SOLUSDT | derivatives_positioning_context | 553128184 | 667969300 | 0.8281 | -0.041242 | 0.057214 | 0.0200 | 4.2056 | 35.0881 | positioning context is visible but not actionable yet |
-| Binance (Futures) | BTCUSDT | derivatives_positioning_context | 6230740526 | 11401915148 | 0.5465 | 0.002711 | 0.108385 | 0.0100 | 1.3025 | 34.0173 | positioning context is visible but not actionable yet |
-| Variational Omni | HYPE-PERP | derivatives_positioning_context | 51152097 | 52598978 | 0.9725 | -2.049000 | 0.066855 | 0.0000 | 2.4948 | 33.8696 | positioning context is visible but not actionable yet |
-| Gate (Futures) | SOL_USDT | derivatives_positioning_context | 457809618 | 511806212 | 0.8945 | -0.040100 | 0.077459 | 0.1500 | 3.7948 | 33.6986 | positioning context is visible but not actionable yet |
-| OrangeX Futures | FIDA-USDT-PERPETUAL | paper_basis_funding_dislocation_watch | 62513807 | 196348149 | 0.3184 | 0.054200 | 1.417323 | 0.0000 | 9.2943 | 33.6877 | basis and funding are both stretched |
-| Bitget Futures | ZECUSDT_UMCBL | derivatives_positioning_context | 51065972 | 231697820 | 0.2204 | -0.156100 | 0.291273 | 0.0200 | 19.0621 | 33.5299 | positioning context is visible but not actionable yet |
-| KuCoin Futures | XRPUSDTM | derivatives_positioning_context | 211856583 | 62257018 | 3.4029 | -0.019400 | 0.112511 | 0.0100 | 3.5549 | 33.4297 | positioning context is visible but not actionable yet |
+| CoinUp.io (Futures) | SOL-USDT | paper_oi_funding_crowding_watch | 185672746 | 66105445 | 2.8087 | -0.038879 | 0.075540 | 0.0200 | 6.4833 | 45.8270 | high OI/volume with material funding |
+| KuCoin Futures | LABUSDTM | paper_oi_funding_crowding_watch | 54140835 | 32714548 | 1.6549 | 0.079300 | 1.556471 | 0.0400 | -5.2743 | 42.9085 | high OI/volume with material funding |
+| CoinW (Futures) | TRX/USDT | paper_oi_funding_crowding_watch | 66503309 | 32652879 | 2.0367 | -0.046755 | 0.000000 | 0.0200 | 0.8711 | 41.6530 | high OI/volume with material funding |
+| Gate (Futures) | LINK_USDT | paper_oi_funding_crowding_watch | 60793001 | 13051143 | 4.6581 | -0.047900 | 0.122769 | 1.2500 | 6.9871 | 41.2394 | high OI/volume with material funding |
+| OrangeX Futures | BSB-USDT-PERPETUAL | paper_basis_funding_dislocation_watch | 79538312 | 212440934 | 0.3744 | 0.094000 | 1.650165 | 0.0000 | 49.7364 | 40.8795 | basis and funding are both stretched |
+| Hyperliquid (Futures) | XYZ:SKHX-USD | paper_oi_funding_crowding_watch | 108151398 | 84022164 | 1.2872 | 0.122009 | -2.963563 | 0.2600 | 1.8473 | 40.8631 | high OI/volume with material funding |
+| KuCoin Futures | SOLUSDTM | paper_oi_funding_crowding_watch | 337015530 | 153121614 | 2.2010 | -0.031700 | 0.311178 | 0.0100 | 6.8540 | 40.2366 | high OI/volume with material funding |
+| Binance (Futures) | ZECUSDT | derivatives_positioning_context | 256033957 | 2716163556 | 0.0943 | -0.106621 | 0.442188 | 0.0100 | 21.3478 | 38.9372 | positioning context is visible but not actionable yet |
+| OKX (Futures) | ZEC-USDT-SWAP | derivatives_positioning_context | 579463503 | 1189918921 | 0.4870 | -0.082282 | 0.185418 | 0.0100 | 19.3901 | 38.5724 | positioning context is visible but not actionable yet |
+| Bybit (Futures) | HUSDT | paper_oi_funding_crowding_watch | 70176065 | 64090940 | 1.0949 | -0.058206 | 0.159164 | 0.0100 | 13.1456 | 38.2401 | high OI/volume with material funding |
+| Bybit (Futures) | TRXUSDT | paper_oi_funding_crowding_watch | 54156133 | 12639452 | 4.2847 | -0.028775 | 0.079620 | 0.0100 | 0.8617 | 37.7664 | high OI/volume with material funding |
+| BingX (Futures) | ZEC-USDT | paper_derivatives_momentum_risk_watch | 106678749 | 160229334 | 0.6658 | -0.094600 | 0.143711 | 0.0100 | 20.3349 | 37.1980 | large move with meaningful OI |
+| OrangeX Futures | FIDA-USDT-PERPETUAL | paper_basis_funding_dislocation_watch | 66727216 | 191175790 | 0.3490 | 0.070600 | 1.909587 | 0.0000 | 16.4944 | 37.0756 | basis and funding are both stretched |
+| Variational Omni | ETH-PERP | paper_oi_funding_crowding_watch | 139848120 | 122826499 | 1.1386 | -8.737000 | 0.064872 | 0.0000 | 7.1186 | 36.8993 | high OI/volume with material funding |
+| Antarctic  | ETH_USDT | paper_oi_funding_crowding_watch | 64261381 | 55411644 | 1.1597 | 0.045100 | 0.007671 | 0.0100 | 7.2024 | 36.6431 | high OI/volume with material funding |
+| KuCoin Futures | ZECUSDTM | paper_basis_funding_dislocation_watch | 93261905 | 191429850 | 0.4872 | -0.087700 | 0.616760 | 0.0500 | 19.7000 | 36.3604 | basis and funding are both stretched |
+| Binance (Futures) | TRXUSDT | paper_oi_funding_crowding_watch | 110598752 | 54197115 | 2.0407 | -0.031912 | 0.090825 | 0.0100 | 0.8060 | 36.1757 | high OI/volume with material funding |
+| Antarctic  | BTC_USDT | paper_oi_funding_crowding_watch | 116454245 | 99462374 | 1.1708 | 0.043400 | 0.000158 | 0.0100 | 3.8337 | 35.8990 | high OI/volume with material funding |
+| Gate (Futures) | ETH_USDT | derivatives_positioning_context | 2891706094 | 5181031317 | 0.5581 | -0.021100 | 0.220635 | 0.0200 | 7.2920 | 35.7994 | positioning context is visible but not actionable yet |
+| BVOX (Futures) | ZEC-SWAP-USDT | derivatives_positioning_context | 259381590 | 1006850512 | 0.2576 | 0.343581 | 0.006821 | 0.0200 | 20.2893 | 35.5938 | positioning context is visible but not actionable yet |
+| OrangeX Futures | ALLO-USDT-PERPETUAL | derivatives_positioning_context | 82629511 | 239693510 | 0.3447 | 1.476700 | 0.212057 | 0.0000 | -21.2796 | 35.2105 | positioning context is visible but not actionable yet |
+| Variational Omni | HYPE-PERP | derivatives_positioning_context | 53277630 | 55400003 | 0.9617 | 0.159600 | 0.106759 | 0.0000 | 5.0941 | 34.6526 | positioning context is visible but not actionable yet |
+| Binance (Futures) | BTCUSDT | derivatives_positioning_context | 6260418742 | 13740897139 | 0.4556 | 0.003286 | 0.038373 | 0.0100 | 3.7133 | 34.2780 | positioning context is visible but not actionable yet |
+| Bybit (Futures) | ZECUSDT | derivatives_positioning_context | 96674597 | 505100700 | 0.1914 | -0.099970 | 0.218038 | 0.0100 | 20.1501 | 34.1658 | positioning context is visible but not actionable yet |
+| Bitget Futures | ZECUSDT_UMCBL | derivatives_positioning_context | 53738978 | 249272156 | 0.2156 | -0.055600 | 0.182447 | 0.0100 | 19.6932 | 33.5535 | positioning context is visible but not actionable yet |
+| BYDFi (Futures) | ETH-PERPUSDC | derivatives_positioning_context | 2514509238 | 25504942 | 98.5891 | 0.010000 | 0.163815 | 0.0100 | 7.1480 | 33.5021 | positioning context is visible but not actionable yet |
+| WhiteBIT Futures | ZEC_PERP | paper_basis_funding_dislocation_watch | 58487301 | 16475675 | 3.5499 | 0.010000 | 0.905238 | 0.0500 | 19.2141 | 33.4746 | basis and funding are both stretched |
+| Binance (Futures) | ETHUSDT | derivatives_positioning_context | 3814075788 | 10384854768 | 0.3673 | -0.008758 | 0.117957 | 0.0100 | 7.1392 | 33.1488 | positioning context is visible but not actionable yet |
+| MEXC (Futures) | ZEC_USDT | derivatives_positioning_context | 55691409 | 364751332 | 0.1527 | -0.106600 | 0.125031 | 0.0600 | 19.9787 | 33.0060 | positioning context is visible but not actionable yet |
+| HTX Futures | BTC-USDT | derivatives_positioning_context | 2037646668 | 774308281 | 2.6316 | 0.010000 | 0.070073 | 0.0100 | 3.9528 | 32.8999 | positioning context is visible but not actionable yet |

@@ -4,28 +4,22 @@ This maps recent OKX USDT swap liquidation flow. Long liquidation means forced s
 
 | asset | action | obs | long liq USD | short liq USD | total liq USD | liq/vol | imbalance | score |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| MRVL | long_liquidation_cascade_watch | 17 | 22227 | 0 | 22227 | 0.000556 | -1.000000 | 0.102508 |
-| OPN | long_liquidation_cascade_watch | 82 | 21874 | 313 | 22187 | 0.000451 | -0.971786 | 0.089663 |
-| XRP | short_liquidation_squeeze_watch | 4 | 0 | 69804 | 69804 | 0.000325 | 1.000000 | 0.087262 |
-| BEAT | long_liquidation_cascade_watch | 34 | 69445 | 15445 | 84890 | 0.000247 | -0.636122 | 0.049243 |
-| TON | short_liquidation_squeeze_watch | 2 | 0 | 7704 | 7704 | 0.000110 | 1.000000 | 0.040765 |
-| ALLO | long_liquidation_cascade_watch | 33 | 23018 | 0 | 23018 | 0.000081 | -1.000000 | 0.039298 |
-| JTO | long_liquidation_cascade_watch | 14 | 6414 | 0 | 6414 | 0.000105 | -1.000000 | 0.039068 |
-| BSB | mixed_liquidation_flow_watch | 189 | 153446 | 94522 | 247968 | 0.000724 | -0.237626 | 0.034491 |
-| ZEC | mixed_liquidation_flow_watch | 77 | 154739 | 89455 | 244194 | 0.000232 | -0.267343 | 0.021958 |
-| HOME | short_liquidation_squeeze_watch | 6 | 262 | 1899 | 2162 | 0.000036 | 0.757186 | 0.015133 |
-| WLD | mixed_liquidation_flow_watch | 42 | 36747 | 57379 | 94126 | 0.000185 | 0.219201 | 0.014843 |
-| H | long_liquidation_cascade_watch | 7 | 1742 | 0 | 1742 | 0.000015 | -1.000000 | 0.012717 |
-| LAB | long_liquidation_cascade_watch | 9 | 4635 | 0 | 4635 | 0.000012 | -1.000000 | 0.012550 |
-| ETH | short_liquidation_squeeze_watch | 19 | 0 | 35450 | 35450 | 0.000005 | 1.000000 | 0.010301 |
-| NEAR | long_liquidation_cascade_watch | 4 | 1343 | 0 | 1343 | 0.000010 | -1.000000 | 0.009837 |
-| ONDO | long_liquidation_cascade_watch | 2 | 85 | 0 | 85 | 0.000002 | -1.000000 | 0.002814 |
-| FIL | long_liquidation_cascade_watch | 1 | 73 | 0 | 73 | 0.000001 | -1.000000 | 0.002273 |
-| SUI | short_liquidation_squeeze_watch | 1 | 0 | 58 | 58 | 0.000001 | 1.000000 | 0.001552 |
-| HYPE | mixed_liquidation_flow_watch | 5 | 2317 | 2886 | 5203 | 0.000013 | 0.109472 | 0.001465 |
-| BTC | short_liquidation_squeeze_watch | 1 | 0 | 255 | 255 | 0.000000 | 1.000000 | 0.000478 |
-| ADA | short_liquidation_squeeze_watch | 1 | 0 | 12 | 12 | 0.000000 | 1.000000 | 0.000447 |
-| XLM | long_liquidation_cascade_watch | 1 | 8 | 0 | 8 | 0.000000 | -1.000000 | 0.000315 |
+| MU | long_liquidation_cascade_watch | 6 | 201391 | 0 | 201391 | 0.002439 | -1.000000 | 0.261965 |
+| XAU | short_liquidation_squeeze_watch | 15 | 0 | 51243 | 51243 | 0.000580 | 1.000000 | 0.113375 |
+| BEAT | long_liquidation_cascade_watch | 202 | 187365 | 51093 | 238458 | 0.000517 | -0.571470 | 0.069886 |
+| HOME | short_liquidation_squeeze_watch | 7 | 0 | 9107 | 9107 | 0.000150 | 1.000000 | 0.048525 |
+| ETH | short_liquidation_squeeze_watch | 68 | 0 | 232837 | 232837 | 0.000026 | 1.000000 | 0.027547 |
+| BTC | short_liquidation_squeeze_watch | 57 | 0 | 197164 | 197164 | 0.000022 | 1.000000 | 0.024575 |
+| ALLO | mixed_liquidation_flow_watch | 41 | 8328 | 22375 | 30703 | 0.000119 | 0.457491 | 0.022360 |
+| WLD | mixed_liquidation_flow_watch | 28 | 8731 | 25243 | 33973 | 0.000065 | 0.486036 | 0.017776 |
+| ZEC | short_liquidation_squeeze_watch | 28 | 4950 | 25463 | 30413 | 0.000026 | 0.674462 | 0.015408 |
+| BSB | short_liquidation_squeeze_watch | 51 | 4380 | 13403 | 17782 | 0.000050 | 0.507429 | 0.015287 |
+| CL | long_liquidation_cascade_watch | 1 | 782 | 0 | 782 | 0.000013 | -1.000000 | 0.010593 |
+| LAB | long_liquidation_cascade_watch | 7 | 823 | 0 | 823 | 0.000003 | -1.000000 | 0.005422 |
+| OPN | mixed_liquidation_flow_watch | 9 | 711 | 372 | 1083 | 0.000022 | -0.313268 | 0.004452 |
+| SUI | mixed_liquidation_flow_watch | 2 | 126 | 353 | 479 | 0.000005 | 0.472369 | 0.002840 |
+| HYPE | long_liquidation_cascade_watch | 1 | 23 | 0 | 23 | 0.000000 | -1.000000 | 0.000329 |
+| PEPE | long_liquidation_cascade_watch | 1 | 3 | 0 | 3 | 0.000000 | -1.000000 | 0.000060 |
 
 ## Interpretation
 

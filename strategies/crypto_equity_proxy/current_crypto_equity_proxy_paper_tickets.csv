@@ -1,5 +1,5 @@
 name,status,side,score,reason
-mstr_btc_dislocation,paper_relative_value_watch,long_mstr_short_btc,-0.16789773,MSTR strongly underperforms BTC; check announcement/news and equity-market risk before action
-crypto_equity_proxy_lead,watch,none,-0.08543078,proxy basket does not show a clean lead/lag trade
-exchange_beta_lead,watch,none,-0.08456826,exchange equity beta does not show a clean crypto lead signal
-miner_stress_vs_btc,watch,none,-0.05203645,miner basket does not show severe stress versus BTC
+mstr_btc_dislocation,paper_relative_value_watch,long_mstr_short_btc,-0.18985691,MSTR strongly underperforms BTC; check announcement/news and equity-market risk before action
+crypto_equity_proxy_lead,watch,none,-0.10738997,proxy basket does not show a clean lead/lag trade
+exchange_beta_lead,watch,none,-0.10652745,exchange equity beta does not show a clean crypto lead signal
+miner_stress_vs_btc,watch,none,-0.07399564,miner basket does not show severe stress versus BTC

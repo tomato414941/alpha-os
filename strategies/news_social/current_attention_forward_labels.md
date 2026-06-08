@@ -4,7 +4,8 @@ This labels attention/perp-overlap candidates with subsequent Hyperliquid return
 
 | symbol | action | dir | score | raw 15m | dir 15m | raw 1h | dir 1h |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| AERO | attention_carry_reversion_watch | 1 | 20.605424 | 0.001880 | 0.001880 | -0.001152 | -0.001152 |
+| ZEC | attention_funding_watch | 1 | 19.130693 |  |  |  |  |
+| AAVE | attention_carry_reversion_watch | 1 | 18.495383 |  |  |  |  |
 
 ## Interpretation
 
