@@ -94,6 +94,7 @@ DEFAULT_COMMANDS = (
     ("strategies.market_making.current_microstructure_flow_snapshot",),
     ("strategies.market_making.current_microstructure_flow_forward_labels",),
     ("strategies.market_making.current_microstructure_flow_paper_gate",),
+    ("strategies.market_making.hyperliquid_l2_snapshot",),
     ("strategies.market_making.current_l2_imbalance_monitor",),
     ("strategies.market_making.current_l2_imbalance_forward_labels",),
     ("strategies.market_making.current_l2_imbalance_paper_gate",),
