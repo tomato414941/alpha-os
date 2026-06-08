@@ -31,13 +31,14 @@ class PaperProbePlanRow:
 def build_paper_probe_plan(
     *,
     stack_path: Path = ROOT / "current_alpha_stack.csv",
+    policy_expansion_path: Path = ROOT / "policy_learning" / "current_policy_expansion_targets.csv",
     top: int = 50,
 ) -> tuple[PaperProbePlanRow, ...]:
     candidates = tuple(
         row
         for row in _read_rows(stack_path)
         if _probe_type(row) != ""
-    )
+    ) + _policy_expansion_candidates(policy_expansion_path)
     sorted_candidates = sorted(candidates, key=lambda row: _float(row.get("priority_score")), reverse=True)
     selected_candidates = _select_diverse_candidates(sorted_candidates, top=top)
     return tuple(
@@ -246,6 +247,12 @@ def _probe_type(row: dict[str, str]) -> str:
     if status in {"paper_short_basis_watch", "paper_long_basis_watch", "basis_term_structure_watch"}:
         return "basis_term_structure_probe"
     if status in {
+        "expand_supported_preference_now",
+        "collect_expansion_labels",
+        "repeat_seed_before_expansion",
+    }:
+        return "policy_expansion_probe"
+    if status in {
         "paper_dex_pool_momentum_watch",
         "paper_dex_reversal_risk_watch",
         "dex_liquidity_stress_watch",
@@ -382,6 +389,12 @@ def _candidate_size(row: dict[str, str]) -> str:
         return match.group(1)
     if row.get("status") == "small_repeat_paper_check":
         return "1000"
+    if row.get("status") in {
+        "expand_supported_preference_now",
+        "collect_expansion_labels",
+        "repeat_seed_before_expansion",
+    }:
+        return "100"
     return ""
 
 
@@ -405,6 +418,36 @@ def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
         return tuple(csv.DictReader(handle))
 
 
+def _policy_expansion_candidates(path: Path) -> tuple[dict[str, str], ...]:
+    rows: list[dict[str, str]] = []
+    for row in _read_rows(path):
+        decision = row.get("decision", "")
+        if decision not in {
+            "expand_supported_preference_now",
+            "collect_expansion_labels",
+            "repeat_seed_before_expansion",
+        }:
+            continue
+        rows.append(
+            {
+                "opportunity": row.get("target_id", ""),
+                "status": decision,
+                "side": row.get("action", ""),
+                "priority_score": row.get("expansion_score", ""),
+                "sources": "policy_learning/current_policy_expansion_targets",
+                "evidence": (
+                    f"{row.get('target_asset', '')}: seed={row.get('seed_id', '')}, "
+                    f"context={row.get('context', '')}, "
+                    f"target={row.get('target_opportunity', '')}, "
+                    f"support={row.get('support_state', '')}"
+                ),
+                "conflict": row.get("reason", ""),
+                "next_step": row.get("next_step", ""),
+            }
+        )
+    return tuple(rows)
+
+
 def _float(value: object) -> float:
     try:
         return float(value or 0.0)
@@ -419,12 +462,21 @@ def _escape(value: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--stack-path", type=Path, default=ROOT / "current_alpha_stack.csv")
+    parser.add_argument(
+        "--policy-expansion-path",
+        type=Path,
+        default=ROOT / "policy_learning" / "current_policy_expansion_targets.csv",
+    )
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_probe_plan.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_probe_plan.md")
     parser.add_argument("--top", type=int, default=50)
     args = parser.parse_args()
 
-    rows = build_paper_probe_plan(stack_path=args.stack_path, top=args.top)
+    rows = build_paper_probe_plan(
+        stack_path=args.stack_path,
+        policy_expansion_path=args.policy_expansion_path,
+        top=args.top,
+    )
     write_paper_probe_plan_csv(rows, output_path=args.output_path)
     write_paper_probe_plan_md(rows, output_path=args.md_output_path)
     for row in rows[:10]:

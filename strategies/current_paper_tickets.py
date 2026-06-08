@@ -74,10 +74,12 @@ def _ticket_for_plan_row(
 ) -> PaperTicket:
     ticket_id = _ticket_id(row)
     existing = existing_tickets.get(ticket_id)
-    if existing and row.get("probe_type") != "event_crypto_hedge_probe":
+    existing_matches = existing is not None and _ticket_matches_plan(existing, row)
+    if existing_matches and row.get("probe_type") != "event_crypto_hedge_probe":
+        assert existing is not None
         return existing
     return _build_ticket(
-        opened_at=existing_opened_at.get(ticket_id, opened_at),
+        opened_at=existing_opened_at.get(ticket_id, opened_at) if existing_matches else opened_at,
         row=row,
         marks=marks,
     )
@@ -206,6 +208,14 @@ def _ticket_id(row: dict[str, str]) -> str:
     return f"paper-{rank:02d}-{asset}-{probe}"
 
 
+def _ticket_matches_plan(ticket: PaperTicket, row: dict[str, str]) -> bool:
+    return (
+        ticket.opportunity == row.get("opportunity", "")
+        and ticket.probe_type == row.get("probe_type", "")
+        and ticket.asset == row.get("asset", "")
+    )
+
+
 def _entry_mark(*, asset: str, venue: str, marks: dict[tuple[str, str], tuple[str, str]]) -> tuple[str, str]:
     keys = ((venue.upper(), asset.upper()), ("HL", asset.upper()), ("", asset.upper()))
     for key in keys:
@@ -304,6 +314,8 @@ def _required_record(row: dict[str, str]) -> str:
         return "source overlap, duplicate-source check, forward label, spread/depth, funding, crowding"
     if probe_type == "execution_edge_probe":
         return "execution mode, fee tier, fill assumption, queue/adverse selection, stop, funding"
+    if probe_type == "policy_expansion_probe":
+        return "seed preference, fresh reward, fill/cost, stop, failure regime, comparison to seed"
     if probe_type == "event_crypto_hedge_probe":
         return "event timestamp, mark move, funding, spread/depth, beta attribution, failure regime"
     if probe_type == "stablecoin_migration_probe":

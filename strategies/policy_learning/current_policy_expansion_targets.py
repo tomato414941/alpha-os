@@ -162,6 +162,8 @@ def _seed_rows(*, oos_path: Path, candidates_path: Path) -> tuple[dict[str, str]
     for row in _read_rows(candidates_path):
         if row.get("decision") != "collect_more_labels":
             continue
+        if row.get("context") == "unclassified":
+            continue
         if _float(row.get("score")) < 40.0 or _float(row.get("mean_reward_bps")) <= 20.0:
             continue
         seeds.append(
