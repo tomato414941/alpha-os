@@ -1365,7 +1365,7 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
                 f"vol24={best_ticket.get('volume_24h', '')}"
             ),
             main_gap="prediction-market paper ticket still lacks true-probability model, news feed, latency, and adverse-selection checks",
-            next_step="build event-model checks for MicroStrategy BTC purchase and Israel/Iran airspace markets before any live action",
+            next_step="build an external event-probability model for the current depth-positive market before any live action",
         )
     depth_path = root / "prediction_markets" / "current_polymarket_clob_depth.csv"
     best_depth = _best_numeric_row(depth_path, key="visible_depth_score")

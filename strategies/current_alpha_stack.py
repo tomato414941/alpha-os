@@ -251,7 +251,7 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
             f"depth={ticket.get('visible_depth_score', '')}, vol24={ticket.get('volume_24h', '')}"
         ),
         conflict="market depth is not edge; needs independent true-probability model and latency/adverse-selection checks",
-        next_step="build external news/filing probability model before any paper event-market action",
+        next_step="build an external event-probability model before any paper event-market action",
     )
 
 

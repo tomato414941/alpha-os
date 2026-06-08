@@ -182,7 +182,26 @@ def _category(question: str) -> str:
         return "crypto_event"
     if any(term in lowered for term in ("iran", "israel", "airspace", "strait of hormuz")):
         return "geopolitical_event"
-    if any(term in lowered for term in ("vs.", "winner", "spread:", "handicap", "league", "mariners", "yankees", "rays")):
+    if any(
+        term in lowered
+        for term in (
+            "vs.",
+            "winner",
+            "spread:",
+            "handicap",
+            "league",
+            "mariners",
+            "yankees",
+            "rays",
+            "giants",
+            "cubs",
+            "red sox",
+            "lol:",
+            "bo5",
+            "lpl",
+            "bilibili",
+        )
+    ):
         return "sports_event"
     if any(term in lowered for term in ("election", "mayoral", "presidential")):
         return "political_event"

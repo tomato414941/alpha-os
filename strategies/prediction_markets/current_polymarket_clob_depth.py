@@ -34,7 +34,7 @@ class ClobDepthRow:
 def build_clob_depth_rows(
     *,
     monitor_summary_path: Path = ROOT / "current_polymarket_microstructure_monitor_summary.csv",
-    top_markets: int = 10,
+    top_markets: int = 20,
 ) -> tuple[ClobDepthRow, ...]:
     market_ids = _top_market_ids(monitor_summary_path, top=top_markets)
     rows: list[ClobDepthRow] = []
@@ -44,7 +44,7 @@ def build_clob_depth_rows(
         question = str(market.get("question") or "")
         rows.append(_try_build_depth_row(market_id=market_id, question=question, outcome="Yes", token_id=yes_token_id))
         rows.append(_try_build_depth_row(market_id=market_id, question=question, outcome="No", token_id=no_token_id))
-    return tuple(sorted(rows, key=lambda row: row.visible_depth_score, reverse=True))
+    return tuple(sorted(rows, key=_depth_sort_key, reverse=True))
 
 
 def write_clob_depth_csv(rows: tuple[ClobDepthRow, ...], *, output_path: Path) -> Path:
@@ -99,8 +99,9 @@ def write_clob_depth_md(
     with output_path.open("w", encoding="utf-8") as handle:
         handle.write("# Current Polymarket CLOB Depth\n\n")
         handle.write(
-            "This checks visible CLOB depth for the top current microstructure monitor "
-            "markets. It is not a trade instruction.\n\n"
+            "This checks visible CLOB depth for unsettled current microstructure monitor "
+            "markets first, then falls back to near-certain markets only if needed. "
+            "It is not a trade instruction.\n\n"
         )
         handle.write(
             "| question | outcome | bid | ask | spread | top bid size | top ask size | bid depth 5c | ask depth 5c | score | reason |\n"
@@ -133,7 +134,10 @@ def write_clob_depth_md(
 def _top_market_ids(path: Path, *, top: int) -> tuple[str, ...]:
     with path.open(newline="", encoding="utf-8") as handle:
         rows = tuple(csv.DictReader(handle))
-    return tuple(row["market_id"] for row in rows[:top])
+    unsettled = tuple(row for row in rows if 0.05 < _float(row.get("mean_midpoint")) < 0.95)
+    near_certain = tuple(row for row in rows if row not in unsettled)
+    selected = (*unsettled[:top], *near_certain[: max(top - len(unsettled), 0)])
+    return tuple(row["market_id"] for row in selected[:top])
 
 
 def _fetch_market(market_id: str) -> dict[str, object]:
@@ -264,6 +268,17 @@ def _reason(*, bid_depth_to_5c: float, ask_depth_to_5c: float, spread: float) ->
     return "spread is wide despite visible depth"
 
 
+def _depth_sort_key(row: ClobDepthRow) -> tuple[int, float]:
+    return (0 if _is_near_certain_book(row) else 1, row.visible_depth_score)
+
+
+def _is_near_certain_book(row: ClobDepthRow) -> bool:
+    if row.best_bid <= 0.0 or row.best_ask <= 0.0:
+        return True
+    midpoint = (row.best_bid + row.best_ask) / 2.0
+    return midpoint <= 0.05 or midpoint >= 0.95
+
+
 def _token_ids(value: object) -> tuple[str, str]:
     if isinstance(value, str):
         parsed = json.loads(value)
@@ -280,6 +295,13 @@ def _escape(value: str) -> str:
     return value.replace("|", "\\|")
 
 
+def _float(value: object) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -287,7 +309,7 @@ def main() -> None:
         type=Path,
         default=ROOT / "current_polymarket_microstructure_monitor_summary.csv",
     )
-    parser.add_argument("--top-markets", type=int, default=10)
+    parser.add_argument("--top-markets", type=int, default=20)
     parser.add_argument(
         "--csv-output-path",
         type=Path,
