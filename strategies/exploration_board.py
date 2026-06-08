@@ -107,6 +107,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _ticker_attention_source_split_row(root),
         _news_social_row(root),
         _market_breadth_row(root),
+        _event_crypto_hedge_survival_row(root),
         _prediction_market_crypto_hedge_row(root),
         _prediction_markets_row(root),
         _anomaly_stress_row(root),
@@ -4034,6 +4035,59 @@ def _prediction_market_crypto_hedge_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="prediction-market event states have not been mapped into crypto hedge candidates",
         next_step="run current_event_crypto_hedge_candidates after probability refresh/actionability",
+    )
+
+
+def _event_crypto_hedge_survival_row(root: Path) -> ExplorationRow:
+    path = root / "prediction_markets" / "current_event_crypto_hedge_survival.csv"
+    best = _best_event_crypto_hedge_survival(path)
+    if best:
+        return ExplorationRow(
+            lane="event_crypto_hedge_survival",
+            status=best.get("survival_status", "event_crypto_hedge_survival"),
+            strongest_current_signal=(
+                f"{best.get('asset', '')} {best.get('hedge_action', '')}: "
+                f"{best.get('event_bias', '')}, "
+                f"score={best.get('survival_score', '')}, "
+                f"asset_bps={best.get('asset_directional_return_bps', '')}, "
+                f"event_bps={best.get('event_mark_return_bps', '')}, "
+                f"residual={best.get('residual_vs_basket_bps', '')}, "
+                f"market={best.get('market_id', '')}"
+            ),
+            main_gap=best.get("reason", "event crypto hedge still needs survival checks"),
+            next_step=best.get("next_step", "rerun event crypto hedge survival after fresh marks"),
+        )
+    return ExplorationRow(
+        lane="event_crypto_hedge_survival",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="event crypto hedges have not been checked against reaction, beta, controls, and event alignment",
+        next_step="run current_event_crypto_hedge_survival after event alignment",
+    )
+
+
+def _best_event_crypto_hedge_survival(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    status_rank = {
+        "event_crypto_hedge_survived_alignment": 5.0,
+        "event_crypto_hedge_residual_watch": 4.0,
+        "event_crypto_hedge_rejected_event_flat": 3.0,
+        "event_crypto_hedge_rejected_same_asset_control": 3.0,
+        "event_crypto_hedge_rejected_event_contradiction": 3.0,
+        "event_crypto_hedge_pending_mark": 2.0,
+        "event_crypto_hedge_candidate_unproven": 1.0,
+    }
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            status_rank.get(row.get("survival_status", ""), 0.0),
+            abs(_safe_float(row.get("survival_score"))),
+        ),
     )
 
 

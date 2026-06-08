@@ -124,6 +124,7 @@ DEFAULT_COMMANDS = (
     ("strategies.prediction_markets.current_event_crypto_hedge_reaction_labels",),
     ("strategies.prediction_markets.current_event_crypto_hedge_beta_attribution",),
     ("strategies.prediction_markets.current_event_crypto_hedge_event_alignment",),
+    ("strategies.prediction_markets.current_event_crypto_hedge_survival",),
     ("strategies.current_paper_ticket_action_queue",),
     ("strategies.current_paper_ticket_fill_risk_check",),
     ("strategies.policy_learning.current_policy_expansion_outcome_frontier",),
