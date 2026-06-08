@@ -276,6 +276,8 @@ DEFAULT_COMMANDS = (
     ("strategies.current_alpha_repeat_fill_survival",),
     ("strategies.current_surviving_alpha_path_risk",),
     ("strategies.current_surviving_alpha_exit_regime_candidates",),
+    ("strategies.current_surviving_alpha_exit_regime_tickets", "--preserve-opened-at"),
+    ("strategies.current_surviving_alpha_exit_regime_outcomes",),
     ("strategies.current_cost_adjusted_cluster_repeat_plan",),
     ("strategies.current_split_first_cluster_lane_plan",),
     ("strategies.current_split_first_lane_repeat_queue",),

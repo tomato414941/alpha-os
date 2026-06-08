@@ -75,6 +75,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_repeat_fill_survival_row(root),
         _surviving_alpha_path_risk_row(root),
         _surviving_alpha_exit_regime_candidates_row(root),
+        _surviving_alpha_exit_regime_tickets_row(root),
+        _surviving_alpha_exit_regime_outcomes_row(root),
         _alpha_conflict_resolution_progress_row(root),
         _cost_adjusted_cluster_repeat_plan_row(root),
         _split_first_cluster_lane_plan_row(root),
@@ -1877,6 +1879,60 @@ def _surviving_alpha_exit_regime_candidates_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="path-risk blocked survivors have not been split by exit horizon",
         next_step="run exit-regime candidates after surviving alpha path risk",
+    )
+
+
+def _surviving_alpha_exit_regime_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_surviving_alpha_exit_regime_tickets.csv"
+    rows = _csv_rows(path)
+    if rows:
+        row = rows[0]
+        return ExplorationRow(
+            lane="surviving_alpha_exit_regime_tickets",
+            status="paper_exit_regime_ticket_open",
+            strongest_current_signal=(
+                f"{row.get('ticket_id', '')}: "
+                f"{row.get('asset', '')} {row.get('side', '')}, "
+                f"entry={row.get('entry_mark', '')}, "
+                f"exit={row.get('exit_horizon_minutes', '')}m, "
+                f"stop={row.get('stop_bps', '')}"
+            ),
+            main_gap=row.get("required_record", "exit-regime ticket needs a fresh paper path"),
+            next_step=row.get("next_step", "wait for exit-regime outcome checkpoint"),
+        )
+    return ExplorationRow(
+        lane="surviving_alpha_exit_regime_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="wide-stop exit candidates have not been opened as fresh paper tickets",
+        next_step="run exit-regime tickets after exit-regime candidates",
+    )
+
+
+def _surviving_alpha_exit_regime_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_surviving_alpha_exit_regime_outcomes.csv"
+    rows = _csv_rows(path)
+    if rows:
+        row = rows[0]
+        return ExplorationRow(
+            lane="surviving_alpha_exit_regime_outcomes",
+            status=row.get("outcome", "paper_exit_regime_outcome"),
+            strongest_current_signal=(
+                f"{row.get('ticket_id', '')}: "
+                f"{row.get('checkpoint_status', '')}, "
+                f"close={row.get('close_return_bps', '')}, "
+                f"adverse={row.get('max_adverse_bps', '')}, "
+                f"stop={row.get('stop_status', '')}"
+            ),
+            main_gap=row.get("evidence", "exit-regime outcome still needs path evidence"),
+            next_step=row.get("next_step", "wait for or review exit-regime outcome"),
+        )
+    return ExplorationRow(
+        lane="surviving_alpha_exit_regime_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="fresh exit-regime tickets have not been checked",
+        next_step="run exit-regime outcomes after opening tickets",
     )
 
 
