@@ -488,6 +488,8 @@ def _cross_market_stress_anomaly_stack(root: Path) -> AlphaStackRow | None:
         status_values = status_values - {"cross_market_volatility_mispricing_watch"}
     if (root / "prediction_markets" / "current_event_probability_paper_outcome.csv").exists():
         status_values = status_values - {"cross_market_event_probability_anomaly"}
+    if (root / "cross_exchange_funding" / "current_dislocation_execution_check.csv").exists():
+        status_values = status_values - {"cross_market_execution_spread_anomaly"}
     anomaly = _best_by_score(
         root / "anomaly_stress" / "current_cross_market_stress_anomaly.csv",
         score_key="score",
