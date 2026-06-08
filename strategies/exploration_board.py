@@ -49,6 +49,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_lane_promoted_repeat_action_queue_row(root),
         _symbol_lane_promoted_repeat_fill_risk_check_row(root),
         _cost_adjusted_alpha_candidates_row(root),
+        _cost_adjusted_alpha_clusters_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -1123,6 +1124,32 @@ def _cost_adjusted_alpha_candidates_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="cost-adjusted candidates are still scattered across fill-risk lanes",
         next_step="run current cost adjusted alpha candidates after fill-risk checks",
+    )
+
+
+def _cost_adjusted_alpha_clusters_row(root: Path) -> ExplorationRow:
+    path = root / "current_cost_adjusted_alpha_clusters.csv"
+    best = _best_numeric_row(path, key="cluster_score")
+    if best:
+        return ExplorationRow(
+            lane="cost_adjusted_alpha_clusters",
+            status=best.get("status", "cost_adjusted_alpha_cluster"),
+            strongest_current_signal=(
+                f"{best.get('cluster_id', '')}: "
+                f"candidates={best.get('candidate_count', '')}, "
+                f"lanes={best.get('source_lane_count', '')}, "
+                f"best_net={best.get('best_net_after_cost_bps', '')}bps, "
+                f"score={best.get('cluster_score', '')}"
+            ),
+            main_gap=best.get("missing_work", "cluster still needs repeat and fill evidence"),
+            next_step=best.get("next_step", "repeat the strongest cost-adjusted alpha cluster"),
+        )
+    return ExplorationRow(
+        lane="cost_adjusted_alpha_clusters",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="cost-adjusted candidates have not been grouped by asset and direction",
+        next_step="run current cost adjusted alpha clusters after candidate aggregation",
     )
 
 
