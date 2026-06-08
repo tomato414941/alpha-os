@@ -35,6 +35,7 @@ uv run python -m strategies.event_flow.flow_imbalance_screen
 uv run python -m strategies.event_flow.fetch_book_depth_sample
 uv run python -m strategies.event_flow.book_depth_imbalance_screen
 uv run python -m strategies.event_flow.book_depth_walk_forward_check
+uv run python -m strategies.event_flow.book_depth_execution_cost_sweep
 ```
 
 ## Current Status

@@ -103,6 +103,7 @@ def build_alpha_source_gaps(
     policy_samples_path: Path = ROOT / "policy_learning" / "current_policy_learning_samples.csv",
     book_depth_screen_path: Path = ROOT / "event_flow" / "book_depth_imbalance_screen.csv",
     book_depth_walk_forward_path: Path = ROOT / "event_flow" / "book_depth_walk_forward_check.csv",
+    book_depth_execution_cost_sweep_path: Path = ROOT / "event_flow" / "book_depth_execution_cost_sweep.csv",
     news_event_forward_labels_path: Path = ROOT / "news_social" / "current_news_event_forward_labels.csv",
     news_event_quality_gate_path: Path = ROOT / "news_social" / "current_news_event_quality_gate.csv",
     factor_hypothesis_templates_path: Path = (
@@ -116,6 +117,7 @@ def build_alpha_source_gaps(
     policy_sample_count = len(_read_rows(policy_samples_path))
     book_depth_screen_rows = _read_rows(book_depth_screen_path)
     book_depth_walk_forward_rows = _read_rows(book_depth_walk_forward_path)
+    book_depth_execution_cost_sweep_rows = _read_rows(book_depth_execution_cost_sweep_path)
     news_event_forward_label_rows = _read_rows(news_event_forward_labels_path)
     news_event_quality_gate_rows = _read_rows(news_event_quality_gate_path)
     factor_hypothesis_template_rows = _read_rows(factor_hypothesis_templates_path)
@@ -127,6 +129,7 @@ def build_alpha_source_gaps(
             policy_sample_count=policy_sample_count,
             book_depth_screen_rows=book_depth_screen_rows,
             book_depth_walk_forward_rows=book_depth_walk_forward_rows,
+            book_depth_execution_cost_sweep_rows=book_depth_execution_cost_sweep_rows,
             news_event_forward_label_rows=news_event_forward_label_rows,
             news_event_quality_gate_rows=news_event_quality_gate_rows,
             factor_hypothesis_template_rows=factor_hypothesis_template_rows,
@@ -202,6 +205,7 @@ def _build_gap(
     policy_sample_count: int,
     book_depth_screen_rows: tuple[dict[str, str], ...],
     book_depth_walk_forward_rows: tuple[dict[str, str], ...],
+    book_depth_execution_cost_sweep_rows: tuple[dict[str, str], ...],
     news_event_forward_label_rows: tuple[dict[str, str], ...],
     news_event_quality_gate_rows: tuple[dict[str, str], ...],
     factor_hypothesis_template_rows: tuple[dict[str, str], ...],
@@ -209,7 +213,17 @@ def _build_gap(
 ) -> AlphaSourceGap:
     available = _available_probe_rows(probe_rows, rule)
     missing_required = tuple(name for name in rule.required_probe_names if not _probe_available(probe_rows, name=name))
-    if rule.gap_id == "lob_ofi_hierarchical_model" and book_depth_walk_forward_rows:
+    if rule.gap_id == "lob_ofi_hierarchical_model" and book_depth_execution_cost_sweep_rows:
+        best = max(book_depth_execution_cost_sweep_rows, key=lambda row: _float(row.get("viability_score")))
+        status = best.get("viability_status", "execution_cost_swept")
+        coverage = (
+            f"{best.get('feature', '')}/{best.get('bucket', '')}/{best.get('action', '')}/"
+            f"{best.get('execution_mode', '')} gross={best.get('test_gross_bps', '')} "
+            f"net={best.get('test_net_bps', '')}"
+        )
+        priority = rule.base_priority + 16.0
+        next_probe = "test maker/low-fee execution, queue position, adverse selection, and longer OOS windows"
+    elif rule.gap_id == "lob_ofi_hierarchical_model" and book_depth_walk_forward_rows:
         best = max(book_depth_walk_forward_rows, key=lambda row: _float(row.get("test_net_bps")))
         status = best.get("decision", "walk_forward_checked")
         coverage = (

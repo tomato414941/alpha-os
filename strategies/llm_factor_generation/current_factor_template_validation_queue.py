@@ -37,11 +37,18 @@ ROUTE_RULES = {
     "ofi_liquidity_state_factor": RouteRule(
         template_id="ofi_liquidity_state_factor",
         validation_route="market_making L2 imbalance gate plus event_flow book-depth walk-forward",
-        artifact_path=ROOT / "market_making" / "current_l2_imbalance_paper_gate.csv",
-        status_columns=("gate_action",),
-        score_columns=("net_15m_bps", "net_1h_bps"),
-        evidence_columns=("asset", "candidate_size_usd", "net_15m_bps", "net_1h_bps", "visible_depth_usage"),
-        next_step="repeat L2 imbalance labels on fresh snapshots and join with historical bookDepth walk-forward",
+        artifact_path=ROOT / "event_flow" / "book_depth_execution_cost_sweep.csv",
+        status_columns=("viability_status",),
+        score_columns=("viability_score", "test_net_bps"),
+        evidence_columns=(
+            "feature",
+            "bucket",
+            "action",
+            "execution_mode",
+            "test_gross_bps",
+            "test_net_bps",
+        ),
+        next_step="test maker/low-fee execution, queue position, and adverse selection before any LOB alpha promotion",
     ),
     "crowded_positioning_unwind_factor": RouteRule(
         template_id="crowded_positioning_unwind_factor",

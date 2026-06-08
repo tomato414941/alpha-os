@@ -1792,6 +1792,28 @@ def _speculative_beta_row(root: Path) -> ExplorationRow:
 
 
 def _event_flow_row(root: Path) -> ExplorationRow:
+    cost_sweep_path = root / "event_flow" / "book_depth_execution_cost_sweep.csv"
+    cost_sweep_rows = _csv_rows(cost_sweep_path)
+    if cost_sweep_rows:
+        best = max(cost_sweep_rows, key=lambda row: float(row.get("viability_score") or "-inf"))
+        return ExplorationRow(
+            lane="event_flow",
+            status=best.get("viability_status", "book_depth_execution_cost_sweep"),
+            strongest_current_signal=(
+                f"{best.get('feature', '')} {best.get('bucket', '')} "
+                f"{best.get('action', '')}/{best.get('execution_mode', '')}, "
+                f"gross={best.get('test_gross_bps', '')}bps, "
+                f"net={best.get('test_net_bps', '')}bps"
+            ),
+            main_gap=(
+                "book-depth signal is too small for ordinary taker execution; maker/low-fee fill probability, "
+                "queue position, adverse selection, and longer OOS windows are missing"
+            ),
+            next_step=best.get(
+                "next_step",
+                "test maker/low-fee execution and queue/adverse-selection controls",
+            ),
+        )
     walk_forward_path = root / "event_flow" / "book_depth_walk_forward_check.csv"
     walk_forward_rows = _csv_rows(walk_forward_path)
     if walk_forward_rows:
