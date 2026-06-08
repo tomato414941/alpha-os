@@ -546,6 +546,7 @@ DEFAULT_COMMANDS = (
     ("strategies.current_alpha_source_gaps",),
     ("strategies.current_alpha_frontier",),
     ("strategies.current_alpha_method_frontier",),
+    ("strategies.current_broad_alpha_execution_queue",),
     ("strategies.current_portable_microstructure_feature_frontier",),
     ("strategies.current_portable_microstructure_horizon_candidates",),
     ("strategies.current_portable_microstructure_horizon_tickets", "--preserve-opened-at"),
