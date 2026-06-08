@@ -939,6 +939,11 @@ def _protocol_fee_valuation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 def _protocol_fee_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "protocol_fundamentals" / "current_protocol_fee_price_context.csv")
+    execution_by_token = {
+        row.get("token_symbol", ""): row
+        for row in _read_rows(root / "protocol_fundamentals" / "current_protocol_fee_execution_context.csv")
+        if row.get("token_symbol")
+    }
     tickets = sorted(
         (
             row
@@ -957,6 +962,8 @@ def _protocol_fee_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     output: list[AlphaStackRow] = []
     for ticket in tickets[:6]:
         token = ticket.get("token_symbol", "")
+        execution = execution_by_token.get(token, {})
+        execution_bonus = _protocol_fee_execution_bonus(execution)
         output.append(
             AlphaStackRow(
                 opportunity=f"{token.lower()}_fee_growth_price_context",
@@ -964,8 +971,8 @@ def _protocol_fee_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
                     ticket.get("status", ""),
-                    source_count=2,
-                    raw_score=_float(ticket.get("score")),
+                    source_count=3 if execution.get("action") == "paper_observation_ready" else 2,
+                    raw_score=_float(ticket.get("score")) + execution_bonus,
                 ),
                 sources="protocol_fundamentals + market_price_context",
                 evidence=(
@@ -975,18 +982,52 @@ def _protocol_fee_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     f"growth7d={ticket.get('fee_growth_7d', '')}, "
                     f"price7d={ticket.get('price_change_7d', '')}, "
                     f"price30d={ticket.get('price_change_30d', '')}"
+                    f"{_protocol_fee_execution_evidence(execution)}"
                 ),
-                conflict=(
-                    "fee growth can be lagging, already chased, or disconnected from token value; "
-                    "CoinGecko price context is current movement, not a forward label"
-                ),
-                next_step=ticket.get(
+                conflict=_protocol_fee_price_context_conflict(execution),
+                next_step=execution.get("next_step")
+                or ticket.get(
                     "next_step",
                     f"paper-label {token} fee-growth price context over multiple horizons",
                 ),
             )
         )
     return tuple(output)
+
+
+def _protocol_fee_execution_bonus(execution: dict[str, str]) -> float:
+    action = execution.get("action", "")
+    if action == "paper_observation_ready":
+        return 18.0
+    if action == "non_hyperliquid_route_check":
+        return 6.0
+    if action in {"wide_spread_watch", "thin_depth_watch", "thin_volume_watch"}:
+        return -8.0
+    if action == "venue_gap":
+        return -20.0
+    return 0.0
+
+
+def _protocol_fee_execution_evidence(execution: dict[str, str]) -> str:
+    if not execution:
+        return ""
+    return (
+        f", exec_action={execution.get('action', '')}, "
+        f"venues={execution.get('venue_count', '')}, "
+        f"hl_funding={execution.get('hl_annualized_funding', '')}, "
+        f"hl_spread_bps={execution.get('hl_spread_bps', '')}, "
+        f"hl_depth_10bps={execution.get('hl_near_depth_10bps_notional', '')}"
+    )
+
+
+def _protocol_fee_price_context_conflict(execution: dict[str, str]) -> str:
+    base = (
+        "fee growth can be lagging, already chased, or disconnected from token value; "
+        "CoinGecko price context is current movement, not a forward label"
+    )
+    if not execution:
+        return base
+    return f"{base}; execution gate: {execution.get('reason', '')}"
 
 
 def _defi_yield_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
