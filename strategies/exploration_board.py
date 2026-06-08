@@ -47,6 +47,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
         _symbol_lane_split_review_row(root),
+        _policy_learning_row(root),
         _crypto_market_structure_row(root),
         _basis_term_structure_row(root),
         _cross_exchange_funding_row(root),
@@ -138,6 +139,32 @@ def _alpha_frontier_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="broad alpha-source coverage is not summarized",
         next_step="run current alpha frontier after the alpha stack",
+    )
+
+
+def _policy_learning_row(root: Path) -> ExplorationRow:
+    path = root / "policy_learning" / "current_policy_learning_samples.csv"
+    best = _best_policy_learning_sample(path)
+    if best:
+        return ExplorationRow(
+            lane="policy_learning_samples",
+            status=best.get("reward_status", "sample_dataset"),
+            strongest_current_signal=(
+                f"{best.get('sample_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"action={best.get('action', '')}, "
+                f"reward={best.get('reward_bps', '')}, "
+                f"cost_adjusted={best.get('cost_adjusted_reward_bps', '')}"
+            ),
+            main_gap="samples are RL-shaped records only; no policy model, dataset split, or out-of-sample protocol exists yet",
+            next_step="use samples to define a small observation/action/reward dataset before training any policy",
+        )
+    return ExplorationRow(
+        lane="policy_learning_samples",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="paper outcomes are not converted into observation/action/reward samples",
+        next_step="run policy-learning sample builder after paper outcomes and fill-risk checks",
     )
 
 
@@ -3583,6 +3610,26 @@ def _best_abs_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:
     if not rows:
         return None
     return max(rows, key=lambda row: abs(float(row.get(key) or "0")))
+
+
+def _best_policy_learning_sample(path: Path) -> dict[str, str] | None:
+    rows = _csv_rows(path)
+    if not rows:
+        return None
+    status_rank = {
+        "cost_adjusted_win": 5,
+        "mark_win_without_cost": 4,
+        "cost_adjusted_edge_failed": 3,
+        "depth_too_thin_for_probe": 2,
+        "mark_loss": 1,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            status_rank.get(row.get("reward_status", ""), 0),
+            float(row.get("cost_adjusted_reward_bps") or row.get("reward_bps") or "0"),
+        ),
+    )
 
 
 def _best_protocol_fee_row(path: Path) -> dict[str, str] | None:

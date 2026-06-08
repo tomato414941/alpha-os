@@ -205,6 +205,23 @@ def write_alpha_frontier_md(rows: tuple[FrontierLane, ...], *, output_path: Path
 
 
 def _build_lane(rule: LaneRule, *, alpha_rows: tuple[dict[str, str], ...]) -> FrontierLane:
+    if rule.lane == "directional ML / RL policy learning":
+        policy_rows = _read_rows(ROOT / "policy_learning" / "current_policy_learning_samples.csv")
+        if policy_rows:
+            best = max(policy_rows, key=_policy_sample_sort_key)
+            best_score = _policy_sample_score(best)
+            active_candidates = len(policy_rows)
+            return FrontierLane(
+                lane=rule.lane,
+                current_status="sample_dataset_ready",
+                frontier_score=rule.base_priority + min(active_candidates * 0.2, 12.0) + min(best_score / 10.0, 12.0),
+                active_candidates=active_candidates,
+                best_score=best_score,
+                best_opportunity=best.get("opportunity", ""),
+                evidence_sources="policy_learning/current_policy_learning_samples",
+                missing_work=rule.missing_work,
+                next_probe=rule.next_probe,
+            )
     matches = tuple(row for row in alpha_rows if _matches_rule(row, rule))
     best = max(matches, key=lambda row: _float(row.get("priority_score")), default={})
     best_score = _float(best.get("priority_score"))
@@ -253,6 +270,21 @@ def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
         return ()
     with path.open(newline="", encoding="utf-8") as handle:
         return tuple(csv.DictReader(handle))
+
+
+def _policy_sample_score(row: dict[str, str]) -> float:
+    return _float(row.get("cost_adjusted_reward_bps") or row.get("reward_bps"))
+
+
+def _policy_sample_sort_key(row: dict[str, str]) -> tuple[int, float]:
+    status_rank = {
+        "cost_adjusted_win": 5,
+        "mark_win_without_cost": 4,
+        "cost_adjusted_edge_failed": 3,
+        "depth_too_thin_for_probe": 2,
+        "mark_loss": 1,
+    }.get(row.get("reward_status", ""), 0)
+    return (status_rank, _policy_sample_score(row))
 
 
 def _float(value: str | None) -> float:

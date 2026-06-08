@@ -34,20 +34,20 @@ This checks opened paper tickets against the latest available public marks. It i
 | paper-28-doge-liquidation-intensity | ready | paper_long | DOGE | OKX | 0.085123000000 | 0.085745000000 | 73.07073294 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-29-sol-stablecoin-migration | pending | paper_long | SOL |  | 66.215000000000 | 66.248000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-30-usdai-stablecoin-peg | ready | paper_observe | USDAI |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
-| paper-31-purr-derivatives-positioning | pending | paper_long | PURR |  | 0.093578000000 | 0.093927000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-31-purr-derivatives-positioning | ready | paper_long | PURR |  | 0.093578000000 | 0.093927000000 | 37.29509073 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-32-usdc-defi-lending | ready | paper_observe | USDC |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | paper-33-pol-stablecoin-migration | pending | paper_short | POL |  | 0.079695000000 | 0.079759000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-34-imx-derivatives-positioning | pending | paper_long | IMX |  | 0.139070000000 | 0.139100000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-34-imx-derivatives-positioning | ready | paper_long | IMX |  | 0.139070000000 | 0.139100000000 | 2.15718703 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-35-wct-derivatives-positioning | ready | paper_observe | WCT |  | 0.044561000000 | 0.044545000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
-| paper-36-near-derivatives-positioning | pending | paper_long | NEAR |  | 2.157400000000 | 2.183400000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-37-dash-derivatives-positioning | pending | paper_long | DASH |  | 37.066000000000 | 37.075000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-36-near-derivatives-positioning | ready | paper_long | NEAR |  | 2.157400000000 | 2.183400000000 | 120.51543525 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
+| paper-37-dash-derivatives-positioning | ready | paper_long | DASH |  | 37.066000000000 | 37.075000000000 | 2.42810122 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-38-stable-derivatives-positioning | ready | paper_observe | STABLE |  | 0.033084000000 | 0.033084000000 |  | observe_mark_flat | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
-| paper-39-zec-derivatives-positioning | pending | paper_observe | ZEC |  | 429.220000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-39-zec-derivatives-positioning | ready | paper_observe | ZEC |  | 429.220000000000 | 427.410000000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-40-zec-attention-event | pending | paper_long | ZEC |  | 429.220000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-41-sol-derivatives-positioning | ready | paper_observe | SOL |  | 66.264000000000 | 66.248000000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-42-stable-derivatives-positioning | ready | paper_observe | STABLE |  | 0.033084000000 | 0.033084000000 |  | observe_mark_flat | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-43-lab-derivatives-positioning | ready | paper_observe | LAB |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
-| paper-44-pengu-derivatives-positioning | pending | paper_observe | PENGU |  | 0.006843000000 | 0.006856000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-44-pengu-derivatives-positioning | ready | paper_observe | PENGU |  | 0.006843000000 | 0.006856000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-45-ethereum-defi-yield | ready | paper_observe | ETHEREUM |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | paper-46-btc-options-volatility | pending | paper_observe | BTC |  | 63429.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-47-zec-news-event | ready | paper_long | ZEC |  | 429.220000000000 | 427.410000000000 | -42.16951680 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
@@ -57,11 +57,11 @@ This checks opened paper tickets against the latest available public marks. It i
 
 ## Summary
 
-- ready: 35
-- wins: 16
+- ready: 41
+- wins: 20
 - losses: 8
 - flat: 1
-- observations: 5
-- pending: 15
+- observations: 7
+- pending: 9
 - best ready mark: paper-16-chip-repeat-execution CHIP 194.42644200bps paper_mark_win
 - worst ready mark: paper-17-event-event-probability EVENT -344.82758621bps paper_mark_loss

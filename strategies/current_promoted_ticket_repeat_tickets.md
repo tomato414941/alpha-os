@@ -4,6 +4,7 @@ These are repeat paper tickets opened only after a first paper ticket survives r
 
 | ticket | previous | asset | decision | size USD | entry | checkpoints | net after cost | next step |
 | --- | --- | --- | --- | ---: | ---: | --- | ---: | --- |
+| repeat-paper-36-near-derivatives-positioning | paper-36-near-derivatives-positioning | NEAR | paper_long |  | 2.183400000000 | 15m,1h | 110.55834621 | repeat this cost-adjusted paper probe and compare 15m/1h behavior against the first ticket |
 | repeat-paper-27-pepe-liquidation-intensity | paper-27-pepe-liquidation-intensity | PEPE | paper_long | 100.00 | 0.000002783000 | 15m,1h | 31.24588904 | repeat this cost-adjusted paper probe and compare 15m/1h behavior against the first ticket |
 | repeat-paper-09-sol-volume-dislocation | paper-09-sol-volume-dislocation | SOL | paper_long | 250 | 65.893000000000 | 15m,1h | 15.73737175 | repeat this cost-adjusted paper probe and compare 15m/1h behavior against the first ticket |
 | repeat-paper-26-sui-liquidation-intensity | paper-26-sui-liquidation-intensity | SUI | paper_long | 100.00 | 0.750000000000 | 15m,1h | 35.10939440 | repeat this cost-adjusted paper probe and compare 15m/1h behavior against the first ticket |

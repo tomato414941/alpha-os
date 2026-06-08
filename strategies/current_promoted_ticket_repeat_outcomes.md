@@ -4,6 +4,7 @@ This checks opened paper tickets against the latest available public marks. It i
 
 | ticket | status | decision | asset | venue | entry | current | dir bps | outcome | missing evidence | next step |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
+| repeat-paper-36-near-derivatives-positioning | pending | paper_long | NEAR |  | 2.183400000000 | 2.183400000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | repeat-paper-27-pepe-liquidation-intensity | ready | paper_long | PEPE |  | 0.000002783000 | 0.000000000000 |  | missing_current_mark | entry or current mark is invalid | fill missing current mark before judging the ticket |
 | repeat-paper-09-sol-volume-dislocation | ready | paper_long | SOL |  | 65.893000000000 | 66.248000000000 | 53.87522195 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | repeat-paper-26-sui-liquidation-intensity | ready | paper_long | SUI |  | 0.750000000000 | 0.752650000000 | 35.33333333 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
@@ -13,13 +14,13 @@ This checks opened paper tickets against the latest available public marks. It i
 | repeat-paper-18-near-microstructure-flow | pending | paper_long | NEAR |  | 2.183400000000 | 2.183400000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | repeat-paper-05-mega-microstructure-flow | ready | paper_long | MEGA |  | 0.051157000000 | 0.050216000000 | -183.94354634 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | repeat-paper-20-mon-microstructure-flow | ready | paper_long | MON |  | 0.021851000000 | 0.021781000000 | -32.03514713 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
-| repeat-paper-50-hype-token-unlock | pending | paper_short | HYPE |  | 61.425000000000 | 61.478000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| repeat-paper-50-hype-token-unlock | ready | paper_short | HYPE |  | 61.425000000000 | 61.478000000000 | -8.62840863 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 
 ## Summary
 
-- ready: 8
+- ready: 9
 - wins: 5
-- losses: 2
+- losses: 3
 - flat: 0
 - observations: 0
 - pending: 2
