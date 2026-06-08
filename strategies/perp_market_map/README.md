@@ -32,6 +32,7 @@ uv run python -m strategies.candidate_validation.current_hl_signal_forward_label
 uv run python -m strategies.perp_market_map.current_crowding_reversion_validated_candidates
 uv run python -m strategies.perp_market_map.current_crowding_derivatives_coverage
 uv run python -m strategies.perp_market_map.current_crowding_cross_venue_confirmation
+uv run python -m strategies.perp_market_map.current_crowding_unwind_label_gate
 uv run python -m strategies.perp_market_map.current_crowding_reversion_execution_check
 uv run python -m strategies.perp_market_map.current_crowding_reversion_paper_outcome
 uv run python -m strategies.perp_market_map.current_okx_perp_pressure

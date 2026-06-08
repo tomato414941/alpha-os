@@ -1354,7 +1354,14 @@ def _perp_crowding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         execution_rows = _read_rows(root / "perp_market_map" / "current_crowding_reversion_execution_check.csv")
         outcome_rows = _read_rows(root / "perp_market_map" / "current_crowding_reversion_paper_outcome.csv")
         cross_venue_rows = _read_rows(root / "perp_market_map" / "current_crowding_cross_venue_confirmation.csv")
-        return _perp_crowding_validated_stacks(validated_rows, execution_rows, outcome_rows, cross_venue_rows)
+        label_gate_rows = _read_rows(root / "perp_market_map" / "current_crowding_unwind_label_gate.csv")
+        return _perp_crowding_validated_stacks(
+            validated_rows,
+            execution_rows,
+            outcome_rows,
+            cross_venue_rows,
+            label_gate_rows,
+        )
     rows = _read_rows(root / "perp_market_map" / "current_crowding_reversion_screen.csv")
     tickets = sorted(rows, key=lambda row: _float(row.get("carry_reversion_score")), reverse=True)
     output: list[AlphaStackRow] = []
@@ -1746,6 +1753,7 @@ def _perp_crowding_validated_stacks(
     execution_rows: tuple[dict[str, str], ...],
     outcome_rows: tuple[dict[str, str], ...],
     cross_venue_rows: tuple[dict[str, str], ...],
+    label_gate_rows: tuple[dict[str, str], ...],
 ) -> tuple[AlphaStackRow, ...]:
     tickets = sorted(
         (
@@ -1764,6 +1772,7 @@ def _perp_crowding_validated_stacks(
     best_execution = _best_crowding_execution_by_candidate(execution_rows)
     best_outcome = _best_crowding_outcome_by_candidate(outcome_rows)
     best_cross_venue = _best_crowding_cross_venue_by_candidate(cross_venue_rows)
+    best_label_gate = _best_crowding_label_gate_by_candidate(label_gate_rows)
     output: list[AlphaStackRow] = []
     for ticket in tickets[:8]:
         asset = ticket.get("asset", "")
@@ -1771,7 +1780,8 @@ def _perp_crowding_validated_stacks(
         execution = best_execution.get((asset, ticket.get("action", "")), {})
         outcome = best_outcome.get((asset, ticket.get("action", "")), {})
         cross_venue = best_cross_venue.get((asset, ticket.get("action", "")), {})
-        stack_status = _perp_crowding_stack_status(status, execution, outcome, cross_venue)
+        label_gate = best_label_gate.get((asset, ticket.get("action", "")), {})
+        stack_status = _perp_crowding_stack_status(status, execution, outcome, cross_venue, label_gate)
         if stack_status == "paper_outcome_failed_carry_reversion_probe":
             continue
         execution_note = ""
@@ -1799,6 +1809,13 @@ def _perp_crowding_validated_stacks(
                 f"max_oi_vol={cross_venue.get('max_oi_volume_ratio', '')}, "
                 f"max_funding={cross_venue.get('max_abs_funding_rate', '')}"
             )
+        label_gate_note = ""
+        if label_gate:
+            label_gate_note = (
+                f", label_gate={label_gate.get('label_gate_status', '')}, "
+                f"label_gate_score={label_gate.get('label_gate_score', '')}, "
+                f"gate_reason={label_gate.get('reason', '')}"
+            )
         outcome_bonus = _perp_crowding_outcome_bonus(outcome)
         output.append(
             AlphaStackRow(
@@ -1813,6 +1830,7 @@ def _perp_crowding_validated_stacks(
                     )
                     + (_float(execution.get("conservative_net_1h_bps")) / 1_000.0 if execution else 0.0)
                     + outcome_bonus
+                    + _perp_crowding_label_gate_bonus(label_gate)
                 ),
                 sources="perp_market_map + candidate_validation",
                 evidence=(
@@ -1828,9 +1846,10 @@ def _perp_crowding_validated_stacks(
                     f"{execution_note}"
                     f"{outcome_note}"
                     f"{cross_venue_note}"
+                    f"{label_gate_note}"
                 ),
                 conflict=(
-                    "validated label sample is still tiny and cross-venue context is not a positive return label; "
+                    "cross-venue context is not a positive return label; "
                     "public-book gate excludes queue position, repeated adverse selection, stop behavior, and live fill evidence"
                 ),
                 next_step=_perp_crowding_next_step(
@@ -1839,6 +1858,7 @@ def _perp_crowding_validated_stacks(
                     execution=execution,
                     outcome=outcome,
                     cross_venue=cross_venue,
+                    label_gate=label_gate,
                 ),
             )
         )
@@ -1850,7 +1870,22 @@ def _perp_crowding_stack_status(
     execution: dict[str, str],
     outcome: dict[str, str],
     cross_venue: dict[str, str],
+    label_gate: dict[str, str],
 ) -> str:
+    label_gate_status = label_gate.get("label_gate_status", "")
+    if label_gate_status in {
+        "crowding_unwind_label_not_supported",
+        "crowding_unwind_paper_outcome_failed",
+        "crowding_context_only_needs_forward_labels",
+        "crowding_mapping_or_label_gap",
+    }:
+        return label_gate_status
+    if label_gate_status in {
+        "crowding_unwind_paper_outcome_supported",
+        "crowding_unwind_execution_probe_ready",
+        "crowding_unwind_label_supported",
+    }:
+        return label_gate_status
     if outcome.get("outcome_1h") == "paper_1h_win":
         if outcome.get("outcome_15m") == "paper_15m_loss":
             return "paper_delayed_carry_reversion_probe"
@@ -1878,6 +1913,19 @@ def _best_crowding_cross_venue_by_candidate(
 ) -> dict[tuple[str, str], dict[str, str]]:
     output: dict[tuple[str, str], dict[str, str]] = {}
     sorted_rows = sorted(rows, key=lambda row: _float(row.get("score")), reverse=True)
+    for row in sorted_rows:
+        key = (row.get("asset", ""), row.get("action", ""))
+        if not key[0] or not key[1] or key in output:
+            continue
+        output[key] = row
+    return output
+
+
+def _best_crowding_label_gate_by_candidate(
+    rows: tuple[dict[str, str], ...],
+) -> dict[tuple[str, str], dict[str, str]]:
+    output: dict[tuple[str, str], dict[str, str]] = {}
+    sorted_rows = sorted(rows, key=lambda row: _float(row.get("label_gate_score")), reverse=True)
     for row in sorted_rows:
         key = (row.get("asset", ""), row.get("action", ""))
         if not key[0] or not key[1] or key in output:
@@ -1937,6 +1985,19 @@ def _perp_crowding_outcome_bonus(outcome: dict[str, str]) -> float:
     return 0.0
 
 
+def _perp_crowding_label_gate_bonus(label_gate: dict[str, str]) -> float:
+    status = label_gate.get("label_gate_status", "")
+    if status in {"crowding_unwind_paper_outcome_supported", "crowding_unwind_execution_probe_ready"}:
+        return 5.0
+    if status == "crowding_unwind_label_supported":
+        return 3.0
+    if status in {"crowding_unwind_label_not_supported", "crowding_unwind_paper_outcome_failed"}:
+        return -18.0
+    if status in {"crowding_context_only_needs_forward_labels", "crowding_mapping_or_label_gap"}:
+        return -8.0
+    return 0.0
+
+
 def _perp_crowding_next_step(
     *,
     asset: str,
@@ -1944,7 +2005,10 @@ def _perp_crowding_next_step(
     execution: dict[str, str],
     outcome: dict[str, str],
     cross_venue: dict[str, str],
+    label_gate: dict[str, str],
 ) -> str:
+    if label_gate.get("next_step"):
+        return label_gate.get("next_step", "")
     if outcome.get("outcome_1h") == "paper_1h_loss":
         return f"do not promote {asset}; repeat only if a fresh crowding snapshot passes the execution gate"
     if outcome.get("outcome_1h") == "paper_1h_win" or outcome.get("outcome_15m") == "paper_15m_win":
@@ -4381,6 +4445,13 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "too_large_for_visible_depth": 52.0,
         "no_edge_after_rough_cost": 45.0,
         "paper_delayed_carry_reversion_watch": 58.0,
+        "crowding_unwind_paper_outcome_supported": 74.0,
+        "crowding_unwind_execution_probe_ready": 70.0,
+        "crowding_unwind_label_supported": 66.0,
+        "crowding_context_only_needs_forward_labels": 36.0,
+        "crowding_unwind_label_not_supported": 24.0,
+        "crowding_unwind_paper_outcome_failed": 20.0,
+        "crowding_mapping_or_label_gap": 18.0,
         "cross_venue_crowding_context_ready": 62.0,
         "cross_venue_crowding_context_only": 54.0,
         "paper_carry_reversion_needs_more_labels": 48.0,
