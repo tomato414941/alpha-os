@@ -2347,6 +2347,7 @@ def _sector_rotation_row(root: Path) -> ExplorationRow:
     context_path = root / "sector_rotation" / "current_category_perp_context.csv"
     best_context = _best_category_perp_context_row(context_path)
     if best_context:
+        action = best_context.get("action", "")
         return ExplorationRow(
             lane="sector_rotation",
             status="category_perp_context",
@@ -2356,8 +2357,8 @@ def _sector_rotation_row(root: Path) -> ExplorationRow:
                 f"funding_support={best_context.get('best_funding_support', '')}, "
                 f"score={best_context.get('context_score', '')}"
             ),
-            main_gap="category-perp context has mostly failed short labels; remaining pending rows are not promotion evidence",
-            next_step="deprioritize sector-perp continuation until repeated labels beat costs and funding support",
+            main_gap=_sector_rotation_context_gap(action),
+            next_step=_sector_rotation_context_next_step(best_context),
         )
     label_path = root / "sector_rotation" / "current_category_tradable_forward_labels.csv"
     best_label = _best_sector_tradable_label_row(label_path)
@@ -2391,6 +2392,23 @@ def _sector_rotation_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="category move is not mapped to tradable constituents, forward labels, liquidity, or costs",
         next_step="map top rotating categories to tradable coins and label category continuation/reversal",
+    )
+
+
+def _sector_rotation_context_gap(action: str) -> str:
+    if action == "sector_perp_repeat_candidate":
+        return "category-perp context has one supportive label; repeat labels, costs, and narrative conflicts are still missing"
+    if action == "wait_for_label":
+        return "category-perp context is tradable but still waiting for forward labels and execution checks"
+    return "category-perp context is weak or mixed and needs repeat evidence before promotion"
+
+
+def _sector_rotation_context_next_step(row: dict[str, str]) -> str:
+    symbol = row.get("symbol", "")
+    category = row.get("category_name", "")
+    return (
+        f"paper-label {category}/{symbol} over 15m/1h/4h with funding, "
+        "spread/depth, and narrative-conflict checks"
     )
 
 

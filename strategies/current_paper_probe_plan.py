@@ -177,6 +177,8 @@ def _probe_type(row: dict[str, str]) -> str:
         return "dislocation_repeat_probe"
     if status in {"attention_price_lag_candidate", "attention_chase_risk", "paper_attention_funding_watch"}:
         return "attention_event_probe"
+    if status in {"sector_perp_repeat_candidate", "sector_rotation_keep_sampling", "sector_rotation_label_pending"}:
+        return "sector_rotation_probe"
     if status in {"multi_source_event_pressure", "two_source_event_pressure", "repeated_event_context"}:
         return "event_pressure_probe"
     if status.startswith("paper_news_"):

@@ -59,6 +59,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_news_event_stacks(root),
         *_attention_funding_stacks(root),
         *_attention_price_context_stacks(root),
+        *_sector_rotation_context_stacks(root),
         *_market_breadth_stacks(root),
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
@@ -2463,6 +2464,83 @@ def _attention_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _sector_rotation_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "sector_rotation" / "current_category_perp_context.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("action")
+            in {
+                "sector_perp_repeat_candidate",
+                "wait_for_label",
+                "keep_sampling",
+            }
+        ),
+        key=lambda row: _float(row.get("context_score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:8]:
+        symbol = ticket.get("symbol", "")
+        direction = _int(ticket.get("direction"))
+        status = _sector_rotation_status(ticket)
+        side = "long_category_constituent" if direction > 0 else "short_category_constituent"
+        category_slug = _category_slug(ticket.get("category_name", ""))
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_{category_slug}_sector_rotation_context",
+                status=status,
+                side=side,
+                priority_score=_priority_score(
+                    status,
+                    source_count=2,
+                    raw_score=_float(ticket.get("context_score")) * 100.0,
+                ),
+                sources="sector_rotation + perp_market_context",
+                evidence=(
+                    f"{symbol}: "
+                    f"category={ticket.get('category_name', '')}, "
+                    f"category_action={ticket.get('category_action', '')}, "
+                    f"change24={ticket.get('category_change_24h', '')}, "
+                    f"dir15={ticket.get('directional_return_15m', '')}, "
+                    f"funding_support={ticket.get('best_funding_support', '')}, "
+                    f"hl_liquidity={ticket.get('hl_liquidity_usd', '')}, "
+                    f"okx_liquidity={ticket.get('okx_liquidity_usd', '')}"
+                ),
+                conflict=(
+                    "category membership can be noisy and late; the same coin can belong to "
+                    "conflicting narratives; needs constituent weighting, forward labels, costs, "
+                    "and crowding checks"
+                ),
+                next_step=(
+                    f"paper-label {symbol} sector-rotation context over 15m/1h/4h "
+                    "with funding, spread/depth, and narrative-conflict checks"
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _sector_rotation_status(ticket: dict[str, str]) -> str:
+    action = ticket.get("action", "")
+    if action == "sector_perp_repeat_candidate":
+        return "sector_perp_repeat_candidate"
+    if action == "keep_sampling":
+        return "sector_rotation_keep_sampling"
+    return "sector_rotation_label_pending"
+
+
+def _category_slug(value: str) -> str:
+    output = []
+    for char in value.lower():
+        output.append(char if char.isalnum() else "_")
+    slug = "".join(output).strip("_")
+    while "__" in slug:
+        slug = slug.replace("__", "_")
+    return slug or "category"
+
+
 def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "market_breadth" / "current_volume_price_dislocation.csv")
     labels = _read_rows(root / "market_breadth" / "current_volume_price_dislocation_labels.csv")
@@ -4058,6 +4136,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "attention_breakout_continuation_watch": 58.0,
         "attention_capitulation_reversal_watch": 56.0,
         "attention_chase_risk": 50.0,
+        "sector_perp_repeat_candidate": 60.0,
+        "sector_rotation_keep_sampling": 48.0,
+        "sector_rotation_label_pending": 44.0,
         "volume_dislocation_execution_probe": 72.0,
         "volume_dislocation_4h_supported_pending_12h": 66.0,
         "volume_dislocation_delayed_4h_support": 52.0,

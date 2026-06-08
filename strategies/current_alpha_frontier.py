@@ -89,6 +89,13 @@ LANE_RULES = (
         base_priority=91.0,
     ),
     LaneRule(
+        lane="sector / narrative rotation",
+        tokens=("sector_rotation", "category", "narrative"),
+        missing_work="constituent mapping, category-membership quality, forward labels, liquidity, costs, and crowding",
+        next_probe="paper-label top tradable category constituents across 15m/1h/4h with funding and depth checks",
+        base_priority=90.5,
+    ),
+    LaneRule(
         lane="options volatility",
         tokens=("options", "volatility", "straddle", "skew"),
         missing_work="quote freshness, spread/depth, hedging path, premium-at-risk, and realized-vol labels",
