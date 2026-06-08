@@ -18,6 +18,8 @@ klines and derives:
 
 - +/-1% liquidity notional imbalance
 - +/-5% liquidity notional imbalance
+- premium-index close
+- mark/index basis
 - next 1-minute close return
 
 Raw downloaded/aggregated market data is written under `market_data/`, which is
@@ -40,5 +42,5 @@ deployable strategy.
 The current diagnostic asks whether 5-minute taker-flow imbalance predicts the
 next 5-minute close-to-close return.
 
-The book-depth diagnostic asks whether shallow/deep liquidity imbalance predicts
-the next 1-minute close-to-close return.
+The book-depth diagnostic asks whether shallow/deep liquidity imbalance and
+perp basis context predict the next 1-minute close-to-close return.

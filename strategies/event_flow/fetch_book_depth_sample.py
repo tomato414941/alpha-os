@@ -12,7 +12,7 @@ import requests
 
 
 BINANCE_UM_DAILY_BOOK_DEPTH_URL = "https://data.binance.vision/data/futures/um/daily/bookDepth"
-BINANCE_UM_DAILY_KLINES_URL = "https://data.binance.vision/data/futures/um/daily/klines"
+BINANCE_UM_DAILY_BASE_URL = "https://data.binance.vision/data/futures/um/daily"
 DEFAULT_SYMBOLS = (
     "BTCUSDT",
     "ETHUSDT",
@@ -38,6 +38,8 @@ class BookDepthLiquiditySnapshot:
     ask_notional_5pct: float
     imbalance_1pct: float
     imbalance_5pct: float
+    premium_index_1m: float
+    mark_index_basis_1m: float
     close_1m: float
     next_1m_return: float
 
@@ -65,7 +67,10 @@ def _fetch_daily_book_depth_liquidity(symbol: str, day: date) -> tuple[BookDepth
     depth_rows = _fetch_depth_rows(symbol, day)
     if not depth_rows:
         return ()
-    close_by_minute = _fetch_1m_closes(symbol, day)
+    close_by_minute = _fetch_1m_closes(symbol, day, data_type="klines")
+    premium_by_minute = _fetch_1m_closes(symbol, day, data_type="premiumIndexKlines")
+    mark_by_minute = _fetch_1m_closes(symbol, day, data_type="markPriceKlines")
+    index_by_minute = _fetch_1m_closes(symbol, day, data_type="indexPriceKlines")
     grouped: dict[str, dict[int, float]] = {}
     for row in depth_rows:
         grouped.setdefault(row["timestamp"], {})[int(float(row["percentage"]))] = float(row["notional"])
@@ -80,6 +85,8 @@ def _fetch_daily_book_depth_liquidity(symbol: str, day: date) -> tuple[BookDepth
         ask_1 = buckets.get(1, 0.0)
         bid_5 = sum(notional for pct, notional in buckets.items() if pct < 0)
         ask_5 = sum(notional for pct, notional in buckets.items() if pct > 0)
+        index_price = index_by_minute.get(minute_ms, 0.0)
+        mark_price = mark_by_minute.get(minute_ms, 0.0)
         snapshots.append(
             BookDepthLiquiditySnapshot(
                 timestamp=_timestamp_to_iso(timestamp),
@@ -90,6 +97,8 @@ def _fetch_daily_book_depth_liquidity(symbol: str, day: date) -> tuple[BookDepth
                 ask_notional_5pct=ask_5,
                 imbalance_1pct=_imbalance(bid_1, ask_1),
                 imbalance_5pct=_imbalance(bid_5, ask_5),
+                premium_index_1m=premium_by_minute.get(minute_ms, 0.0),
+                mark_index_basis_1m=(mark_price / index_price) - 1.0 if index_price > 0.0 else 0.0,
                 close_1m=close,
                 next_1m_return=(next_close / close) - 1.0,
             )
@@ -108,8 +117,8 @@ def _fetch_depth_rows(symbol: str, day: date) -> tuple[dict[str, str], ...]:
             return tuple(csv.DictReader(TextIOWrapper(handle, encoding="utf-8")))
 
 
-def _fetch_1m_closes(symbol: str, day: date) -> dict[int, float]:
-    url = f"{BINANCE_UM_DAILY_KLINES_URL}/{symbol}/1m/{symbol}-1m-{day:%Y-%m-%d}.zip"
+def _fetch_1m_closes(symbol: str, day: date, *, data_type: str) -> dict[int, float]:
+    url = f"{BINANCE_UM_DAILY_BASE_URL}/{data_type}/{symbol}/1m/{symbol}-1m-{day:%Y-%m-%d}.zip"
     response = requests.get(url, timeout=60)
     if response.status_code == 404:
         return {}
@@ -135,6 +144,8 @@ def _write_snapshots(snapshots: tuple[BookDepthLiquiditySnapshot, ...], *, outpu
                 "ask_notional_5pct",
                 "imbalance_1pct",
                 "imbalance_5pct",
+                "premium_index_1m",
+                "mark_index_basis_1m",
                 "close_1m",
                 "next_1m_return",
             )
@@ -150,6 +161,8 @@ def _write_snapshots(snapshots: tuple[BookDepthLiquiditySnapshot, ...], *, outpu
                     f"{snapshot.ask_notional_5pct:.8f}",
                     f"{snapshot.imbalance_1pct:.10f}",
                     f"{snapshot.imbalance_5pct:.10f}",
+                    f"{snapshot.premium_index_1m:.10f}",
+                    f"{snapshot.mark_index_basis_1m:.10f}",
                     f"{snapshot.close_1m:.12f}",
                     f"{snapshot.next_1m_return:.10f}",
                 )

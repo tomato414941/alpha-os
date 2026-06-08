@@ -15,6 +15,8 @@ class BookDepthSample:
     symbol: str
     imbalance_1pct: float
     imbalance_5pct: float
+    premium_index_1m: float
+    mark_index_basis_1m: float
     next_1m_return: float
 
 
@@ -38,6 +40,8 @@ def load_book_depth_samples(dataset_dir: Path = DEFAULT_OUTPUT_DIR) -> tuple[Boo
                     symbol=str(row["symbol"]),
                     imbalance_1pct=float(row["imbalance_1pct"]),
                     imbalance_5pct=float(row["imbalance_5pct"]),
+                    premium_index_1m=float(row.get("premium_index_1m") or 0.0),
+                    mark_index_basis_1m=float(row.get("mark_index_basis_1m") or 0.0),
                     next_1m_return=float(row["next_1m_return"]),
                 )
                 for row in reader
@@ -47,7 +51,7 @@ def load_book_depth_samples(dataset_dir: Path = DEFAULT_OUTPUT_DIR) -> tuple[Boo
 
 def screen_book_depth_imbalance(samples: tuple[BookDepthSample, ...]) -> tuple[BucketResult, ...]:
     rows = []
-    for feature in ("imbalance_1pct", "imbalance_5pct"):
+    for feature in ("imbalance_1pct", "imbalance_5pct", "premium_index_1m", "mark_index_basis_1m"):
         feature_samples = tuple((getattr(sample, feature), sample.next_1m_return) for sample in samples)
         rows.extend(_bucket_results(feature, feature_samples))
     return tuple(rows)
@@ -74,9 +78,9 @@ def write_bucket_results(rows: tuple[BucketResult, ...], *, output_path: Path) -
 def write_bucket_results_md(rows: tuple[BucketResult, ...], *, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as handle:
-        handle.write("# Book Depth Imbalance Screen\n\n")
+        handle.write("# Book Depth Context Screen\n\n")
         handle.write(
-            "This checks whether futures bookDepth liquidity imbalance has a simple next-1m return edge. "
+            "This checks whether futures bookDepth liquidity imbalance and perp basis context have a simple next-1m return edge. "
             "It is a data-path and diagnostic check, not a deployable strategy.\n\n"
         )
         handle.write("| feature | bucket | count | mean next return | hit rate |\n")

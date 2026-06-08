@@ -1798,14 +1798,14 @@ def _event_flow_row(root: Path) -> ExplorationRow:
         best = max(book_depth_rows, key=lambda row: float(row.get("mean_next_return") or "-inf"))
         return ExplorationRow(
             lane="event_flow",
-            status="book_depth_probe",
+            status="book_depth_context_probe",
             strongest_current_signal=(
                 f"{best.get('feature', '')} {best.get('bucket', '')} "
                 f"mean_next_return={best.get('mean_next_return', '')}, "
                 f"hit_rate={best.get('hit_rate', '')}"
             ),
-            main_gap="recent-week LOB sample only; no costs, funding timing, liquidation context, or purged walk-forward split",
-            next_step="join funding and liquidation timestamps, then run a purged walk-forward check before any policy",
+            main_gap="recent-week LOB/basis sample only; no costs, liquidation context, or purged walk-forward split",
+            next_step="join liquidation timestamps and execution costs, then run a purged walk-forward check before any policy",
         )
     flow_path = root / "event_flow" / "flow_imbalance_screen.csv"
     top = _row_by_value(flow_path, field="bucket", value="top_20")
