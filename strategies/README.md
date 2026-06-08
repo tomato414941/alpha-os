@@ -107,6 +107,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - cross-lane queue for current small paper observations
 - `current_paper_probe_plan.md`
   - latest current paper-observation plan
+- `current_paper_tickets.py`
+  - opens the current paper-observation plan into timestamped paper tickets
+- `current_paper_tickets.md`
+  - latest current paper tickets with entry marks and required records
 - `current_symbol_opportunity_map.py`
   - symbol-level cluster generator from the current alpha stack
 - `current_symbol_opportunity_map.md`

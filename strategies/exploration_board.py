@@ -22,6 +22,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
     return (
         _alpha_stack_row(root),
         _paper_probe_plan_row(root),
+        _paper_tickets_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -111,6 +112,34 @@ def _paper_probe_plan_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="current paper-probe candidates are not separated from the broader alpha stack",
         next_step="run current paper probe plan after the alpha stack",
+    )
+
+
+def _paper_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_paper_tickets.csv"
+    rows = _csv_rows(path)
+    best = rows[0] if rows else None
+    if best:
+        return ExplorationRow(
+            lane="paper_tickets",
+            status=best.get("decision", "paper_observation"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('side', '')}, "
+                f"asset={best.get('asset', '')}, "
+                f"venue={best.get('venue', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"checkpoints={best.get('checkpoints', '')}"
+            ),
+            main_gap=best.get("required_record", "paper ticket needs observation records"),
+            next_step=best.get("next_step", "record paper-ticket checkpoint outcomes"),
+        )
+    return ExplorationRow(
+        lane="paper_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="paper probe plan has not been opened into observation tickets",
+        next_step="run current paper tickets after the paper probe plan",
     )
 
 
