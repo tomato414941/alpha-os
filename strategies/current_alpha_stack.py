@@ -2316,7 +2316,7 @@ def _token_unlock_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 
 def _liquidation_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
-    rows = sorted(
+    gate_rows = sorted(
         (
             row
             for row in _read_rows(root / "liquidation_flow" / "current_okx_liquidation_paper_gate.csv")
@@ -2327,7 +2327,7 @@ def _liquidation_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     )
     output: list[AlphaStackRow] = []
     seen_assets: set[str] = set()
-    for ticket in rows:
+    for ticket in gate_rows:
         asset = ticket.get("asset", "")
         if not asset or asset in seen_assets:
             continue
@@ -2351,6 +2351,50 @@ def _liquidation_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 ),
                 conflict="retrospective paper outcome can overstate edge; needs fresh-event repeats and live depth/fill checks",
                 next_step=f"repeat {asset} liquidation event on fresh observations with fees, spread, fill, and funding included",
+            )
+        )
+        if len(output) >= 8:
+            break
+    review_rows = sorted(
+        _read_rows(root / "liquidation_flow" / "current_okx_liquidation_actionability_review.csv"),
+        key=lambda row: _float(row.get("actionability_score")),
+        reverse=True,
+    )
+    for ticket in review_rows:
+        asset = ticket.get("asset", "")
+        if not asset or asset in seen_assets:
+            continue
+        note = ticket.get("note", "")
+        if note == "first checks support follow-up":
+            status = "liquidation_followup_watch"
+        elif note == "waiting for matching forward label":
+            status = "liquidation_label_needed_watch"
+        else:
+            continue
+        seen_assets.add(asset)
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_okx_liquidation_followup",
+                status=status,
+                side=ticket.get("action", ""),
+                priority_score=_priority_score(
+                    status,
+                    source_count=2 if ticket.get("near_touch_depth_5bps") else 1,
+                    raw_score=_float(ticket.get("actionability_score")),
+                ),
+                sources="liquidation_flow",
+                evidence=(
+                    f"{asset}: obs={ticket.get('monitor_observations', '')}, "
+                    f"monitor_score={ticket.get('monitor_mean_score', '')}, "
+                    f"cont15={ticket.get('continuation_return_15m', '')}, "
+                    f"spread_bps={ticket.get('spread_bps', '')}, "
+                    f"near_depth_5bps={ticket.get('near_touch_depth_5bps', '')}"
+                ),
+                conflict=(
+                    "liquidation-flow signal is not yet a gated paper trade; "
+                    "fees, spread, label coverage, venue depth, and fresh-event repeats can kill the edge"
+                ),
+                next_step=f"repeat {asset} liquidation-flow observation and require positive label plus paper-gate net after costs",
             )
         )
         if len(output) >= 8:
@@ -2585,6 +2629,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "fee_growth_pending_forward_label": 34.0,
         "fee_growth_unlabeled_watch": 28.0,
         "fee_growth_label_failed": 18.0,
+        "liquidation_followup_watch": 47.0,
+        "liquidation_label_needed_watch": 40.0,
         "funding_crowded_watch": 46.0,
         "crowded_short_risk": 48.0,
         "paper_risk_context": 45.0,

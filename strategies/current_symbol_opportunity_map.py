@@ -87,6 +87,7 @@ STOP_TOKENS = {
     "FEES",
     "FLUID",
     "FOLLOW",
+    "FOLLOWUP",
     "FLOW",
     "FOUNDATION",
     "FUNDING",
