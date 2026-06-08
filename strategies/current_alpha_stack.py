@@ -1341,6 +1341,8 @@ def _perp_crowding_next_step(
 
 
 def _protocol_fee_valuation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    if (root / "protocol_fundamentals" / "current_protocol_fee_actionability.csv").exists():
+        return ()
     rows = _read_rows(root / "protocol_fundamentals" / "current_protocol_fee_valuation.csv")
     tickets = sorted(
         (
