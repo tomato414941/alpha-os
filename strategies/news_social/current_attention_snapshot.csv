@@ -1,26 +1,26 @@
 timestamp,source,rank,asset_id,symbol,name,score,label,value
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,1,crypto_market,MARKET,Crypto Fear and Greed Index,8.00000000,Extreme Fear,1780876800
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,2,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780790400
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,3,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780704000
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,4,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780617600
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,5,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780531200
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,6,crypto_market,MARKET,Crypto Fear and Greed Index,11.00000000,Extreme Fear,1780444800
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,7,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780358400
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,8,crypto_market,MARKET,Crypto Fear and Greed Index,29.00000000,Fear,1780272000
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,9,crypto_market,MARKET,Crypto Fear and Greed Index,28.00000000,Fear,1780185600
-2026-06-08T11:10:21.086494+00:00,alternative_me_fear_greed,10,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780099200
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,1,pudgy-penguins,PENGU,Pudgy Penguins,1.00000000,113,1.394781241628575
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,2,zcash,ZEC,Zcash,1.00000000,15,6.783277164663172
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,3,audiera,BEAT,Audiera,2.00000000,62,67.93012621738494
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,4,bitcoin,BTC,Bitcoin,3.00000000,1,1.2057113612565924
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,5,near,NEAR,NEAR Protocol,4.00000000,37,12.078481495368942
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,6,hyperliquid,HYPE,Hyperliquid,5.00000000,10,4.386645953685473
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,7,bonk,BONK,Bonk,6.00000000,118,1.4899681133908762
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,8,lighter,LIT,Lighter,7.00000000,119,9.142423259892663
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,9,solana,SOL,Solana,8.00000000,7,2.285719074473422
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,10,allora,ALLO,Allora,9.00000000,237,77.42866554264046
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,11,bittensor,TAO,Bittensor,10.00000000,42,0.534776050344401
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,12,lab,LAB,LAB,11.00000000,27,0.22406387098022743
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,13,monad,MON,Monad,12.00000000,147,-4.9275419430731
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,14,pi-network,PI,Pi Network,13.00000000,55,-0.7077213998906118
-2026-06-08T11:10:21.086494+00:00,coingecko_trending,15,worldcoin-wld,WLD,Worldcoin,14.00000000,52,9.546125271801511
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,1,crypto_market,MARKET,Crypto Fear and Greed Index,8.00000000,Extreme Fear,1780876800
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,2,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780790400
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,3,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780704000
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,4,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780617600
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,5,crypto_market,MARKET,Crypto Fear and Greed Index,12.00000000,Extreme Fear,1780531200
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,6,crypto_market,MARKET,Crypto Fear and Greed Index,11.00000000,Extreme Fear,1780444800
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,7,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780358400
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,8,crypto_market,MARKET,Crypto Fear and Greed Index,29.00000000,Fear,1780272000
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,9,crypto_market,MARKET,Crypto Fear and Greed Index,28.00000000,Fear,1780185600
+2026-06-08T12:19:50.917603+00:00,alternative_me_fear_greed,10,crypto_market,MARKET,Crypto Fear and Greed Index,23.00000000,Extreme Fear,1780099200
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,1,allora,ALLO,Allora,1.00000000,258,47.58190521376369
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,2,audiera,BEAT,Audiera,1.00000000,62,73.27156499989702
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,3,hyperliquid,HYPE,Hyperliquid,2.00000000,10,4.4289961881763515
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,4,bitcoin,BTC,Bitcoin,3.00000000,1,0.6169911818894458
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,5,pudgy-penguins,PENGU,Pudgy Penguins,4.00000000,113,1.1829183748628747
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,6,zcash,ZEC,Zcash,5.00000000,15,3.7627812791452526
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,7,solana,SOL,Solana,6.00000000,7,1.9143360590675025
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,8,aave,AAVE,Aave,7.00000000,71,0.9123163620737231
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,9,velvet,VELVET,Velvet,8.00000000,213,58.26824755498778
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,10,lighter,LIT,Lighter,9.00000000,124,4.983965367930728
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,11,bittensor,TAO,Bittensor,10.00000000,42,1.081436035463183
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,12,ethereum,ETH,Ethereum,11.00000000,2,2.818515256605781
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,13,near,NEAR,NEAR Protocol,12.00000000,37,9.829069668038933
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,14,ripple,XRP,XRP,13.00000000,6,1.227887676237823
+2026-06-08T12:19:50.917603+00:00,coingecko_trending,15,openserv,SERV,OpenServ,14.00000000,386,24.019970128744188

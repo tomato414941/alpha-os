@@ -24,19 +24,19 @@ This checks opened paper tickets against the latest available public marks. It i
 | paper-18-arb-intraday-derivatives | ready | paper_short | ARB |  | 0.082550000000 | 0.082550000000 | -0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-19-virtual-volume-dislocation | ready | paper_long | VIRTUAL | HL | 0.583090000000 | 0.583090000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-20-eth-volume-dislocation | ready | paper_long | ETH | HL | 1668.900000000000 | 1668.900000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| paper-21-event-event-probability | ready | paper_long | EVENT | prediction_market | 0.110000 | 0.110000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
+| paper-21-event-event-probability | ready | paper_long | EVENT | prediction_market | 0.110000 |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | paper-22-link-volume-dislocation | ready | paper_long | LINK | HL | 7.911700000000 | 7.911700000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-23-chip-repeat-execution | ready | paper_long | CHIP | OKX | 0.031460000000 | 0.031460000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| paper-24-event-event-probability | ready | paper_long | EVENT | prediction_market | 0.290000 | 0.290000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
+| paper-24-event-event-probability | ready | paper_long | EVENT | prediction_market | 0.290000 |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | paper-25-near-microstructure-flow | ready | paper_long | NEAR |  | 2.183400000000 | 2.183400000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-26-sui-microstructure-flow | ready | paper_long | SUI |  | 0.752650000000 | 0.752650000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-27-mon-microstructure-flow | ready | paper_long | MON |  | 0.021781000000 | 0.021781000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-28-chip-microstructure-flow | ready | paper_long | CHIP |  | 0.031478000000 | 0.031478000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-29-eth-wallet-entity-flow | ready | paper_long | ETH | HL | 1668.900000000000 | 1668.900000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-30-bera-microstructure-flow | pending | paper_long | BERA |  | 0.249400000000 | 0.249400000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-31-zec-dislocation-repeat | pending | paper_short | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-31-zec-dislocation-repeat | ready | paper_short | ZEC |  | 427.410000000000 | 427.410000000000 | -0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-32-eth-options-volatility | pending | paper_observe | ETH |  | 1668.900000000000 | 1668.900000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-33-mu-liquidation-intensity | pending | paper_long | MU | OKX |  |  |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-33-mu-liquidation-intensity | ready | paper_long | MU | OKX |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | paper-34-near-execution-edge | ready | paper_long | NEAR |  | 2.183400000000 | 2.183400000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-35-sol-stablecoin-migration | pending | paper_long | SOL |  | 66.248000000000 | 66.248000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-36-crypto-crypto-equity-proxy | ready | paper_short | CRYPTO |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
@@ -48,7 +48,7 @@ This checks opened paper tickets against the latest available public marks. It i
 | paper-42-btc-basis-term-structure | ready | paper_short | BTC |  | 63419.000000000000 | 63419.000000000000 | -0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-43-zec-attention-event | pending | paper_long | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-44-ethereum-defi-yield | ready | paper_observe | ETHEREUM |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
-| paper-45-zec-sector-rotation | pending | paper_long | ZEC |  | 427.410000000000 | 427.410000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-45-zec-sector-rotation | ready | paper_long | ZEC |  | 427.410000000000 | 427.410000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-46-zec-news-event | ready | paper_long | ZEC |  | 427.410000000000 | 427.410000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | paper-47-worldcup-dex-pool-flow | pending | paper_observe | WORLDCUP |  |  |  |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-48-crv-protocol-fee | ready | paper_long | CRV |  | 0.200100000000 | 0.198760000000 | -66.96651674 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
@@ -57,11 +57,11 @@ This checks opened paper tickets against the latest available public marks. It i
 
 ## Summary
 
-- ready: 42
+- ready: 45
 - wins: 4
 - losses: 2
 - flat: 26
 - observations: 6
-- pending: 8
+- pending: 5
 - best ready mark: paper-03-inj-volume-dislocation INJ 161.67534722bps paper_mark_win
 - worst ready mark: paper-04-hype-volume-dislocation HYPE -248.86196012bps paper_mark_loss

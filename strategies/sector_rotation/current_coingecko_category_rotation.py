@@ -32,8 +32,13 @@ def fetch_coingecko_categories(
     *,
     url: str = COINGECKO_CATEGORIES_URL,
 ) -> tuple[dict[str, object], ...]:
-    response = requests.get(url, timeout=30)
-    response.raise_for_status()
+    try:
+        response = requests.get(url, timeout=30)
+        if response.status_code in {403, 429}:
+            return ()
+        response.raise_for_status()
+    except requests.RequestException:
+        return ()
     return tuple(response.json())
 
 

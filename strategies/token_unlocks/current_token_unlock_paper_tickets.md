@@ -4,21 +4,21 @@ This converts current token unlock/perp overlaps into paper tickets. It is not a
 
 | symbol | side | in | value USD | % supply | funding | volume USD | impact | max lev | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| HYPE | short | 28 | 594900000 | 4.5000 | 0.10950000 | 766770426 | 0.00032840 | 10.0 | 32.643326 | paper_short_candidate | supply shock and short carry align on a tradable perp venue |
-| ZRO | short | 12 | 34450000 | 10.2000 | 0.10950000 | 2902449 | 0.00089583 | 5.0 | 31.454662 | paper_short_candidate | supply shock and short carry align on a tradable perp venue |
-| ME | watch_squeeze | 2 | 10360000 | 30.9000 | -0.70236716 | 187445 | 0.00235373 | 3.0 | 29.422672 | crowded_short_risk | supply shock overlaps negative funding, so new shorts may be crowded |
-| KAITO | short | 12 | 7950000 | 7.3000 | 0.10950000 | 184036 | 0.00166419 | 5.0 | 27.940985 | paper_short_candidate | supply shock and short carry align on a tradable perp venue |
-| EIGEN | short | 23 | 7750000 | 5.0000 | 0.10950000 | 1010223 | 0.00272183 | 5.0 | 25.249173 | paper_short_candidate | supply shock and short carry align on a tradable perp venue |
-| PYTH | none | 346 | 93650000 | 37.0000 | 0.00343567 | 542917 | 0.00215620 | 5.0 | 17.778608 | context_only | unlock is not large enough for a direct supply-shock ticket |
-| AI | short | 23 | 444360 | 12.7000 | 0.00000000 | 0 | 0.00000000 | 3.0 | 12.937777 | too_illiquid | perp venue volume is too low for paper priority |
-| PIXEL | short | 11 | 630970 | 11.8000 | 0.00000000 | 0 | 0.00000000 | 3.0 | 12.439643 | too_illiquid | perp venue volume is too low for paper priority |
-| SOPH | short | 20 | 1210000 | 5.2000 | 0.10950000 | 23223 | 0.00772343 | 3.0 | 4.884913 | too_illiquid | perp venue volume is too low for paper priority |
-| MOVE | none | 1 | 1930000 | 4.3000 | -10.92133728 | 350074 | 0.00337036 | 3.0 | -4.094724 | context_only | unlock is not large enough for a direct supply-shock ticket |
-| IO | none | 3 | 1830000 | 3.8000 | -1.00520825 | 510139 | 0.00232254 | 3.0 | -14.457732 | context_only | unlock is not large enough for a direct supply-shock ticket |
-| NIL | none | 16 | 1250000 | 4.3000 | -0.10277670 | 552452 | 0.00246877 | 3.0 | -15.309688 | context_only | unlock is not large enough for a direct supply-shock ticket |
-| BABY | none | 2 | 2270000 | 3.7000 | -0.18438924 | 1049862 | 0.00288733 | 3.0 | -15.343324 | context_only | unlock is not large enough for a direct supply-shock ticket |
-| XPL | none | 17 | 7310000 | 3.4000 | 0.06033800 | 7344910 | 0.00120997 | 10.0 | -15.419735 | context_only | unlock is not large enough for a direct supply-shock ticket |
-| LINEA | none | 2 | 2740000 | 3.6000 | 0.10950000 | 224247 | 0.00398248 | 3.0 | -15.705590 | context_only | unlock is not large enough for a direct supply-shock ticket |
+| HYPE | short | 27 | 594900000 | 4.5000 | 0.10950000 | 760191800 | 0.00017575 | 10.0 | 32.691925 | paper_short_candidate | supply shock and short carry align on a tradable perp venue |
+| ZRO | short | 11 | 34450000 | 10.2000 | 0.10950000 | 2894196 | 0.00064664 | 5.0 | 31.512089 | paper_short_candidate | supply shock and short carry align on a tradable perp venue |
+| ME | watch_squeeze | 1 | 10360000 | 30.9000 | -0.61421528 | 187325 | 0.00183885 | 3.0 | 29.419329 | crowded_short_risk | supply shock overlaps negative funding, so new shorts may be crowded |
+| KAITO | short | 11 | 7950000 | 7.3000 | 0.10950000 | 183414 | 0.00178823 | 5.0 | 27.961851 | paper_short_candidate | supply shock and short carry align on a tradable perp venue |
+| EIGEN | short | 23 | 7750000 | 5.0000 | 0.10950000 | 1017780 | 0.00217984 | 5.0 | 25.304128 | paper_short_candidate | supply shock and short carry align on a tradable perp venue |
+| PYTH | none | 345 | 93650000 | 37.0000 | -0.25553884 | 550873 | 0.00126687 | 5.0 | 18.120440 | context_only | unlock is not large enough for a direct supply-shock ticket |
+| AI | short | 22 | 444360 | 12.7000 | 0.00000000 | 0 | 0.00000000 | 3.0 | 12.971110 | too_illiquid | perp venue volume is too low for paper priority |
+| PIXEL | short | 10 | 630970 | 11.8000 | 0.00000000 | 0 | 0.00000000 | 3.0 | 12.472976 | too_illiquid | perp venue volume is too low for paper priority |
+| SOPH | short | 20 | 1210000 | 5.2000 | 0.10950000 | 23193 | 0.00514044 | 3.0 | 5.143208 | too_illiquid | perp venue volume is too low for paper priority |
+| MOVE | none | 1 | 1930000 | 4.3000 | -7.95393896 | 357190 | 0.00424790 | 3.0 | -7.149165 | context_only | unlock is not large enough for a direct supply-shock ticket |
+| IO | none | 3 | 1830000 | 3.8000 | -1.06186092 | 514430 | 0.00159063 | 3.0 | -14.327459 | context_only | unlock is not large enough for a direct supply-shock ticket |
+| XPL | none | 17 | 7310000 | 3.4000 | 0.10950000 | 7529621 | 0.00027142 | 10.0 | -15.258247 | context_only | unlock is not large enough for a direct supply-shock ticket |
+| NIL | none | 16 | 1250000 | 4.3000 | 0.01698476 | 555145 | 0.00181281 | 3.0 | -15.329615 | context_only | unlock is not large enough for a direct supply-shock ticket |
+| BABY | none | 1 | 2270000 | 3.7000 | 0.10950000 | 1036219 | 0.00302768 | 3.0 | -15.400280 | context_only | unlock is not large enough for a direct supply-shock ticket |
+| ALT | none | 16 | 1820000 | 3.9000 | -0.10952278 | 162895 | 0.00157839 | 3.0 | -15.647160 | context_only | unlock is not large enough for a direct supply-shock ticket |
 
 ## Caveat
 

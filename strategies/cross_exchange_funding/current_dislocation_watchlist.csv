@@ -1,132 +1,96 @@
 source,action,asset,long_venue,short_venue,annualized_edge,net_8h_proxy,net_24h_proxy,liquidity_proxy,friction_proxy,reason
 hl_single_venue,current_funding_monitor,MOVE,HlPerp,cash_or_spot_proxy,7.95393896,,,357189.74488500,0.00424790,long_perp_receives_funding
+predicted_cross_venue,current_funding_monitor,MOVE,BybitPerp,HlPerp,3.90889246,,,1032943.29090300,0.00473709,mark/oracle dislocation
+okx_hl_current,paper_24h_monitor,MOVE,OkxSwap,HlPerp,3.13593101,-0.00092665,0.00480108,10329.43290903,0.00379051,OKX and Hyperliquid context available
 hl_single_venue,current_funding_monitor,STABLE,HlPerp,cash_or_spot_proxy,2.76317556,,,757479.64533100,0.00229635,long_perp_receives_funding
-predicted_cross_venue,current_funding_monitor,ZORA,BybitPerp,HlPerp,1.88924730,,,120877.15734000,0.00309782,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,AERO,BybitPerp,HlPerp,1.67107950,,,687774.84605000,0.00196011,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,JUP,BybitPerp,HlPerp,1.60577983,,,1405843.76950000,0.00164976,Hyperliquid context available
 hl_single_venue,current_funding_monitor,IO,HlPerp,cash_or_spot_proxy,1.06186092,,,514430.23942900,0.00159063,long_perp_receives_funding
-predicted_cross_venue,current_funding_monitor,PNUT,BybitPerp,HlPerp,1.02588185,,,275249.64486500,0.00143472,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,IO,BybitPerp,HlPerp,0.98064871,,,582704.83402400,0.00189587,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,POPCAT,BybitPerp,HlPerp,0.96894097,,,363454.66912500,0.00114608,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,BERA,BybitPerp,HlPerp,0.96873161,,,472839.84628100,0.00204411,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,ONDO,BybitPerp,HlPerp,0.92523120,,,13497430.21255000,0.00142601,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,VIRTUAL,BybitPerp,HlPerp,0.91538584,,,1698539.90551400,0.00120139,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,TRUMP,BybitPerp,HlPerp,0.89590360,,,1715053.81240000,0.00083426,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,PENGU,BybitPerp,HlPerp,0.84880020,,,2590974.03005200,0.00073131,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,RENDER,BybitPerp,HlPerp,0.84593130,,,1119269.91409000,0.00241627,Hyperliquid context available
+predicted_cross_venue,current_funding_monitor,TRUMP,BybitPerp,HlPerp,0.80825629,,,1736805.13331000,0.00097716,Hyperliquid context available
 hl_single_venue,current_funding_monitor,AIXBT,HlPerp,cash_or_spot_proxy,0.75757093,,,332868.05941400,0.00218958,long_perp_receives_funding
 hl_single_venue,current_funding_monitor,ZEC,HlPerp,cash_or_spot_proxy,0.74153488,,,439029767.71360075,0.00020808,long_perp_receives_funding
 hl_single_venue,current_funding_monitor,IP,HlPerp,cash_or_spot_proxy,0.70983068,,,524635.24163600,0.00129660,long_perp_receives_funding
-predicted_cross_venue,current_funding_monitor,IMX,BinPerp,HlPerp,0.70355940,,,1056294.82468500,0.00256374,Hyperliquid context available
-predicted_cross_venue,current_funding_monitor,kBONK,BybitPerp,HlPerp,0.66293490,,,1460041.37813100,0.00090498,Hyperliquid context available
+predicted_cross_venue,current_funding_monitor,BERA,BybitPerp,HlPerp,0.68391510,,,485313.79794700,0.00247185,Hyperliquid context available
+predicted_cross_venue,current_funding_monitor,IMX,BinPerp,HlPerp,0.66122670,,,1065255.16163100,0.00392549,Hyperliquid context available
+predicted_cross_venue,current_funding_monitor,VIRTUAL,BybitPerp,HlPerp,0.65520332,,,1729414.26939400,0.00085859,Hyperliquid context available
+predicted_cross_venue,current_funding_monitor,PNUT,BybitPerp,HlPerp,0.64608942,,,279064.25194000,0.00262342,Hyperliquid context available
+okx_hl_current,paper_24h_monitor,MEGA,OkxSwap,HlPerp,0.63176983,-0.00101291,0.00014100,22969.84854286,0.00158987,OKX and Hyperliquid context available
 hl_single_venue,current_funding_monitor,SAND,HlPerp,cash_or_spot_proxy,0.61957290,,,213819.71579900,0.00282186,long_perp_receives_funding
-predicted_cross_venue,current_funding_monitor,XPL,BybitPerp,HlPerp,0.61683540,,,8373843.89922800,0.00161745,Hyperliquid context available
+predicted_cross_venue,current_funding_monitor,RENDER,BybitPerp,HlPerp,0.61935390,,,1140674.50813000,0.00265056,Hyperliquid context available
 hl_single_venue,current_funding_monitor,ME,HlPerp,cash_or_spot_proxy,0.61421528,,,187325.38250600,0.00183885,long_perp_receives_funding
+predicted_cross_venue,current_funding_monitor,ZORA,BybitPerp,HlPerp,0.60956460,,,122215.50418200,0.00274988,Hyperliquid context available
 hl_single_venue,current_funding_monitor,kNEIRO,HlPerp,cash_or_spot_proxy,0.56012316,,,259420.25818300,0.00108831,long_perp_receives_funding
 hl_single_venue,current_funding_monitor,W,HlPerp,cash_or_spot_proxy,0.55136842,,,220667.24243400,0.00416667,long_perp_receives_funding
-predicted_cross_venue,current_funding_monitor,NEAR,BybitPerp,HlPerp,0.53463375,,,73748919.78617001,0.00090773,Hyperliquid context available
 hl_single_venue,current_funding_monitor,kSHIB,HlPerp,cash_or_spot_proxy,0.53104960,,,820722.74882400,0.00084710,long_perp_receives_funding
-okx_hl_current,paper_24h_monitor,HYPE,OkxSwap,HlPerp,0.23139532,-0.00010383,0.00031881,4135502.65000000,0.00031515,OKX and Hyperliquid context available
-okx_hl_current,paper_24h_monitor,TRX,OkxSwap,HlPerp,0.21571553,-0.00034443,0.00004957,17035.52766690,0.00054143,OKX and Hyperliquid context available
-predicted_cross_venue,thin_or_wide_watch,MOVE,BinPerp,BybitPerp,5.41663650,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,ME,BybitPerp,HlPerp,3.94895894,,,276957.21352600,0.00946727,Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,MOVE,OkxSwap,HlPerp,3.55119244,-0.00166677,0.00481942,9623.50857711,0.00490987,OKX and Hyperliquid context available
-predicted_cross_venue,thin_or_wide_watch,ZETA,BybitPerp,BinPerp,3.27028320,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-okx_hl_current,blocked_by_cost_or_capacity,ME,OkxSwap,HlPerp,3.23141581,-0.00891526,-0.00301313,2769.57213526,0.01186632,wide Hyperliquid impact spread
-predicted_cross_venue,thin_or_wide_watch,ZK,BybitPerp,BinPerp,2.72000190,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,STABLE,BinPerp,BybitPerp,2.51464560,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,UMA,BybitPerp,BinPerp,2.47745940,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,ANIME,BybitPerp,BinPerp,2.41432170,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,INIT,BybitPerp,BinPerp,2.32928400,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,MORPHO,BybitPerp,BinPerp,2.31193920,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,WIF,BybitPerp,BinPerp,2.10938610,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,NIL,BybitPerp,BinPerp,2.08597500,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,WCT,BybitPerp,BinPerp,2.03120310,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,USTC,BybitPerp,BinPerp,1.97135040,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,MET,BybitPerp,BinPerp,1.94079990,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,BANANA,BybitPerp,BinPerp,1.85922240,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,GAS,BybitPerp,BinPerp,1.80661860,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,MINA,BybitPerp,HlPerp,1.64992410,,,134550.01467900,0.00884465,Hyperliquid context available
-predicted_cross_venue,thin_or_wide_watch,CYBER,BybitPerp,BinPerp,1.61514690,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,IP,BybitPerp,BinPerp,1.58407080,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,AVNT,BybitPerp,BinPerp,1.40981250,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,SYRUP,BybitPerp,BinPerp,1.40735970,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,SKY,BybitPerp,BinPerp,1.37102760,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,BRETT,BybitPerp,BinPerp,1.28171940,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-okx_hl_current,blocked_by_cost_or_capacity,STABLE,OkxSwap,HlPerp,1.20777425,-0.00228593,-0.00007995,7523.62298669,0.00338892,OKX and Hyperliquid context available
-predicted_cross_venue,thin_or_wide_watch,DYM,BybitPerp,BinPerp,1.19543340,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,ETHFI,BybitPerp,BinPerp,1.09826310,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,CHILLGUY,BybitPerp,BinPerp,1.09469340,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,STRK,BybitPerp,BinPerp,1.09232820,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,0G,BybitPerp,BinPerp,1.05034590,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,POL,BybitPerp,BinPerp,1.02183210,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,JTO,BybitPerp,BinPerp,1.02018960,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,POLYX,BybitPerp,BinPerp,1.00994040,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,YGG,BybitPerp,BinPerp,0.93370650,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,WLFI,BybitPerp,BinPerp,0.93140700,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,AIXBT,BybitPerp,BinPerp,0.88984080,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,ORDI,BybitPerp,BinPerp,0.83351400,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,LIT,BybitPerp,BinPerp,0.73838040,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-okx_hl_current,blocked_by_cost_or_capacity,MEGA,OkxSwap,HlPerp,0.71459114,-0.00188734,-0.00058215,21898.24340852,0.00253993,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,BABY,OkxSwap,HlPerp,0.68926126,-0.00305757,-0.00179865,10325.35804260,0.00368704,OKX and Hyperliquid context available
-predicted_cross_venue,thin_or_wide_watch,BNT,BybitPerp,BinPerp,0.64024650,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-okx_hl_current,blocked_by_cost_or_capacity,IMX,OkxSwap,HlPerp,0.63179294,-0.00376232,-0.00260836,10555.51174188,0.00433930,OKX and Hyperliquid context available
-predicted_cross_venue,thin_or_wide_watch,BOME,BybitPerp,BinPerp,0.61037490,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-okx_hl_current,blocked_by_cost_or_capacity,SNX,OkxSwap,HlPerp,0.58913667,-0.00500473,-0.00392868,3168.12294356,0.00554276,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,AERO,OkxSwap,HlPerp,0.58342084,-0.00198492,-0.00091931,6874.83574930,0.00251773,OKX and Hyperliquid context available
-predicted_cross_venue,thin_or_wide_watch,MANTA,BybitPerp,BinPerp,0.54498150,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,GMX,BybitPerp,BinPerp,0.52673880,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-predicted_cross_venue,thin_or_wide_watch,MAV,BybitPerp,BinPerp,0.51513180,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-okx_hl_current,blocked_by_cost_or_capacity,BERA,OkxSwap,HlPerp,0.50997275,-0.00157268,-0.00064122,4722.95046257,0.00203840,OKX and Hyperliquid context available
-predicted_cross_venue,thin_or_wide_watch,BIO,BybitPerp,BinPerp,0.50227650,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
-okx_hl_current,blocked_by_cost_or_capacity,AIXBT,HlPerp,OkxSwap,0.43202604,-0.00323563,-0.00244654,3321.94813650,0.00363018,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,LAYER,OkxSwap,HlPerp,0.42856959,-0.00471978,-0.00393700,2109.90826253,0.00511116,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,MERL,OkxSwap,HlPerp,0.42099985,-0.00301309,-0.00224414,1563.56517028,0.00339756,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,WCT,OkxSwap,HlPerp,0.33454947,-0.00247216,-0.00186111,1281.54385244,0.00277768,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,SEI,OkxSwap,HlPerp,0.31966661,-0.00145655,-0.00087269,7531.85633822,0.00174848,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,CHIP,OkxSwap,HlPerp,0.31874520,-0.00135148,-0.00076929,4844.48746656,0.00164257,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,JTO,HlPerp,OkxSwap,0.31417338,-0.00189296,-0.00131913,57036.26810000,0.00217988,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,ADA,HlPerp,OkxSwap,0.30988325,-0.00095159,-0.00038559,87285.04793980,0.00123459,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,AXS,OkxSwap,HlPerp,0.30924821,-0.00433850,-0.00377366,1364.20524148,0.00462092,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,ICP,HlPerp,OkxSwap,0.30725904,-0.00147947,-0.00091826,12317.93400810,0.00176007,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,AAVE,OkxSwap,HlPerp,0.25442523,-0.00098797,-0.00052327,47205.05768160,0.00122032,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,S,OkxSwap,HlPerp,0.24655161,-0.00247591,-0.00202558,2104.60522975,0.00270107,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,ZEC,HlPerp,OkxSwap,0.24120197,-0.00106735,-0.00062680,115623.88330000,0.00128763,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,MON,OkxSwap,HlPerp,0.23462565,-0.00157294,-0.00114440,36524.50158684,0.00178721,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,TRUMP,OkxSwap,HlPerp,0.21832529,-0.00127546,-0.00087669,17139.69889000,0.00147484,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,W,OkxSwap,HlPerp,0.19170181,-0.00507207,-0.00472193,2155.34963326,0.00524714,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,APE,OkxSwap,HlPerp,0.16864712,-0.00178754,-0.00147951,14260.63018606,0.00194156,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,AVNT,HlPerp,OkxSwap,0.15588420,-0.00262095,-0.00233623,4577.47357222,0.00276331,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,2Z,OkxSwap,HlPerp,0.15399774,-0.00186016,-0.00157888,2778.43676319,0.00200079,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,MORPHO,OkxSwap,HlPerp,0.14662775,-0.00261188,-0.00234407,11055.27884350,0.00274578,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,WIF,HlPerp,OkxSwap,0.14619148,-0.00215915,-0.00189214,16071.24696060,0.00229266,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,INJ,OkxSwap,HlPerp,0.13575420,-0.00257955,-0.00233160,38031.53576550,0.00270353,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,BNB,OkxSwap,HlPerp,0.13474759,-0.00038746,-0.00014134,85210.37387490,0.00051051,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,SAND,OkxSwap,HlPerp,0.13336075,-0.00458378,-0.00434020,2462.75850651,0.00470557,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,TON,OkxSwap,HlPerp,0.12510745,-0.00149866,-0.00127015,219678.78417890,0.00161291,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,TURBO,OkxSwap,HlPerp,0.12391240,-0.00274735,-0.00252102,814.12432210,0.00286051,low Hyperliquid day volume
-okx_hl_current,blocked_by_cost_or_capacity,AR,OkxSwap,HlPerp,0.12355465,-0.00204157,-0.00181590,9763.50646581,0.00215441,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,DASH,OkxSwap,HlPerp,0.12259850,-0.00200016,-0.00177624,19304.33142050,0.00211212,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,MOODENG,OkxSwap,HlPerp,0.11745895,-0.00269809,-0.00248355,2023.62602351,0.00280536,OKX and Hyperliquid context available
-okx_hl_current,paper_8h_monitor,BTC,HlPerp,OkxSwap,0.11562092,0.00005637,0.00026755,435385.56132000,0.00004922,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,LTC,OkxSwap,HlPerp,0.11328620,-0.00056520,-0.00035829,36730.30331890,0.00066866,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,IOTA,OkxSwap,HlPerp,0.11301043,-0.01077310,-0.01056669,704.16668700,0.01087631,low Hyperliquid day volume; wide Hyperliquid impact spread
-okx_hl_current,blocked_by_cost_or_capacity,SUI,OkxSwap,HlPerp,0.11075794,-0.00058941,-0.00038711,471554.13493857,0.00069055,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,AI,HlPerp,OkxSwap,0.10950000,-0.00034713,-0.00014713,0.00000000,0.00044713,missing Hyperliquid context
-okx_hl_current,blocked_by_cost_or_capacity,MEW,HlPerp,OkxSwap,0.10950000,-0.00044990,-0.00024990,0.00000000,0.00054990,missing Hyperliquid context
-okx_hl_current,blocked_by_cost_or_capacity,LINEA,OkxSwap,HlPerp,0.09874259,-0.00346737,-0.00328702,2321.60833101,0.00355755,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,IP,HlPerp,OkxSwap,0.08869108,-0.00154445,-0.00138245,5508.53818098,0.00162544,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,BIGTIME,HlPerp,OkxSwap,0.08465752,-0.00518665,-0.00503202,1246.14966135,0.00526396,thin OKX top-50 book
-okx_hl_current,blocked_by_cost_or_capacity,ALGO,HlPerp,OkxSwap,0.07976506,-0.00191995,-0.00177426,5517.70576209,0.00199279,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,COMP,HlPerp,OkxSwap,0.07919094,-0.00280508,-0.00266044,1716.51465560,0.00287740,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,AVAX,OkxSwap,HlPerp,0.07674957,-0.00058345,-0.00044327,78159.40697772,0.00065355,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,TIA,OkxSwap,HlPerp,0.07603912,-0.00118102,-0.00104213,10184.32320006,0.00125046,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,ATOM,OkxSwap,HlPerp,0.06905883,-0.00385564,-0.00372950,2878.33258569,0.00391870,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,TAO,OkxSwap,HlPerp,0.06674641,-0.00104215,-0.00092024,75344.19945900,0.00110311,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,LINK,OkxSwap,HlPerp,0.06378868,-0.00067385,-0.00055734,41699.55774770,0.00073211,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,UMA,OkxSwap,HlPerp,0.05808642,-0.00598833,-0.00588223,423.90350761,0.00604137,low Hyperliquid day volume; wide Hyperliquid impact spread
-okx_hl_current,blocked_by_cost_or_capacity,NEO,OkxSwap,HlPerp,0.05796123,-0.00424712,-0.00414126,1240.25718499,0.00430005,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,LDO,HlPerp,OkxSwap,0.05611393,-0.00198201,-0.00187952,5743.24059605,0.00203326,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,CFX,OkxSwap,HlPerp,0.05595643,-0.00259069,-0.00248848,7885.95862025,0.00264179,OKX and Hyperliquid context available
-okx_hl_current,blocked_by_cost_or_capacity,BLUR,OkxSwap,HlPerp,0.05244874,-0.00751277,-0.00741697,1531.78975139,0.00756067,wide Hyperliquid impact spread
-okx_hl_current,blocked_by_cost_or_capacity,BIO,HlPerp,OkxSwap,0.05096534,-0.00195730,-0.00186421,7322.20888263,0.00200384,OKX and Hyperliquid context available
+predicted_cross_venue,current_funding_monitor,NEAR,BybitPerp,HlPerp,0.50742300,,,74439618.00528990,0.00016083,Hyperliquid context available
+okx_hl_current,paper_24h_monitor,TRX,OkxSwap,HlPerp,0.20004067,-0.00031911,0.00004626,17228.20356520,0.00050180,OKX and Hyperliquid context available
+okx_hl_current,paper_24h_monitor,ZEC,HlPerp,OkxSwap,0.14218407,-0.00002885,0.00023084,107389.08530000,0.00015870,OKX and Hyperliquid context available
+okx_hl_current,paper_24h_monitor,BTC,HlPerp,OkxSwap,0.00833576,-0.00000989,0.00000533,376380.96061000,0.00001751,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,ME,OkxSwap,HlPerp,3.48343173,-0.00569081,0.00067163,2784.36672931,0.00887202,wide Hyperliquid impact spread
+predicted_cross_venue,thin_or_wide_watch,ME,BinPerp,HlPerp,3.36913980,,,278436.67293100,0.01016621,wide impact spread
+predicted_cross_venue,thin_or_wide_watch,NIL,BybitPerp,BinPerp,1.21891020,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+predicted_cross_venue,thin_or_wide_watch,MANTA,BybitPerp,BinPerp,1.20905520,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+okx_hl_current,blocked_by_cost_or_capacity,STABLE,OkxSwap,HlPerp,1.17856212,-0.00122839,0.00092424,7663.61218989,0.00230470,OKX and Hyperliquid context available
+predicted_cross_venue,thin_or_wide_watch,STABLE,BinPerp,BybitPerp,1.16632830,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+predicted_cross_venue,thin_or_wide_watch,UMA,BybitPerp,BinPerp,1.09885440,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+predicted_cross_venue,thin_or_wide_watch,MEME,BybitPerp,BinPerp,0.77964000,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+predicted_cross_venue,thin_or_wide_watch,2Z,BybitPerp,BinPerp,0.72427680,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+predicted_cross_venue,thin_or_wide_watch,WIF,BybitPerp,BinPerp,0.66781860,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+okx_hl_current,blocked_by_cost_or_capacity,BABY,OkxSwap,HlPerp,0.62711824,-0.00383273,-0.00268731,10335.06813995,0.00440545,OKX and Hyperliquid context available
+predicted_cross_venue,thin_or_wide_watch,BNT,BybitPerp,BinPerp,0.62626335,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+predicted_cross_venue,thin_or_wide_watch,MORPHO,BybitPerp,BinPerp,0.58564980,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+okx_hl_current,blocked_by_cost_or_capacity,IMX,OkxSwap,HlPerp,0.57698883,-0.00311544,-0.00206158,10652.55161631,0.00364237,OKX and Hyperliquid context available
+predicted_cross_venue,thin_or_wide_watch,ETHFI,BybitPerp,BinPerp,0.54791610,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+okx_hl_current,blocked_by_cost_or_capacity,BERA,OkxSwap,HlPerp,0.53159657,-0.00241984,-0.00144889,4853.13797947,0.00290531,OKX and Hyperliquid context available
+predicted_cross_venue,thin_or_wide_watch,MAV,BybitPerp,BinPerp,0.50995245,,,0.00000000,0.00000000,Hyperliquid not involved; external venue feasibility still unknown
+okx_hl_current,blocked_by_cost_or_capacity,SNX,OkxSwap,HlPerp,0.50223171,-0.00289886,-0.00198155,3227.70102940,0.00335752,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,AERO,OkxSwap,HlPerp,0.44170863,-0.00160685,-0.00080007,6897.77813520,0.00201023,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,JTO,HlPerp,OkxSwap,0.39506300,-0.00128504,-0.00056346,70650.32800000,0.00164583,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,LAYER,OkxSwap,HlPerp,0.38787957,-0.00437765,-0.00366920,2153.17963503,0.00473188,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,MERL,OkxSwap,HlPerp,0.37741399,-0.00286353,-0.00217419,1581.00111858,0.00320820,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,AXS,OkxSwap,HlPerp,0.34849676,-0.00339585,-0.00275933,1388.26068807,0.00371411,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,SEI,OkxSwap,HlPerp,0.34639505,-0.00109689,-0.00046420,7624.77164321,0.00141323,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,JUP,HlPerp,OkxSwap,0.32202284,-0.00197941,-0.00139124,15083.79838040,0.00227349,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,WCT,OkxSwap,HlPerp,0.30965990,-0.00563514,-0.00506955,1256.69958700,0.00591793,wide Hyperliquid impact spread
+okx_hl_current,blocked_by_cost_or_capacity,S,OkxSwap,HlPerp,0.29031068,-0.00271115,-0.00218090,2108.61060140,0.00297627,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,AAVE,OkxSwap,HlPerp,0.25401835,-0.00064409,-0.00018013,48222.00507300,0.00087607,OKX and Hyperliquid context available
+okx_hl_current,paper_8h_monitor,HYPE,OkxSwap,HlPerp,0.24415160,0.00004343,0.00048937,3812387.97000000,0.00017953,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,COMP,OkxSwap,HlPerp,0.23846477,-0.00305212,-0.00261657,1734.61879680,0.00326990,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,AVNT,HlPerp,OkxSwap,0.23816338,-0.00253435,-0.00209935,4608.45243672,0.00275185,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,CHIP,OkxSwap,HlPerp,0.23500566,-0.00114431,-0.00071507,4927.03230745,0.00135892,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,ADA,HlPerp,OkxSwap,0.22087727,-0.00086394,-0.00046051,89077.45651250,0.00106566,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,ICP,HlPerp,OkxSwap,0.21270276,-0.00134285,-0.00095435,12420.03883890,0.00153710,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,GMT,OkxSwap,HlPerp,0.20949158,-0.00418863,-0.00380600,865.10731112,0.00437995,low Hyperliquid day volume
+okx_hl_current,blocked_by_cost_or_capacity,MON,OkxSwap,HlPerp,0.17925814,-0.00148233,-0.00115491,36739.39237831,0.00164603,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,W,OkxSwap,HlPerp,0.15849343,-0.00406523,-0.00377574,2179.69271882,0.00420997,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,TRUMP,OkxSwap,HlPerp,0.15538749,-0.00144062,-0.00115681,17368.05133310,0.00158252,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,MORPHO,OkxSwap,HlPerp,0.14792541,-0.00191640,-0.00164622,12011.46854990,0.00205149,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,INJ,OkxSwap,HlPerp,0.13372354,-0.00139776,-0.00115351,38355.14602960,0.00151988,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,TURBO,OkxSwap,HlPerp,0.13137550,-0.00239711,-0.00215715,830.64346485,0.00251708,low Hyperliquid day volume
+okx_hl_current,blocked_by_cost_or_capacity,APE,OkxSwap,HlPerp,0.13072644,-0.00181608,-0.00157731,14329.61900206,0.00193546,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,TON,OkxSwap,HlPerp,0.12929287,-0.00146151,-0.00122536,221586.50435090,0.00157959,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,BIO,HlPerp,OkxSwap,0.12387445,-0.00152812,-0.00130187,7457.65263047,0.00164125,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,SUI,OkxSwap,HlPerp,0.11869594,-0.00033037,-0.00011357,472568.63023590,0.00043877,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,SAND,OkxSwap,HlPerp,0.11767405,-0.00370241,-0.00348748,2470.96811865,0.00380988,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,TAO,OkxSwap,HlPerp,0.11645123,-0.00088634,-0.00067365,76365.29706240,0.00099269,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,LTC,OkxSwap,HlPerp,0.11452463,-0.00083098,-0.00062180,36851.72730180,0.00093557,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,AIXBT,HlPerp,OkxSwap,0.11291222,-0.00362744,-0.00342121,3350.13322725,0.00373056,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,IOTA,OkxSwap,HlPerp,0.11173477,-0.00810994,-0.00790586,708.42691847,0.00821198,low Hyperliquid day volume; wide Hyperliquid impact spread
+okx_hl_current,blocked_by_cost_or_capacity,AI,HlPerp,OkxSwap,0.10950000,-0.00034873,-0.00014873,0.00000000,0.00044873,missing Hyperliquid context
+okx_hl_current,blocked_by_cost_or_capacity,MEW,HlPerp,OkxSwap,0.10950000,-0.00072679,-0.00052679,0.00000000,0.00082679,missing Hyperliquid context
+okx_hl_current,blocked_by_cost_or_capacity,AR,OkxSwap,HlPerp,0.10797198,-0.00185765,-0.00166044,10003.00845808,0.00195625,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,WIF,HlPerp,OkxSwap,0.10333161,-0.00160897,-0.00142023,16347.78041190,0.00170333,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,ALGO,HlPerp,OkxSwap,0.09910538,-0.00177180,-0.00159079,6073.38136941,0.00186231,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,DASH,OkxSwap,HlPerp,0.09810799,-0.00169263,-0.00151344,19673.96631200,0.00178223,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,UMA,OkxSwap,HlPerp,0.09266605,-0.00389353,-0.00372427,424.51259197,0.00397815,low Hyperliquid day volume
+okx_hl_current,blocked_by_cost_or_capacity,BNB,OkxSwap,HlPerp,0.09170365,-0.00034421,-0.00017672,90100.13004250,0.00042796,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,ATOM,OkxSwap,HlPerp,0.08260182,-0.00304211,-0.00289124,2887.28524666,0.00311755,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,LINEA,OkxSwap,HlPerp,0.07286604,-0.00270801,-0.00257492,2373.33772039,0.00277455,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,STRK,HlPerp,OkxSwap,0.07141596,-0.00198340,-0.00185296,5982.82837743,0.00204862,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,VIRTUAL,OkxSwap,HlPerp,0.07134245,-0.00106871,-0.00093840,17294.14269394,0.00113386,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,LINK,OkxSwap,HlPerp,0.06943723,-0.00055457,-0.00042775,41902.72639650,0.00061798,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,TIA,OkxSwap,HlPerp,0.06354655,-0.00125748,-0.00114142,10341.43379842,0.00131552,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,SOL,OkxSwap,HlPerp,0.05841767,-0.00012239,-0.00001569,2926340.56773530,0.00017573,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,IP,OkxSwap,HlPerp,0.05397394,-0.00178965,-0.00169106,5658.60970071,0.00183894,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,ARB,HlPerp,OkxSwap,0.05203620,-0.00152883,-0.00143379,21750.92025606,0.00157635,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,AVAX,HlPerp,OkxSwap,0.05152463,-0.00056352,-0.00046942,79444.84686465,0.00061058,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,LIT,OkxSwap,HlPerp,0.05045349,-0.00080199,-0.00070984,38585.42380000,0.00084806,OKX and Hyperliquid context available
+okx_hl_current,blocked_by_cost_or_capacity,WLD,OkxSwap,HlPerp,0.05022755,-0.00108009,-0.00098835,360787.89810000,0.00112596,OKX and Hyperliquid context available

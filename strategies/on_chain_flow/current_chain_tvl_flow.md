@@ -4,33 +4,33 @@ This ranks current chain-level TVL flow. It is a broad capital-flow screen, not 
 
 | chain | token | tvl USD | day % | week % | month % | action | followup |
 | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
-| ENI | ENI | 319239375 | 0.0026 | 0.2319 | 1.4807 | chain_inflow_momentum_watch | label ENI continuation against perp funding and liquidity |
-| Provenance | HASH | 1580174192 | 0.0036 | 0.0535 | 0.2314 | chain_inflow_momentum_watch | label HASH continuation against perp funding and liquidity |
-| Mantle | MNT | 155794339 | -0.0037 | -0.3240 | -0.2826 | chain_outflow_stress_watch | label MNT downside or rotation-away behavior |
-| X Layer |  | 72531461 | -0.0178 | -0.2099 | -0.1023 | chain_outflow_stress_watch | use as broad on-chain regime context |
-| Stellar | XLM | 200566018 | -0.0349 | -0.1647 | 0.0562 | chain_outflow_stress_watch | label XLM downside or rotation-away behavior |
-| Polygon | POL | 1038630020 | -0.0120 | -0.1025 | -0.1549 | chain_outflow_stress_watch | label POL downside or rotation-away behavior |
-| Cardano | ADA | 92607229 | 0.0132 | -0.2825 | -0.3261 | chain_flow_reversal_watch | separate ADA reversal from stale TVL accounting |
-| Katana | KAT | 101959293 | 0.0195 | -0.2822 | -0.5378 | chain_flow_reversal_watch | separate KAT reversal from stale TVL accounting |
-| Ink |  | 203198591 | 0.0383 | -0.2133 | -0.3597 | chain_flow_reversal_watch | use as broad on-chain regime context |
-| Avalanche | AVAX | 478567869 | 0.0097 | -0.2080 | -0.2698 | chain_flow_reversal_watch | separate AVAX reversal from stale TVL accounting |
-| MegaETH | MEGA | 120388313 | 0.0105 | -0.1964 | -0.4196 | chain_flow_reversal_watch | separate MEGA reversal from stale TVL accounting |
-| Flare | FLR | 121089919 | 0.0372 | -0.1821 | -0.2477 | chain_flow_reversal_watch | separate FLR reversal from stale TVL accounting |
-| Hydration | HDX | 55119695 | 0.0131 | -0.1799 | -0.2769 | chain_flow_reversal_watch | separate HDX reversal from stale TVL accounting |
-| Berachain | BERA | 55524581 | 0.0077 | -0.1687 | -0.2341 | chain_flow_reversal_watch | separate BERA reversal from stale TVL accounting |
-| Stacks | STX | 98358132 | 0.0279 | -0.1543 | -0.2059 | chain_flow_reversal_watch | separate STX reversal from stale TVL accounting |
-| Arbitrum | ARB | 1272942248 | 0.0362 | -0.1448 | -0.1882 | chain_flow_reversal_watch | separate ARB reversal from stale TVL accounting |
-| Sui | SUI | 446619392 | 0.0160 | -0.1435 | -0.2243 | chain_flow_reversal_watch | separate SUI reversal from stale TVL accounting |
-| Bitcoin | BTC | 4158555066 | 0.0357 | -0.1384 | -0.2111 | chain_flow_reversal_watch | separate BTC reversal from stale TVL accounting |
-| Movement | MOVE | 127952617 | 0.0457 | -0.1360 | -0.2484 | chain_flow_reversal_watch | separate MOVE reversal from stale TVL accounting |
-| Rootstock | RBTC | 94151445 | 0.0198 | -0.1299 | -0.2064 | chain_flow_reversal_watch | separate RBTC reversal from stale TVL accounting |
-| Mixin | XIN | 18637456 | 0.0286 | -0.1162 | -0.2176 | chain_flow_reversal_watch | separate XIN reversal from stale TVL accounting |
-| Sei | SEI | 57623394 | 0.0208 | -0.1143 | -0.1265 | chain_flow_reversal_watch | separate SEI reversal from stale TVL accounting |
-| Aptos | APT | 194015836 | 0.0213 | -0.1097 | -0.2635 | chain_flow_reversal_watch | separate APT reversal from stale TVL accounting |
-| Ethereum | ETH | 37577633973 | 0.0387 | -0.1022 | -0.1721 | chain_flow_reversal_watch | separate ETH reversal from stale TVL accounting |
-| BSC | BNB | 5176747653 | 0.0229 | -0.0986 | -0.0767 | chain_flow_reversal_watch | separate BNB reversal from stale TVL accounting |
-| Base |  | 3967897498 | 0.0392 | -0.0981 | -0.1248 | chain_flow_reversal_watch | use as broad on-chain regime context |
-| Tron | TRON | 4399703211 | 0.0117 | -0.0962 | -0.1430 | chain_flow_reversal_watch | separate TRON reversal from stale TVL accounting |
-| Solana | SOL | 4870171005 | 0.0360 | -0.0951 | -0.1507 | chain_flow_reversal_watch | separate SOL reversal from stale TVL accounting |
-| Monad | MON | 355988737 | 0.0170 | -0.0948 | -0.0775 | chain_flow_reversal_watch | separate MON reversal from stale TVL accounting |
-| OP Mainnet | OP | 296212169 | 0.0418 | -0.0928 | -0.1633 | chain_flow_reversal_watch | separate OP reversal from stale TVL accounting |
+| ENI | ENI | 319260051 | 0.0027 | 0.2320 | 1.4809 | chain_inflow_momentum_watch | label ENI continuation against perp funding and liquidity |
+| Provenance | HASH | 1582793899 | 0.0052 | 0.0553 | 0.2334 | chain_inflow_momentum_watch | label HASH continuation against perp funding and liquidity |
+| X Layer |  | 72884453 | -0.0130 | -0.2060 | -0.0979 | chain_outflow_stress_watch | use as broad on-chain regime context |
+| Stellar | XLM | 199685793 | -0.0391 | -0.1684 | 0.0516 | chain_outflow_stress_watch | label XLM downside or rotation-away behavior |
+| Polygon | POL | 1042055923 | -0.0087 | -0.0996 | -0.1521 | chain_outflow_stress_watch | label POL downside or rotation-away behavior |
+| Mantle | MNT | 156755201 | 0.0025 | -0.3198 | -0.2782 | chain_flow_reversal_watch | separate MNT reversal from stale TVL accounting |
+| Katana | KAT | 103202385 | 0.0319 | -0.2734 | -0.5321 | chain_flow_reversal_watch | separate KAT reversal from stale TVL accounting |
+| Cardano | ADA | 93901759 | 0.0273 | -0.2725 | -0.3167 | chain_flow_reversal_watch | separate ADA reversal from stale TVL accounting |
+| Mezo | MEZO | 50116415 | 0.0355 | -0.2609 | 4.0632 | chain_flow_reversal_watch | separate MEZO reversal from stale TVL accounting |
+| Ink |  | 203860901 | 0.0417 | -0.2108 | -0.3576 | chain_flow_reversal_watch | use as broad on-chain regime context |
+| Avalanche | AVAX | 478457463 | 0.0095 | -0.2082 | -0.2700 | chain_flow_reversal_watch | separate AVAX reversal from stale TVL accounting |
+| MegaETH | MEGA | 122353274 | 0.0270 | -0.1833 | -0.4101 | chain_flow_reversal_watch | separate MEGA reversal from stale TVL accounting |
+| Hydration | HDX | 55174683 | 0.0141 | -0.1791 | -0.2762 | chain_flow_reversal_watch | separate HDX reversal from stale TVL accounting |
+| Flare | FLR | 122756688 | 0.0515 | -0.1708 | -0.2374 | chain_flow_reversal_watch | separate FLR reversal from stale TVL accounting |
+| Berachain | BERA | 55602873 | 0.0091 | -0.1675 | -0.2330 | chain_flow_reversal_watch | separate BERA reversal from stale TVL accounting |
+| Stacks | STX | 98176389 | 0.0260 | -0.1559 | -0.2073 | chain_flow_reversal_watch | separate STX reversal from stale TVL accounting |
+| Sui | SUI | 443217456 | 0.0082 | -0.1501 | -0.2302 | chain_flow_reversal_watch | separate SUI reversal from stale TVL accounting |
+| Arbitrum | ARB | 1278931136 | 0.0411 | -0.1408 | -0.1843 | chain_flow_reversal_watch | separate ARB reversal from stale TVL accounting |
+| Bitcoin | BTC | 4169562050 | 0.0385 | -0.1361 | -0.2090 | chain_flow_reversal_watch | separate BTC reversal from stale TVL accounting |
+| Movement | MOVE | 129400974 | 0.0575 | -0.1262 | -0.2399 | chain_flow_reversal_watch | separate MOVE reversal from stale TVL accounting |
+| Rootstock | RBTC | 95208184 | 0.0312 | -0.1201 | -0.1975 | chain_flow_reversal_watch | separate RBTC reversal from stale TVL accounting |
+| Sei | SEI | 57491769 | 0.0185 | -0.1163 | -0.1285 | chain_flow_reversal_watch | separate SEI reversal from stale TVL accounting |
+| Mixin | XIN | 18680150 | 0.0309 | -0.1141 | -0.2158 | chain_flow_reversal_watch | separate XIN reversal from stale TVL accounting |
+| Aptos | APT | 193503262 | 0.0186 | -0.1120 | -0.2655 | chain_flow_reversal_watch | separate APT reversal from stale TVL accounting |
+| Hyperliquid L1 | HYPE | 1559052150 | 0.0641 | -0.1022 | 0.0153 | chain_flow_reversal_watch | separate HYPE reversal from stale TVL accounting |
+| Ethereum | ETH | 37643538006 | 0.0405 | -0.1006 | -0.1706 | chain_flow_reversal_watch | separate ETH reversal from stale TVL accounting |
+| Base |  | 3966487449 | 0.0388 | -0.0984 | -0.1252 | chain_flow_reversal_watch | use as broad on-chain regime context |
+| Tron | TRON | 4390741621 | 0.0097 | -0.0980 | -0.1447 | chain_flow_reversal_watch | separate TRON reversal from stale TVL accounting |
+| BSC | BNB | 5186027120 | 0.0247 | -0.0970 | -0.0750 | chain_flow_reversal_watch | separate BNB reversal from stale TVL accounting |
+| Solana | SOL | 4880904302 | 0.0383 | -0.0931 | -0.1488 | chain_flow_reversal_watch | separate SOL reversal from stale TVL accounting |

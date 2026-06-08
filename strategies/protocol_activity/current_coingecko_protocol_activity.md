@@ -4,10 +4,8 @@ This joins current attention/category candidates to CoinGecko developer and comm
 
 | symbol | name | action | commits 4w | stars | telegram | source | score | reason |
 | --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- |
-| ZEC | Zcash | developer_attention_watch | 144 | 5452 | 0 | trending_rank_2;category_Privacy | 39.928669 | active development overlaps current attention or sector context |
-| BTC | Bitcoin | developer_attention_watch | 281 | 89307 | 0 | trending_rank_3 | 36.950890 | active development overlaps current attention or sector context |
-| LINK | Chainlink | developer_attention_watch | 212 | 8213 | 0 | trending_rank_9;category_Privacy | 33.056098 | active development overlaps current attention or sector context |
-| NEAR | NEAR Protocol | developer_attention_watch | 109 | 2590 | 0 | trending_rank_7 | 30.307783 | active development overlaps current attention or sector context |
+| ZEC | Zcash | developer_attention_watch | 144 | 5452 | 0 | trending_rank_6;category_Privacy;category_Quantum-Resistant;category_Zero Knowledge (ZK);category_Privacy Coins | 45.455192 | active development overlaps current attention or sector context |
+| BTC | Bitcoin | developer_attention_watch | 279 | 89323 | 0 | trending_rank_4 | 35.950968 | active development overlaps current attention or sector context |
 
 ## Interpretation
 
