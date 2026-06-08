@@ -233,6 +233,11 @@ def _options_volatility_next_step(ticket: dict[str, str]) -> str:
 
 
 def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
+    gap = _best_by_score(
+        root / "prediction_markets" / "current_event_probability_gap.csv",
+        score_key="score",
+        status_values={"paper_probability_gap_candidate", "probability_gap_watch"},
+    )
     ticket = _best_by_score(
         root / "prediction_markets" / "current_prediction_market_paper_tickets.csv",
         score_key="score",
@@ -240,6 +245,27 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
     )
     if not ticket:
         return None
+    if gap:
+        return AlphaStackRow(
+            opportunity="prediction_market_event_model",
+            status=gap.get("status", "paper_probability_gap_candidate"),
+            side=f"{gap.get('suggested_side', '')}: {gap.get('question', '')}",
+            priority_score=_priority_score(
+                gap.get("status", ""),
+                source_count=3,
+                raw_score=_float(gap.get("score")),
+            ),
+            sources="prediction_markets + external_news + probability_gap",
+            evidence=(
+                f"market_yes={gap.get('market_yes_probability', '')}, "
+                f"estimated_yes={gap.get('estimated_yes_probability', '')}, "
+                f"gap={gap.get('probability_gap', '')}, "
+                f"confidence={gap.get('confidence_score', '')}, "
+                f"evidence={gap.get('evidence_terms', '')}"
+            ),
+            conflict="headline-derived probability is rough and uncalibrated; needs source verification, timing checks, costs, and adverse-selection analysis",
+            next_step="paper-check the probability gap with source-level verification, stale-news filtering, and CLOB execution assumptions",
+        )
     news = _row_by_market_id(
         root / "prediction_markets" / "current_event_news_pressure.csv",
         ticket.get("market_id", ""),
@@ -1822,6 +1848,8 @@ def _abs_float(value: str | None) -> float:
 def _priority_score(status: str, *, source_count: int, raw_score: float) -> float:
     status_score = {
         "paper_event_model_candidate": 75.0,
+        "paper_probability_gap_candidate": 78.0,
+        "probability_gap_watch": 62.0,
         "paper_short_candidate": 72.0,
         "paper_long_candidate": 72.0,
         "paper_short_put_spread_candidate": 68.0,

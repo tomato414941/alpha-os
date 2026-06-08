@@ -1351,6 +1351,22 @@ def _best_token_unlock_paper_ticket(path: Path) -> dict[str, str] | None:
 
 
 def _prediction_markets_row(root: Path) -> ExplorationRow:
+    gap_path = root / "prediction_markets" / "current_event_probability_gap.csv"
+    best_gap = _best_prediction_market_probability_gap(gap_path)
+    if best_gap:
+        return ExplorationRow(
+            lane="prediction_markets",
+            status=best_gap.get("status", "paper_probability_gap_candidate"),
+            strongest_current_signal=(
+                f"{best_gap.get('suggested_side', '')}: {best_gap.get('question', '')}, "
+                f"market_yes={best_gap.get('market_yes_probability', '')}, "
+                f"estimated_yes={best_gap.get('estimated_yes_probability', '')}, "
+                f"gap={best_gap.get('probability_gap', '')}, "
+                f"confidence={best_gap.get('confidence_score', '')}"
+            ),
+            main_gap="probability gap is headline-derived and uncalibrated; source timing, duplication, costs, and adverse selection are unresolved",
+            next_step="paper-check the probability gap with source-level verification and stale-news filtering before any live action",
+        )
     ticket_path = root / "prediction_markets" / "current_prediction_market_paper_tickets.csv"
     best_ticket = _best_prediction_market_paper_ticket(ticket_path)
     if best_ticket:
@@ -1466,6 +1482,20 @@ def _best_prediction_market_news_pressure(path: Path, market_id: str) -> dict[st
     if not matches:
         return None
     return max(matches, key=lambda row: float(row.get("score") or "0"))
+
+
+def _best_prediction_market_probability_gap(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("status") in {"paper_probability_gap_candidate", "probability_gap_watch"}
+        )
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("score") or "0"))
 
 
 def _best_macro_regime_ticket(path: Path) -> dict[str, str] | None:

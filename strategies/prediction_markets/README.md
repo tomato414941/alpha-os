@@ -12,6 +12,7 @@ uv run python -m strategies.prediction_markets.current_polymarket_microstructure
 uv run python -m strategies.prediction_markets.current_polymarket_microstructure_monitor
 uv run python -m strategies.prediction_markets.current_polymarket_clob_depth
 uv run python -m strategies.prediction_markets.current_event_news_pressure
+uv run python -m strategies.prediction_markets.current_event_probability_gap
 ```
 
 ## Current Status
