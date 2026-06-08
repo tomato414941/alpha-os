@@ -6,6 +6,8 @@ import sys
 
 
 DEFAULT_COMMANDS = (
+    ("strategies.wallet_entity_flow.current_wallet_entity_flow_access",),
+    ("strategies.wallet_entity_flow.current_hyperliquid_seed_wallet_flow",),
     ("strategies.current_alpha_stack",),
     ("strategies.current_paper_probe_plan",),
     ("strategies.current_paper_ticket_outcomes",),
@@ -142,7 +144,6 @@ DEFAULT_COMMANDS = (
     ("strategies.current_symbol_cluster_label_queue",),
     ("strategies.current_symbol_lane_split_review",),
     ("strategies.policy_learning.current_policy_learning_samples",),
-    ("strategies.wallet_entity_flow.current_wallet_entity_flow_access",),
     ("strategies.current_alpha_frontier",),
     ("strategies.exploration_board",),
 )
@@ -166,15 +167,25 @@ def run_observation_cycle(*, open_new_tickets: bool = False, refresh_public_mark
     if refresh_public_marks:
         commands.extend(PUBLIC_MARK_COMMANDS)
     if open_new_tickets:
-        commands.extend(DEFAULT_COMMANDS[:2])
+        pre_ticket_commands = _commands_through_paper_probe_plan()
+        commands.extend(pre_ticket_commands)
         commands.append(OPEN_TICKET_COMMAND)
-        commands.extend(DEFAULT_COMMANDS[2:])
+        commands.extend(DEFAULT_COMMANDS[len(pre_ticket_commands) :])
     else:
         commands.extend(DEFAULT_COMMANDS)
     for command in commands:
         module, *args = command
         print(f"== {module}")
         subprocess.run((sys.executable, "-m", module, *args), check=True)
+
+
+def _commands_through_paper_probe_plan() -> list[tuple[str, ...]]:
+    commands: list[tuple[str, ...]] = []
+    for command in DEFAULT_COMMANDS:
+        commands.append(command)
+        if command[0] == "strategies.current_paper_probe_plan":
+            break
+    return commands
 
 
 def main() -> None:

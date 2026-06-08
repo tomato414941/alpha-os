@@ -207,6 +207,21 @@ def write_alpha_frontier_md(rows: tuple[FrontierLane, ...], *, output_path: Path
 def _build_lane(rule: LaneRule, *, alpha_rows: tuple[dict[str, str], ...]) -> FrontierLane:
     if rule.lane == "wallet / entity on-chain flow":
         access_rows = _read_rows(ROOT / "wallet_entity_flow" / "current_wallet_entity_flow_access.csv")
+        flow_rows = _read_rows(ROOT / "wallet_entity_flow" / "current_hyperliquid_seed_wallet_flow.csv")
+        if flow_rows:
+            best = max(flow_rows, key=lambda row: _float(row.get("score")))
+            active_candidates = len(flow_rows)
+            return FrontierLane(
+                lane=rule.lane,
+                current_status="seed_flow_probe_ready",
+                frontier_score=rule.base_priority + 10.0 + min(active_candidates * 0.4, 10.0),
+                active_candidates=active_candidates,
+                best_score=_float(best.get("score")),
+                best_opportunity=best.get("coin", ""),
+                evidence_sources="wallet_entity_flow/current_hyperliquid_seed_wallet_flow",
+                missing_work=rule.missing_work,
+                next_probe=rule.next_probe,
+            )
         if access_rows:
             access_ok = tuple(row for row in access_rows if row.get("status") in {"access_ok", "implemented_proxy"})
             best = access_ok[0] if access_ok else access_rows[0]

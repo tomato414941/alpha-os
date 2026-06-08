@@ -399,6 +399,8 @@ def _cluster_next_step(*, symbol: str, status: str, rows: list[dict[str, str]]) 
 def _symbols_for_stack_row(row: dict[str, str]) -> tuple[str, ...]:
     if row.get("status") == "historical_derivatives_feature_prior":
         return ()
+    if row.get("status") == "seed_wallet_flow_watch":
+        return _symbols_from_wallet_flow_evidence(row.get("evidence", ""))
     if row.get("status") in {
         "persistent_derivatives_symbol_feature_prior",
         "recent_derivatives_symbol_feature_prior",
@@ -425,6 +427,20 @@ def _symbols_for_stack_row(row: dict[str, str]) -> tuple[str, ...]:
     if " " not in side and "?" not in side:
         symbols.update(_symbols_from_free_text(side))
     return tuple(sorted(symbols))
+
+
+def _symbols_from_wallet_flow_evidence(evidence: str) -> tuple[str, ...]:
+    match = re.search(r"\bcoin=([^,;]+)", evidence)
+    if not match:
+        return ()
+    return _symbols_from_hyperliquid_coin(match.group(1).strip())
+
+
+def _symbols_from_hyperliquid_coin(coin: str) -> tuple[str, ...]:
+    if ":" in coin:
+        coin = coin.rsplit(":", 1)[-1]
+    normalized = _normalize_symbol(coin)
+    return (normalized,) if normalized else ()
 
 
 def _symbols_from_evidence_head(evidence: str) -> tuple[str, ...]:

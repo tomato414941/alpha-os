@@ -59,6 +59,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_market_breadth_stacks(root),
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
+        *_wallet_entity_flow_stacks(root),
         *_chain_stablecoin_migration_stacks(root),
         *_stablecoin_peg_stress_stacks(root),
         *_token_unlock_actionability_stacks(root),
@@ -2679,6 +2680,67 @@ def _on_chain_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _wallet_entity_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "wallet_entity_flow" / "current_hyperliquid_seed_wallet_flow.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("action")
+            in {
+                "watch_wallet_long_pressure",
+                "watch_wallet_short_pressure",
+                "watch_recent_wallet_buy_flow",
+                "watch_recent_wallet_sell_flow",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:6]:
+        coin = ticket.get("coin", "")
+        wallet_label = ticket.get("wallet_label", "")
+        action = ticket.get("action", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{_slug(wallet_label)}_{_slug(coin)}_wallet_flow",
+                status="seed_wallet_flow_watch",
+                side=_wallet_flow_side(action),
+                priority_score=_priority_score(
+                    "seed_wallet_flow_watch",
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="wallet_entity_flow + hyperliquid_public_user_fills",
+                evidence=(
+                    f"wallet={wallet_label}, coin={coin}, fills={ticket.get('fills', '')}, "
+                    f"net_buy_usd={ticket.get('net_buy_notional', '')}, "
+                    f"net_closed_pnl_after_fees={ticket.get('net_closed_pnl_after_fees', '')}, "
+                    f"current_position={ticket.get('current_position', '')}, "
+                    f"position_notional={ticket.get('current_position_notional', '')}"
+                ),
+                conflict=(
+                    "seed wallet is public but not an entity label or verified profitable trader; "
+                    "wallet-flow can be stale, copy-crowded, or non-causal"
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"label {wallet_label}/{coin} wallet-flow pressure and compare against market-wide flow",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _wallet_flow_side(action: str) -> str:
+    if "long" in action or "buy" in action:
+        return "long_wallet_flow_pressure"
+    if "short" in action or "sell" in action:
+        return "short_wallet_flow_pressure"
+    return "wallet_flow_context"
+
+
 def _stablecoin_peg_stress_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "stablecoin_liquidity" / "current_peg_stress_screen.csv")
     tradeability_symbols = {
@@ -3707,6 +3769,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_news_macro_crypto_watch": 54.0,
         "paper_protocol_activity_watch": 47.0,
         "paper_chain_flow_watch": 55.0,
+        "seed_wallet_flow_watch": 52.0,
         "paper_depeg_repeg_watch": 62.0,
         "paper_premium_mean_reversion_watch": 62.0,
         "peg_supply_stress_watch": 50.0,

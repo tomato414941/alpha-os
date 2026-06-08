@@ -24,9 +24,9 @@ This checks opened paper tickets against the latest available public marks. It i
 | paper-18-near-microstructure-flow | ready | paper_long | NEAR |  | 2.176400000000 | 2.183400000000 | 32.16320529 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-19-sui-microstructure-flow | ready | paper_long | SUI |  | 0.747670000000 | 0.752650000000 | 66.60692552 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-20-mon-microstructure-flow | ready | paper_long | MON |  | 0.021816000000 | 0.021781000000 | -16.04327099 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
-| paper-21-chip-microstructure-flow | pending | paper_long | CHIP |  | 0.031399000000 | 0.031478000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-22-bera-microstructure-flow | pending | paper_long | BERA |  | 0.239250000000 | 0.249400000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-23-sei-microstructure-flow | pending | paper_long | SEI |  | 0.049185000000 | 0.049997000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-21-chip-microstructure-flow | ready | paper_long | CHIP |  | 0.031399000000 | 0.031478000000 | 25.16003694 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
+| paper-22-bera-microstructure-flow | ready | paper_long | BERA |  | 0.239250000000 | 0.249400000000 | 424.24242424 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
+| paper-23-sei-microstructure-flow | ready | paper_long | SEI |  | 0.049185000000 | 0.049997000000 | 165.09098302 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-24-zec-dislocation-repeat | ready | paper_short | ZEC |  | 427.870000000000 | 427.410000000000 | 10.75092902 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-25-mu-liquidation-intensity | ready | paper_long | MU | OKX |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | paper-26-sui-liquidation-intensity | ready | paper_long | SUI | OKX | 0.746700000000 | 0.752400000000 | 76.33587786 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
@@ -47,21 +47,21 @@ This checks opened paper tickets against the latest available public marks. It i
 | paper-41-sol-derivatives-positioning | ready | paper_observe | SOL |  | 66.264000000000 | 66.248000000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-42-stable-derivatives-positioning | ready | paper_observe | STABLE |  | 0.033084000000 | 0.033084000000 |  | observe_mark_flat | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-43-lab-derivatives-positioning | ready | paper_observe | LAB |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
-| paper-44-pengu-derivatives-positioning | ready | paper_observe | PENGU |  | 0.006843000000 | 0.006856000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
-| paper-45-ethereum-defi-yield | ready | paper_observe | ETHEREUM |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
-| paper-46-btc-options-volatility | pending | paper_observe | BTC |  | 63429.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-47-zec-news-event | ready | paper_long | ZEC |  | 429.220000000000 | 427.410000000000 | -42.16951680 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
+| paper-44-ethereum-defi-yield | ready | paper_observe | ETHEREUM |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
+| paper-45-btc-options-volatility | pending | paper_observe | BTC |  | 63419.000000000000 | 63419.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-46-zec-news-event | ready | paper_long | ZEC |  | 427.410000000000 | 427.410000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
+| paper-47-cl-wallet-entity-flow | pending | paper_short | CL | HL |  |  |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-48-crv-protocol-fee | ready | paper_long | CRV |  | 0.200100000000 | 0.198760000000 | -66.96651674 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | paper-49-zec-protocol-activity | ready | paper_observe | ZEC |  | 429.220000000000 | 427.410000000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-50-hype-token-unlock | ready | paper_short | HYPE |  | 61.511000000000 | 61.478000000000 | 5.36489408 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 
 ## Summary
 
-- ready: 41
-- wins: 20
-- losses: 8
-- flat: 1
-- observations: 7
-- pending: 9
-- best ready mark: paper-16-chip-repeat-execution CHIP 194.42644200bps paper_mark_win
+- ready: 43
+- wins: 23
+- losses: 7
+- flat: 2
+- observations: 6
+- pending: 7
+- best ready mark: paper-22-bera-microstructure-flow BERA 424.24242424bps paper_mark_win
 - worst ready mark: paper-17-event-event-probability EVENT -344.82758621bps paper_mark_loss

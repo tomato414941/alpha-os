@@ -49,6 +49,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_lane_split_review_row(root),
         _policy_learning_row(root),
         _wallet_entity_flow_row(root),
+        _hyperliquid_seed_wallet_flow_row(root),
         _crypto_market_structure_row(root),
         _basis_term_structure_row(root),
         _cross_exchange_funding_row(root),
@@ -192,6 +193,32 @@ def _wallet_entity_flow_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="wallet/entity-flow source access has not been probed",
         next_step="run wallet/entity-flow access probe",
+    )
+
+
+def _hyperliquid_seed_wallet_flow_row(root: Path) -> ExplorationRow:
+    path = root / "wallet_entity_flow" / "current_hyperliquid_seed_wallet_flow.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="hyperliquid_seed_wallet_flow",
+            status=best.get("action", "seed_wallet_flow"),
+            strongest_current_signal=(
+                f"{best.get('wallet_label', '')}/{best.get('coin', '')}: "
+                f"net_buy={best.get('net_buy_notional', '')}, "
+                f"net_pnl={best.get('net_closed_pnl_after_fees', '')}, "
+                f"position={best.get('current_position', '')}, "
+                f"score={best.get('score', '')}"
+            ),
+            main_gap=best.get("caveat", "seed wallet is not a verified entity label"),
+            next_step=best.get("next_step", "label wallet-flow pressure before treating it as alpha"),
+        )
+    return ExplorationRow(
+        lane="hyperliquid_seed_wallet_flow",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="seed wallets have not been converted into flow observations",
+        next_step="run Hyperliquid seed wallet flow probe",
     )
 
 

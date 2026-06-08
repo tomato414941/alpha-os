@@ -213,6 +213,8 @@ def _probe_type(row: dict[str, str]) -> str:
         return "token_unlock_probe"
     if status == "paper_protocol_activity_watch":
         return "protocol_activity_probe"
+    if status == "seed_wallet_flow_watch":
+        return "wallet_entity_flow_probe"
     if status in {
         "paper_oi_funding_crowding_watch",
         "paper_oi_unwind_watch",
@@ -275,6 +277,12 @@ def _candidate_id(row: dict[str, str]) -> tuple[str, str, str]:
 
 
 def _asset(*, evidence: str, opportunity: str) -> str:
+    coin_match = re.search(r"\bcoin=([^,\s]+)", evidence)
+    if coin_match:
+        coin = coin_match.group(1)
+        if ":" in coin:
+            coin = coin.rsplit(":", 1)[-1]
+        return re.sub(r"[^A-Za-z0-9]", "", coin).upper()
     if ":" in evidence:
         subject = evidence.split(":", 1)[0].strip()
         if "/" in subject:
