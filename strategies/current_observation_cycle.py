@@ -265,6 +265,7 @@ DEFAULT_COMMANDS = (
     ("strategies.options_volatility.current_options_volatility_survival",),
     ("strategies.prediction_markets.current_event_probability_refresh",),
     ("strategies.prediction_markets.current_event_probability_actionability",),
+    ("strategies.prediction_markets.current_event_probability_execution_check",),
     ("strategies.prediction_markets.current_event_crypto_hedge_candidates",),
     ("strategies.anomaly_stress.current_cross_market_stress_anomaly",),
     ("strategies.anomaly_stress.current_peg_anomaly_tradeability",),
