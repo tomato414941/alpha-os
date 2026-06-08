@@ -103,6 +103,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - cross-lane current paper candidate stack generator
 - `current_alpha_stack.md`
   - latest cross-lane paper candidate stack
+- `current_paper_probe_plan.py`
+  - cross-lane queue for current small paper observations
+- `current_paper_probe_plan.md`
+  - latest current paper-observation plan
 - `current_symbol_opportunity_map.py`
   - symbol-level cluster generator from the current alpha stack
 - `current_symbol_opportunity_map.md`

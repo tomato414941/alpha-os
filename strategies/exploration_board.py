@@ -21,6 +21,7 @@ class ExplorationRow:
 def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
     return (
         _alpha_stack_row(root),
+        _paper_probe_plan_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -84,6 +85,32 @@ def _alpha_stack_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="current paper candidates are not joined across lanes",
         next_step="run current alpha stack to identify cross-lane candidate priorities",
+    )
+
+
+def _paper_probe_plan_row(root: Path) -> ExplorationRow:
+    path = root / "current_paper_probe_plan.csv"
+    best = _best_numeric_row(path, key="priority_score")
+    if best:
+        return ExplorationRow(
+            lane="paper_probe_plan",
+            status=best.get("probe_type", "paper_probe_queue"),
+            strongest_current_signal=(
+                f"{best.get('opportunity', '')}: "
+                f"{best.get('side', '')}, "
+                f"priority={best.get('priority_score', '')}, "
+                f"venue={best.get('venue', '')}, "
+                f"size={best.get('candidate_size_usd', '')}"
+            ),
+            main_gap=best.get("missing_evidence", "paper probe still needs realized observation evidence"),
+            next_step=best.get("next_step", "record the top paper observation"),
+        )
+    return ExplorationRow(
+        lane="paper_probe_plan",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="current paper-probe candidates are not separated from the broader alpha stack",
+        next_step="run current paper probe plan after the alpha stack",
     )
 
 
