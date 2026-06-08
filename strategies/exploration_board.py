@@ -24,6 +24,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_frontier_row(root),
         _alpha_source_gaps_row(root),
         _alpha_method_frontier_row(root),
+        _research_backed_alpha_expansion_plan_row(root),
         _cross_modal_alpha_context_row(root),
         _cross_modal_source_split_row(root),
         _paper_probe_plan_row(root),
@@ -210,6 +211,31 @@ def _alpha_method_frontier_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="modern alpha methods have not been mapped to current sources and candidates",
         next_step="run current alpha method frontier after source gaps and alpha frontier",
+    )
+
+
+def _research_backed_alpha_expansion_plan_row(root: Path) -> ExplorationRow:
+    path = root / "current_research_backed_alpha_expansion_plan.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="research_backed_alpha_expansion_plan",
+            status=best.get("status", "research_backed_expansion"),
+            strongest_current_signal=(
+                f"{best.get('expansion_id', '')}: "
+                f"{best.get('family', '')}, "
+                f"priority={best.get('priority', '')}, "
+                f"targets={best.get('target_assets', '')}"
+            ),
+            main_gap=best.get("missing_data", "research-backed expansion still needs data and labels"),
+            next_step=best.get("first_probe", "turn the strongest research-backed expansion into a concrete probe"),
+        )
+    return ExplorationRow(
+        lane="research_backed_alpha_expansion_plan",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="external research directions have not been mapped to current alpha-os coverage",
+        next_step="run current research backed alpha expansion plan after method frontier",
     )
 
 
