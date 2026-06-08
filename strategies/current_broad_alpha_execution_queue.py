@@ -172,6 +172,8 @@ def _l2_imbalance_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
 
 def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
     path = root / "market_breadth/current_volume_price_dislocation_execution_gate.csv"
+    ticket_path = root / "market_breadth/current_volume_price_dislocation_tickets.csv"
+    tickets = {row.get("symbol", ""): row for row in _read_rows(ticket_path)}
     selected = tuple(
         row
         for row in _read_rows(path)
@@ -184,13 +186,15 @@ def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...
             lane="market_breadth_dislocation",
             subject=f"{row.get('symbol', '')}/{row.get('name', '')}",
             side=row.get("side", ""),
-            action=row.get("action", ""),
-            status=row.get("label_status", ""),
+            action="paper_execution_probe_opened" if tickets.get(row.get("symbol", "")) else row.get("action", ""),
+            status=_market_breadth_status(
+                row=row,
+                ticket=tickets.get(row.get("symbol", ""), {}),
+            ),
             score=_fmt(row.get("conservative_net_4h_bps")),
-            size_or_risk=(
-                f"depth10={row.get('near_depth_10bps_notional', '')}; "
-                f"usage250={row.get('visible_depth_usage_250', '')}; "
-                f"spread={row.get('spread_bps', '')}"
+            size_or_risk=_market_breadth_size_or_risk(
+                row=row,
+                ticket=tickets.get(row.get("symbol", ""), {}),
             ),
             evidence=(
                 f"dir4h={row.get('directional_return_4h', '')}; "
@@ -199,14 +203,36 @@ def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...
                 f"reason={row.get('reason', '')}"
             ),
             checkpoints="15m,1h,4h,repeat",
-            source_path=_relative(path),
+            source_path=_relative(ticket_path if tickets.get(row.get("symbol", "")) else path),
             required_record=(
                 "repeat paper ticket, fill/funding/depth refresh, stop/adverse excursion, "
                 "and cross-asset false-positive check"
             ),
-            next_step=row.get("next_step", ""),
+            next_step=tickets.get(row.get("symbol", ""), {}).get("next_step") or row.get("next_step", ""),
         )
         for row in selected
+    )
+
+
+def _market_breadth_status(*, row: dict[str, str], ticket: dict[str, str]) -> str:
+    if ticket:
+        return f"{row.get('label_status', '')}:paper_ticket_opened"
+    return row.get("label_status", "")
+
+
+def _market_breadth_size_or_risk(*, row: dict[str, str], ticket: dict[str, str]) -> str:
+    if ticket:
+        return (
+            f"notional={ticket.get('candidate_size_usd', '')}; "
+            f"entry={ticket.get('entry_mark', '')}; "
+            f"depth10={row.get('near_depth_10bps_notional', '')}; "
+            f"usage250={row.get('visible_depth_usage_250', '')}; "
+            f"spread={row.get('spread_bps', '')}"
+        )
+    return (
+        f"depth10={row.get('near_depth_10bps_notional', '')}; "
+        f"usage250={row.get('visible_depth_usage_250', '')}; "
+        f"spread={row.get('spread_bps', '')}"
     )
 
 
@@ -780,6 +806,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "cost_adjusted_repeat_probe": 80.0,
         "repeat_probe_opened": 75.0,
         "repeat_paper_probe": 70.0,
+        "paper_execution_probe_opened": 65.0,
         "paper_execution_probe": 45.0,
         "paper_check_pure_probability": 35.0,
         "cost_adjusted_event_window_probe": 30.0,
