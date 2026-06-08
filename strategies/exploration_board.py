@@ -74,6 +74,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_promotion_worklist_row(root),
         _alpha_repeat_fill_survival_row(root),
         _surviving_alpha_path_risk_row(root),
+        _surviving_alpha_fill_audit_tickets_row(root),
+        _surviving_alpha_fill_audit_outcomes_row(root),
         _surviving_alpha_exit_regime_candidates_row(root),
         _surviving_alpha_exit_regime_tickets_row(root),
         _surviving_alpha_exit_regime_outcomes_row(root),
@@ -1856,6 +1858,60 @@ def _surviving_alpha_path_risk_row(root: Path) -> ExplorationRow:
     )
 
 
+def _surviving_alpha_fill_audit_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_surviving_alpha_fill_audit_tickets.csv"
+    rows = _csv_rows(path)
+    if rows:
+        row = rows[0]
+        return ExplorationRow(
+            lane="surviving_alpha_fill_audit_tickets",
+            status="paper_fill_audit_ticket_open",
+            strongest_current_signal=(
+                f"{row.get('ticket_id', '')}: "
+                f"{row.get('asset', '')} {row.get('side', '')}, "
+                f"entry={row.get('entry_mark', '')}, "
+                f"stop={row.get('stop_bps', '')}, "
+                f"horizons={row.get('audit_horizons', '')}"
+            ),
+            main_gap=row.get("required_record", "fill audit still needs fresh public path evidence"),
+            next_step=row.get("next_step", "wait for fill-audit outcome checkpoint"),
+        )
+    return ExplorationRow(
+        lane="surviving_alpha_fill_audit_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="path-survived repeat candidates have not been opened as fresh fill-audit tickets",
+        next_step="run fill-audit tickets after surviving alpha path risk",
+    )
+
+
+def _surviving_alpha_fill_audit_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_surviving_alpha_fill_audit_outcomes.csv"
+    rows = _csv_rows(path)
+    if rows:
+        best = _best_fill_audit_outcome(rows)
+        return ExplorationRow(
+            lane="surviving_alpha_fill_audit_outcomes",
+            status=best.get("outcome", "paper_fill_audit_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}/{best.get('horizon', '')}: "
+                f"{best.get('checkpoint_status', '')}, "
+                f"close={best.get('close_return_bps', '')}, "
+                f"adverse={best.get('max_adverse_bps', '')}, "
+                f"stop={best.get('stop_status', '')}"
+            ),
+            main_gap=best.get("evidence", "fill audit still needs path evidence"),
+            next_step=best.get("next_step", "wait for or review fill-audit outcome"),
+        )
+    return ExplorationRow(
+        lane="surviving_alpha_fill_audit_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="fresh fill-audit tickets have not been checked",
+        next_step="run fill-audit outcomes after opening tickets",
+    )
+
+
 def _surviving_alpha_exit_regime_candidates_row(root: Path) -> ExplorationRow:
     path = root / "current_surviving_alpha_exit_regime_candidates.csv"
     best = _best_numeric_row(path, key="priority")
@@ -1933,6 +1989,24 @@ def _surviving_alpha_exit_regime_outcomes_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="fresh exit-regime tickets have not been checked",
         next_step="run exit-regime outcomes after opening tickets",
+    )
+
+
+def _best_fill_audit_outcome(rows: tuple[dict[str, str], ...]) -> dict[str, str]:
+    outcome_rank = {
+        "paper_fill_audit_win": 4,
+        "pending": 3,
+        "paper_fill_audit_loss": 2,
+        "paper_fill_audit_stop_loss": 1,
+        "missing_path": 0,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            outcome_rank.get(row.get("outcome", ""), 0),
+            _safe_float(row.get("close_return_bps")),
+            -abs(_safe_float(row.get("max_adverse_bps"))),
+        ),
     )
 
 
