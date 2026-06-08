@@ -186,6 +186,8 @@ def _lane_bias(row: dict[str, str]) -> str:
         return "risk_or_avoid"
     if "yield" in side or "yield" in text or "apy" in text:
         return "yield"
+    if any(token in side for token in ("straddle", "long_vol", "calendar_spread")):
+        return "relative_value"
     if any(token in side for token in ("long_mstr_short", "short_future_long", "long_future_short")):
         return "relative_value"
     if side.startswith("short") or " short_" in text or "_short" in text:

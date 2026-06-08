@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 from dataclasses import dataclass
+from math import sqrt
 from pathlib import Path
 
 from strategies.options_volatility.current_deribit_options_surface import (
@@ -32,9 +33,14 @@ class OptionsVolatilityPaperTicket:
     volume_usd: float
     atm_call: str
     atm_put: str
+    call_ask_pct: float
+    put_ask_pct: float
     quote_spread_pct: float
-    ask_premium_pct: float
-    ask_premium_usd: float
+    max_loss_pct: float
+    max_loss_usd: float
+    breakeven_move_pct: float
+    realized_move_pct: float
+    premium_to_realized_move: float
     quote_status: str
     quote_reason: str
     score: float
@@ -72,9 +78,11 @@ def build_paper_tickets(
             term_iv_spread_to_next=term,
             volume_usd=volume,
         )
-        quote_status, quote_reason, quote_spread, ask_premium_pct, ask_premium_usd = _quote_status_reason(
+        quote_status, quote_reason, quote_metrics = _quote_status_reason(
             structure=structure,
             status=status,
+            days_to_expiry=dte,
+            realized_vol_24h=rv24,
             quote_check=quote_check,
         )
         final_status = _final_status(status=status, quote_status=quote_status)
@@ -94,9 +102,14 @@ def build_paper_tickets(
                 volume_usd=volume,
                 atm_call="" if quote_check is None else quote_check.atm_call.instrument_name,
                 atm_put="" if quote_check is None else quote_check.atm_put.instrument_name,
-                quote_spread_pct=quote_spread,
-                ask_premium_pct=ask_premium_pct,
-                ask_premium_usd=ask_premium_usd,
+                call_ask_pct=quote_metrics.call_ask_pct,
+                put_ask_pct=quote_metrics.put_ask_pct,
+                quote_spread_pct=quote_metrics.quote_spread_pct,
+                max_loss_pct=quote_metrics.max_loss_pct,
+                max_loss_usd=quote_metrics.max_loss_usd,
+                breakeven_move_pct=quote_metrics.breakeven_move_pct,
+                realized_move_pct=quote_metrics.realized_move_pct,
+                premium_to_realized_move=quote_metrics.premium_to_realized_move,
                 quote_status=quote_status,
                 quote_reason=quote_reason,
                 score=_score(
@@ -138,9 +151,14 @@ def write_tickets_csv(
                 "volume_usd",
                 "atm_call",
                 "atm_put",
+                "call_ask_pct",
+                "put_ask_pct",
                 "quote_spread_pct",
-                "ask_premium_pct",
-                "ask_premium_usd",
+                "max_loss_pct",
+                "max_loss_usd",
+                "breakeven_move_pct",
+                "realized_move_pct",
+                "premium_to_realized_move",
                 "quote_status",
                 "quote_reason",
                 "score",
@@ -165,9 +183,14 @@ def write_tickets_csv(
                     f"{ticket.volume_usd:.2f}",
                     ticket.atm_call,
                     ticket.atm_put,
+                    f"{ticket.call_ask_pct:.6f}",
+                    f"{ticket.put_ask_pct:.6f}",
                     f"{ticket.quote_spread_pct:.6f}",
-                    f"{ticket.ask_premium_pct:.6f}",
-                    f"{ticket.ask_premium_usd:.2f}",
+                    f"{ticket.max_loss_pct:.6f}",
+                    f"{ticket.max_loss_usd:.2f}",
+                    f"{ticket.breakeven_move_pct:.6f}",
+                    f"{ticket.realized_move_pct:.6f}",
+                    f"{ticket.premium_to_realized_move:.6f}",
                     ticket.quote_status,
                     ticket.quote_reason,
                     f"{ticket.score:.8f}",
@@ -192,21 +215,22 @@ def write_tickets_md(
             "It is not a live options trade instruction.\n\n"
         )
         handle.write(
-            "| currency | expiry | structure | dte | atm iv | rv24 | prem24 | quote spread | premium % | premium USD | score | status | quote status | reason |\n"
+            "| currency | expiry | structure | dte | atm iv | rv24 | prem24 | quote spread | max loss % | realized move % | prem/rv move | score | status | quote status | reason |\n"
         )
-        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |\n")
+        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |\n")
         for ticket in tickets[:top]:
             handle.write(
                 f"| {ticket.currency} | {ticket.expiry} | {ticket.structure} | "
                 f"{ticket.days_to_expiry:.2f} | {ticket.atm_iv:.2f} | "
                 f"{ticket.realized_vol_24h:.2f} | {ticket.iv_premium_24h:.2f} | "
-                f"{ticket.quote_spread_pct:.4f} | {ticket.ask_premium_pct:.2f} | "
-                f"{ticket.ask_premium_usd:.0f} | {ticket.score:.6f} | "
+                f"{ticket.quote_spread_pct:.4f} | {ticket.max_loss_pct:.2f} | "
+                f"{ticket.realized_move_pct:.2f} | {ticket.premium_to_realized_move:.2f} | "
+                f"{ticket.score:.6f} | "
                 f"{ticket.status} | {ticket.quote_status} | {ticket.reason}; {ticket.quote_reason} |\n"
             )
         handle.write("\n## Caveat\n\n")
         handle.write(
-            "These tickets use only a simple ATM call+put quote proxy. They still lack full option spread construction, delta hedge PnL, margin, assignment/expiry handling, and realized-vol forecasts. "
+            "Long-vol tickets use a simple ATM straddle proxy from public Deribit summary quotes. They still lack order-book depth, delta hedge PnL, margin, assignment/expiry handling, and realized-vol forecasts. "
             "Short premium candidates must be treated as capped-risk structures, not naked short options.\n"
         )
     return output_path
@@ -229,8 +253,8 @@ def _structure_status_reason(
         return "short_put_spread", "paper_short_put_spread_candidate", "put skew and IV premium are rich versus recent realized vol"
     if action == "cheap_vol_watch" and iv_premium_24h <= -20.0:
         if volume_usd < 250_000.0:
-            return "long_vol_spread", "too_thin", "IV is cheap versus recent realized vol but option volume is thin"
-        return "long_vol_spread", "paper_long_vol_candidate", "IV is cheap versus recent realized vol; test capped-premium long-vol structure"
+            return "long_atm_straddle", "too_thin", "IV is cheap versus recent realized vol but option volume is thin"
+        return "long_atm_straddle", "paper_long_vol_candidate", "IV is cheap versus recent realized vol; test capped-premium long-vol structure"
     if action == "term_structure_watch" and term_iv_spread_to_next >= 5.0 and iv_premium_24h >= 10.0:
         return "calendar_spread", "paper_calendar_spread_watch", "front IV premium and term spread are elevated"
     return "none", "context_only", "surface context exists but no paper structure is selected"
@@ -240,6 +264,18 @@ def _structure_status_reason(
 class QuoteCheck:
     atm_call: OptionQuote
     atm_put: OptionQuote
+
+
+@dataclass(frozen=True)
+class QuoteMetrics:
+    call_ask_pct: float = 0.0
+    put_ask_pct: float = 0.0
+    quote_spread_pct: float = 0.0
+    max_loss_pct: float = 0.0
+    max_loss_usd: float = 0.0
+    breakeven_move_pct: float = 0.0
+    realized_move_pct: float = 0.0
+    premium_to_realized_move: float = 0.0
 
 
 def _build_quote_checks(currencies: tuple[str, ...]) -> dict[tuple[str, str], QuoteCheck]:
@@ -263,26 +299,49 @@ def _quote_status_reason(
     *,
     structure: str,
     status: str,
+    days_to_expiry: float,
+    realized_vol_24h: float,
     quote_check: QuoteCheck | None,
-) -> tuple[str, str, float, float, float]:
+) -> tuple[str, str, QuoteMetrics]:
     if not status.startswith("paper_"):
-        return "quote_not_needed", "no paper structure selected", 0.0, 0.0, 0.0
+        return "quote_not_needed", "no paper structure selected", QuoteMetrics()
     if quote_check is None:
-        return "quote_missing", "ATM option pair was not found in Deribit summary", 0.0, 0.0, 0.0
+        return "quote_missing", "ATM option pair was not found in Deribit summary", QuoteMetrics()
     bid_total = (quote_check.atm_call.bid_price or 0.0) + (quote_check.atm_put.bid_price or 0.0)
     ask_total = (quote_check.atm_call.ask_price or 0.0) + (quote_check.atm_put.ask_price or 0.0)
     underlying = (quote_check.atm_call.underlying_price + quote_check.atm_put.underlying_price) / 2.0
     if bid_total <= 0.0 or ask_total <= 0.0 or underlying <= 0.0:
-        return "quote_missing", "ATM option pair has missing bid or ask", 0.0, 0.0, 0.0
+        return "quote_missing", "ATM option pair has missing bid or ask", QuoteMetrics()
     mid_total = (bid_total + ask_total) / 2.0
     spread_pct = (ask_total - bid_total) / mid_total
-    ask_premium_pct = ask_total * 100.0
-    ask_premium_usd = ask_total * underlying
+    max_loss_pct = ask_total * 100.0
+    realized_move_pct = _realized_move_pct(
+        annualized_realized_vol=realized_vol_24h,
+        days_to_expiry=days_to_expiry,
+    )
+    metrics = QuoteMetrics(
+        call_ask_pct=(quote_check.atm_call.ask_price or 0.0) * 100.0,
+        put_ask_pct=(quote_check.atm_put.ask_price or 0.0) * 100.0,
+        quote_spread_pct=spread_pct,
+        max_loss_pct=max_loss_pct,
+        max_loss_usd=ask_total * underlying,
+        breakeven_move_pct=max_loss_pct,
+        realized_move_pct=realized_move_pct,
+        premium_to_realized_move=(
+            max_loss_pct / realized_move_pct if realized_move_pct > 0.0 else 0.0
+        ),
+    )
     if spread_pct > 0.12:
-        return "quote_too_wide", "ATM option pair spread is too wide for a clean paper ticket", spread_pct, ask_premium_pct, ask_premium_usd
-    if structure == "long_vol_spread" and ask_premium_pct > 12.0:
-        return "premium_too_large", "ATM long-vol proxy premium is too large relative to notional", spread_pct, ask_premium_pct, ask_premium_usd
-    return "quote_executable_watch", "ATM option pair quote is present with acceptable spread", spread_pct, ask_premium_pct, ask_premium_usd
+        return "quote_too_wide", "ATM option pair spread is too wide for a clean paper ticket", metrics
+    if structure == "long_atm_straddle" and max_loss_pct > 12.0:
+        return "premium_too_large", "ATM straddle premium is too large relative to notional", metrics
+    return "quote_executable_watch", "ATM option pair quote is present with acceptable spread", metrics
+
+
+def _realized_move_pct(*, annualized_realized_vol: float, days_to_expiry: float) -> float:
+    if annualized_realized_vol <= 0.0 or days_to_expiry <= 0.0:
+        return 0.0
+    return annualized_realized_vol * sqrt(days_to_expiry / 365.0)
 
 
 def _final_status(*, status: str, quote_status: str) -> str:
