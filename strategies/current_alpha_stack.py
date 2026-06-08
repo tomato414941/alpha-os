@@ -230,7 +230,7 @@ def _volatility_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
             for row in rows
             if row.get("status")
             in {
-                "volatility_candidate_after_hedge_check",
+                "volatility_candidate_needs_sweep_hedge",
                 "volatility_quote_mechanics_watch",
                 "volatility_short_expiry_hedge_watch",
                 "volatility_structure_mechanics_watch",
@@ -2441,7 +2441,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_long_vol_candidate": 66.0,
         "paper_long_vol_quote_candidate": 70.0,
         "paper_calendar_spread_watch": 58.0,
-        "volatility_candidate_after_hedge_check": 70.0,
+        "volatility_candidate_needs_sweep_hedge": 52.0,
         "volatility_quote_mechanics_watch": 56.0,
         "volatility_short_expiry_hedge_watch": 52.0,
         "volatility_structure_mechanics_watch": 50.0,

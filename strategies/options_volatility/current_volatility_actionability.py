@@ -189,9 +189,9 @@ def _status_side_reason(
             return "volatility_short_expiry_hedge_watch", "paper_hedge_check", "expiry is close, so gamma and hedge timing dominate"
         if quote_spread_pct <= 0.06 and max_loss_pct <= 12.0 and premium_to_realized_move <= 0.65 and top_ask_premium_depth_usd >= 25_000.0:
             return (
-                "volatility_candidate_after_hedge_check",
-                "paper_long_vol_after_hedge_check",
-                "cheap IV has visible top depth and capped premium before hedge and sweep checks",
+                "volatility_candidate_needs_sweep_hedge",
+                "paper_long_vol_sweep_hedge_check",
+                "cheap IV has visible top depth and capped premium, but sweep depth and hedge behavior are not checked yet",
             )
         return (
             "volatility_quote_mechanics_watch",
@@ -225,10 +225,10 @@ def _score(
     top_ask_premium_depth_usd: float,
 ) -> float:
     cheapness = max(-iv_premium_24h, 0.0)
-    if status == "volatility_candidate_after_hedge_check":
+    if status == "volatility_candidate_needs_sweep_hedge":
         return min(
-            95.0,
-            64.0
+            74.0,
+            50.0
             + min(cheapness / 2.0, 18.0)
             + min(top_ask_premium_depth_usd / 25_000.0, 8.0)
             - max(quote_spread_pct - 0.03, 0.0) * 100.0
@@ -248,7 +248,7 @@ def _score(
 
 def _next_step(*, currency: str, expiry: str, structure: str, status: str) -> str:
     subject = f"{currency} {expiry} {structure}"
-    if status == "volatility_candidate_after_hedge_check":
+    if status == "volatility_candidate_needs_sweep_hedge":
         return f"paper-check {subject} multi-level sweep, delta hedge schedule, max premium loss, margin, and exit bid"
     if status == "volatility_quote_mechanics_watch":
         return f"check {subject} spread, top depth, premium-at-risk, breakeven move, and hedge feasibility"
