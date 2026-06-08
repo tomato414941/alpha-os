@@ -100,6 +100,30 @@ coarse daily label, not a deployable signal. The next useful step is regime
 splitting and cost-aware carry/reversal labels rather than treating any one
 feature as standalone alpha.
 
+## Binance Symbol-Feature Queue
+
+Run:
+
+```bash
+uv run python -m strategies.p0_parallel.binance_derivatives_symbol_feature_candidates
+```
+
+This turns the same Binance USD-M history into a per-symbol research queue.
+It is not a current trade list; it identifies which symbol-feature pairs should
+be rerun on recent windows before joining to execution gates.
+
+Top current queue rows:
+
+| symbol | feature | bucket | score | note |
+| --- | --- | --- | ---: | --- |
+| UNIUSDT | mean_sum_top_long_short_ratio | low | 351.7328 | low bucket had materially higher next-day mean |
+| NEARUSDT | mean_funding_rate | high_mean_only | 340.6412 | high funding bucket had stronger mean but weaker hit rate |
+| UNIUSDT | oi_value_change | high | 328.9493 | high OI-change bucket had stronger next-day mean |
+| DOGEUSDT | mean_premium_close | high | 311.2457 | high premium bucket had stronger mean and hit rate |
+| BCHUSDT | mean_premium_close | high | 289.2663 | high premium bucket had stronger mean and hit rate |
+
+The next useful step is to rerun these on recent windows and split by regime.
+
 ## Funding Carry Proxy
 
 Run:

@@ -30,6 +30,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _cross_exchange_funding_row(root),
         _perp_market_map_row(root),
         _derivatives_positioning_row(root),
+        _binance_derivatives_history_row(root),
         _macro_regime_row(root),
         _crypto_equity_proxy_row(root),
         _speculative_beta_row(root),
@@ -586,6 +587,51 @@ def _derivatives_positioning_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="OI, funding, premium, and long-short history are not summarized",
         next_step="run Binance derivatives history over a broad symbol and date panel",
+    )
+
+
+def _binance_derivatives_history_row(root: Path) -> ExplorationRow:
+    symbol_feature_path = root / "p0_parallel" / "binance_derivatives_symbol_feature_candidates.csv"
+    best_symbol_feature = _best_numeric_row(symbol_feature_path, key="edge_score")
+    if best_symbol_feature:
+        return ExplorationRow(
+            lane="binance_derivatives_history",
+            status=best_symbol_feature.get("status", "symbol_feature_queue"),
+            strongest_current_signal=(
+                f"{best_symbol_feature.get('symbol', '')} "
+                f"{best_symbol_feature.get('feature', '')}: "
+                f"bucket={best_symbol_feature.get('preferred_bucket', '')}, "
+                f"score={best_symbol_feature.get('edge_score', '')}, "
+                f"low_mean={best_symbol_feature.get('low_bucket_mean_next_return', '')}, "
+                f"high_mean={best_symbol_feature.get('high_bucket_mean_next_return', '')}"
+            ),
+            main_gap="symbol-feature queue is historical and still needs recent-window reruns, regime splits, and execution costs",
+            next_step=best_symbol_feature.get(
+                "next_step",
+                "rerun top Binance derivatives symbol-feature candidate on recent windows",
+            ),
+        )
+    signal_path = root / "p0_parallel" / "binance_derivatives_signal_summary.csv"
+    best_corr = _best_abs_numeric_row(signal_path, key="correlation_to_next_return")
+    if best_corr:
+        return ExplorationRow(
+            lane="binance_derivatives_history",
+            status="feature_prior_only",
+            strongest_current_signal=(
+                f"{best_corr.get('feature', '')}: "
+                f"obs={best_corr.get('observations', '')}, "
+                f"corr={best_corr.get('correlation_to_next_return', '')}, "
+                f"high_mean={best_corr.get('high_bucket_mean_next_return', '')}"
+            ),
+            main_gap="feature summary is not split by symbol or recent regime",
+            next_step="build symbol-feature candidates from the Binance derivatives history panel",
+        )
+    return ExplorationRow(
+        lane="binance_derivatives_history",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="Binance derivatives history is not summarized into symbol-feature candidates",
+        next_step="run Binance derivatives history and symbol-feature candidate queue",
     )
 
 
