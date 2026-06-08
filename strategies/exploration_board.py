@@ -1180,6 +1180,26 @@ def _defi_lending_row(root: Path) -> ExplorationRow:
 
 
 def _market_making_row(root: Path) -> ExplorationRow:
+    microstructure_path = root / "market_making" / "current_microstructure_flow_snapshot.csv"
+    best_microstructure = _best_microstructure_flow_row(microstructure_path)
+    if best_microstructure:
+        return ExplorationRow(
+            lane="market_making",
+            status=best_microstructure.get("action", "microstructure_flow_watch"),
+            strongest_current_signal=(
+                f"{best_microstructure.get('asset', '')}: "
+                f"dir={best_microstructure.get('direction', '')}, "
+                f"pressure={best_microstructure.get('pressure_score', '')}, "
+                f"book={best_microstructure.get('book_imbalance_10bps', '')}, "
+                f"trade={best_microstructure.get('trade_imbalance', '')}, "
+                f"spread={best_microstructure.get('spread_bps', '')}bps"
+            ),
+            main_gap="microstructure snapshot still needs forward labels, maker/taker fee modeling, queue position, and adverse-selection checks",
+            next_step=(
+                f"label {best_microstructure.get('asset', '')} microstructure flow over 15m/1h "
+                "and compare aligned pressure against book/trade divergence"
+            ),
+        )
     paper_gate_path = root / "market_making" / "current_l2_imbalance_paper_gate.csv"
     best_gate = _best_l2_imbalance_paper_gate_row(paper_gate_path)
     if best_gate:
@@ -3375,6 +3395,30 @@ def _best_l2_imbalance_paper_gate_row(path: Path) -> dict[str, str] | None:
             float(row.get("net_15m_bps") or "-inf"),
             float(row.get("net_1h_bps") or "-inf"),
             -float(row.get("visible_depth_usage") or "inf"),
+        ),
+    )
+
+
+def _best_microstructure_flow_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    action_rank = {
+        "aligned_pressure_watch": 4,
+        "book_trade_divergence_watch": 3,
+        "one_sided_pressure_watch": 2,
+        "no_clear_pressure": 1,
+    }
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            action_rank.get(row.get("action", ""), 0),
+            abs(float(row.get("pressure_score") or "0")),
+            int(row.get("trade_count") or "0"),
+            -float(row.get("spread_bps") or "0"),
         ),
     )
 

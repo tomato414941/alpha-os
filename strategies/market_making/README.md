@@ -18,6 +18,7 @@ uv run python -m strategies.market_making.hyperliquid_l2_snapshot --assets BTC E
 uv run python -m strategies.market_making.current_l2_imbalance_monitor
 uv run python -m strategies.market_making.current_l2_imbalance_forward_labels
 uv run python -m strategies.market_making.current_l2_imbalance_paper_gate
+uv run python -m strategies.market_making.current_microstructure_flow_snapshot
 ```
 
 ## Current Status
