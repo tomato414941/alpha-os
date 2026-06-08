@@ -32,6 +32,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_method_frontier_row(root),
         _portable_microstructure_feature_frontier_row(root),
         _portable_microstructure_horizon_candidates_row(root),
+        _portable_microstructure_horizon_tickets_row(root),
+        _portable_microstructure_horizon_outcomes_row(root),
         _research_backed_alpha_expansion_plan_row(root),
         _exchange_stablecoin_inflow_readiness_row(root),
         _stablecoin_flow_probe_candidates_row(root),
@@ -450,6 +452,60 @@ def _portable_microstructure_horizon_candidates_row(root: Path) -> ExplorationRo
         strongest_current_signal="not run yet",
         main_gap="portable microstructure frontier has not been split into candidate and rejected horizons",
         next_step="run current portable microstructure horizon candidates after the feature frontier",
+    )
+
+
+def _portable_microstructure_horizon_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_portable_microstructure_horizon_tickets.csv"
+    rows = _csv_rows(path)
+    best = rows[0] if rows else None
+    if best:
+        return ExplorationRow(
+            lane="portable_microstructure_horizon_tickets",
+            status=best.get("decision", "portable_microstructure_horizon_ticket"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"{best.get('side', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"checkpoint={best.get('checkpoints', '')}"
+            ),
+            main_gap=best.get("required_record", "portable microstructure ticket needs repeat evidence"),
+            next_step=best.get("next_step", "check the horizon-specific microstructure ticket"),
+        )
+    return ExplorationRow(
+        lane="portable_microstructure_horizon_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="horizon-specific microstructure candidates have not been opened as paper observations",
+        next_step="open portable microstructure horizon tickets after candidate generation",
+    )
+
+
+def _portable_microstructure_horizon_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_portable_microstructure_horizon_outcomes.csv"
+    rows = _csv_rows(path)
+    best = _best_paper_ticket_outcome(rows)
+    if best:
+        return ExplorationRow(
+            lane="portable_microstructure_horizon_outcomes",
+            status=best.get("outcome", "portable_microstructure_horizon_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"current={best.get('current_mark', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}"
+            ),
+            main_gap=best.get("missing_evidence", "portable microstructure outcome still needs repeat evidence"),
+            next_step=best.get("next_step", "refresh portable microstructure horizon outcomes"),
+        )
+    return ExplorationRow(
+        lane="portable_microstructure_horizon_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="portable microstructure horizon tickets have not been checked against current marks",
+        next_step="run portable microstructure horizon outcomes after checkpoint maturation",
     )
 
 
