@@ -38,6 +38,7 @@ def build_broad_alpha_paper_tickets(
         + _seed_wallet_candidates(top_per_source)
         + _liquidation_intensity_candidates(top_per_source)
         + _btc_funding_candidates(top_per_source)
+        + _intraday_derivatives_candidates(top_per_source)
         + _market_breadth_candidates(top_per_source)
         + _option_watch_candidates(top_per_source)
         + _stablecoin_proxy_candidates(top_per_source)
@@ -233,6 +234,41 @@ def _btc_funding_candidates(top: int) -> tuple[dict[str, str], ...]:
     )
 
 
+def _intraday_derivatives_candidates(top: int) -> tuple[dict[str, str], ...]:
+    live_symbols = _intraday_live_symbols()
+    rows = tuple(
+        row
+        for row in _top_rows(
+            ROOT / "p0_parallel" / "binance_derivatives_intraday_paper_labels_2bps.csv",
+            "score",
+            top * 2,
+        )
+        if _float(row.get("score")) > 0.0
+        and row.get("symbol", "") in live_symbols
+    )[:top]
+    return tuple(
+        _directional_candidate(
+            source=f"intraday_derivatives:{row.get('symbol', '')}:{row.get('feature', '')}:{row.get('action', '')}",
+            asset=row.get("symbol", ""),
+            decision=_intraday_derivatives_decision(row.get("action", "")),
+            status=row.get("status", ""),
+            required_record="fresh live feature value, live spread/depth, funding timestamp, fill delay, stop behavior",
+            next_step=row.get("next_step", ""),
+            score=row.get("score", ""),
+            size_usd="100.00",
+        )
+        for row in rows
+    )
+
+
+def _intraday_live_symbols() -> set[str]:
+    return {
+        row.get("symbol", "")
+        for row in _read_rows(ROOT / "p0_parallel" / "binance_derivatives_intraday_live_execution_gate.csv")
+        if row.get("symbol") and row.get("candidate_size_usd") == "100.00"
+    }
+
+
 def _market_breadth_candidates(top: int) -> tuple[dict[str, str], ...]:
     return tuple(
         _directional_candidate(
@@ -418,6 +454,12 @@ def _ticket_id(candidate: dict[str, str]) -> str:
 
 def _wallet_decision(side: str) -> str:
     if "short" in side:
+        return "paper_short"
+    return "paper_long"
+
+
+def _intraday_derivatives_decision(action: str) -> str:
+    if action == "short_opposite":
         return "paper_short"
     return "paper_long"
 

@@ -5,13 +5,14 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | priority | ticket | action | asset | decision | dir bps | outcome | reason | next step |
 | ---: | --- | --- | --- | --- | ---: | --- | --- | --- |
 | 398.2586 | broad-paper-pol-paper-short | promote_to_fill_and_risk_check | POL | paper_short | 298.25861430 | paper_mark_win | paper mark moved in the ticket direction | check fill assumption, funding, stop, adverse excursion, then repeat the label |
-| 150.0839 | broad-paper-beat-paper-long | promote_to_fill_and_risk_check | BEAT | paper_long | 50.08385600 | paper_mark_win | paper mark moved in the ticket direction | check fill assumption, funding, stop, adverse excursion, then repeat the label |
 | 50.0000 | broad-paper-sui-paper-long | wait_for_checkpoint | SUI | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-pump-paper-long | wait_for_checkpoint | PUMP | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-inj-paper-long | wait_for_checkpoint | INJ | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-eth-paper-short | wait_for_checkpoint | ETH | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-xrp-paper-long | wait_for_checkpoint | XRP | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-sol-paper-short | wait_for_checkpoint | SOL | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | broad-paper-arbusdt-paper-short | wait_for_checkpoint | ARBUSDT | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | broad-paper-arbusdt-paper-long | wait_for_checkpoint | ARBUSDT | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-fet-paper-long | wait_for_checkpoint | FET | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-fartcoin-paper-long | wait_for_checkpoint | FARTCOIN | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-ub-paper-long | wait_for_checkpoint | UB | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
@@ -45,4 +46,5 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | 40.0000 | broad-paper-aave-paper-long | keep_observing_quote | AAVE | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | broad-paper-zro-paper-short | keep_observing_quote | ZRO | paper_short | -0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | broad-paper-eigen-paper-short | keep_observing_quote | EIGEN | paper_short | -0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
-| -268.1621 | broad-paper-allo-paper-long | deprioritize_or_repeat_once | ALLO | paper_long | -293.16207027 | paper_mark_loss | paper mark moved against the ticket direction | repeat only if the original hypothesis has independent support; otherwise deprioritize |
+| -43.9227 | broad-paper-beat-paper-long | deprioritize_or_repeat_once | BEAT | paper_long | -68.92273761 | paper_mark_loss | paper mark moved against the ticket direction | repeat only if the original hypothesis has independent support; otherwise deprioritize |
+| -107.2252 | broad-paper-allo-paper-long | deprioritize_or_repeat_once | ALLO | paper_long | -132.22516056 | paper_mark_loss | paper mark moved against the ticket direction | repeat only if the original hypothesis has independent support; otherwise deprioritize |

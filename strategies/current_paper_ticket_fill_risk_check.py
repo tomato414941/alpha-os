@@ -40,6 +40,7 @@ def build_fill_risk_checks(
     liquidation_intensity_context_path: Path = ROOT
     / "liquidation_flow"
     / "current_okx_liquidation_intensity_paper_gate.csv",
+    intraday_live_gate_path: Path = ROOT / "p0_parallel" / "binance_derivatives_intraday_live_execution_gate.csv",
     taker_fee_bps_per_fill: float = 4.0,
 ) -> tuple[FillRiskCheck, ...]:
     tickets = {row.get("ticket_id", ""): row for row in _read_rows(tickets_path)}
@@ -48,6 +49,7 @@ def build_fill_risk_checks(
         okx_context_path=okx_context_path,
         market_breadth_context_path=market_breadth_context_path,
         liquidation_intensity_context_path=liquidation_intensity_context_path,
+        intraday_live_gate_path=intraday_live_gate_path,
     )
     rows = []
     for row in _read_rows(action_queue_path):
@@ -200,6 +202,7 @@ def _market_context(
     okx_context_path: Path,
     market_breadth_context_path: Path,
     liquidation_intensity_context_path: Path,
+    intraday_live_gate_path: Path,
 ) -> dict[tuple[str, str], dict[str, str]]:
     contexts: dict[tuple[str, str], dict[str, str]] = {}
     for row in _read_rows(hl_context_path):
@@ -222,6 +225,17 @@ def _market_context(
                 {
                     "spread_bps": row.get("spread_bps", ""),
                     "near_depth_10bps_notional": row.get("depth_10bps_notional", ""),
+                    "annualized_funding": "",
+                },
+            )
+    for row in _read_rows(intraday_live_gate_path):
+        symbol = row.get("symbol", "")
+        if symbol and row.get("candidate_size_usd") == "100.00":
+            contexts.setdefault(
+                ("HL", symbol),
+                {
+                    "spread_bps": row.get("spread_bps", ""),
+                    "near_depth_10bps_notional": row.get("side_depth_10bps_notional", ""),
                     "annualized_funding": "",
                 },
             )
@@ -311,6 +325,11 @@ def main() -> None:
         type=Path,
         default=ROOT / "liquidation_flow" / "current_okx_liquidation_intensity_paper_gate.csv",
     )
+    parser.add_argument(
+        "--intraday-live-gate-path",
+        type=Path,
+        default=ROOT / "p0_parallel" / "binance_derivatives_intraday_live_execution_gate.csv",
+    )
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_ticket_fill_risk_check.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_ticket_fill_risk_check.md")
     args = parser.parse_args()
@@ -320,6 +339,7 @@ def main() -> None:
         tickets_path=args.tickets_path,
         market_breadth_context_path=args.market_breadth_context_path,
         liquidation_intensity_context_path=args.liquidation_intensity_context_path,
+        intraday_live_gate_path=args.intraday_live_gate_path,
     )
     write_fill_risk_checks_csv(rows, output_path=args.output_path)
     write_fill_risk_checks_md(rows, output_path=args.md_output_path)

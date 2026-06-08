@@ -57,7 +57,7 @@ def build_broad_alpha_fill_audit_tickets(
         for row in _read_rows(fill_risk_path)
         if row.get("risk_action") == "cost_adjusted_paper_probe"
     ]
-    return tuple(
+    tickets = tuple(
         _ticket_for_row(
             row=row,
             broad_ticket=broad_tickets.get(row.get("ticket_id", ""), {}),
@@ -67,6 +67,9 @@ def build_broad_alpha_fill_audit_tickets(
         )
         for row in rows
     )
+    active_ticket_ids = {ticket.ticket_id for ticket in tickets}
+    carried_forward = tuple(ticket for ticket in existing.values() if ticket.ticket_id not in active_ticket_ids)
+    return tickets + carried_forward
 
 
 def write_broad_alpha_fill_audit_tickets_csv(
