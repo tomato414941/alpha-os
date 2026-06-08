@@ -4,44 +4,44 @@ This joins supported volume-price dislocation labels to current Hyperliquid fund
 
 | symbol | side | dir 1h | dir 4h | funding ann | spread bps | depth 10bps USD | 250 usage | net 4h bps | action | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| HYPE | long_reversal | 0.01957757 | 0.04969039 | 0.109500 | 0.15768767 | 53111.31875000 | 0.00470709 | 488.24621233 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| INJ | long_reversal | 0.00300905 | 0.04554181 | -0.175246 | 4.90058807 | 2914.50736000 | 0.08577779 | 443.31772393 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| EIGEN | long_reversal | -0.00720621 | 0.03935698 | 0.109500 | 5.44810678 | 1388.01244200 | 0.18011366 | 379.62169322 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| PUMP | long_reversal | 0.00197239 | 0.02038133 | 0.109500 | 6.08087565 | 10437.27642100 | 0.02395261 | 189.23242435 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| FARTCOIN | long_reversal | 0.01072527 | 0.01116484 | 0.109500 | 0.84491572 | 2350.25808350 | 0.10637130 | 102.30348428 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| XPL | long_reversal | -0.00215268 | 0.01031553 | 0.109500 | 4.17280997 | 9161.95567800 | 0.02728675 | 90.48249003 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| SOL | long_reversal | 0.00104408 | 0.00641579 | 0.024685 | 0.14838887 | 485119.27501500 | 0.00051534 | 55.89679513 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| LINK | long_reversal | 0.00114110 | 0.00588302 | 0.109500 | 1.36448494 | 66656.94686000 | 0.00375055 | 48.96571506 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| ETH | long_reversal | 0.00363203 | 0.00458470 | -0.140041 | 0.59327816 | 13925818.07053500 | 0.00001795 | 37.89317784 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| VIRTUAL | long_reversal | 0.00199352 | 0.00381368 | -0.384719 | 0.33739330 | 19333.87536800 | 0.01293067 | 31.55611470 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| TIA | long_reversal | -0.00258235 | 0.00393651 | 0.109500 | 4.65455448 | 7219.50943600 | 0.03462839 | 26.21054552 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| RENDER | long_reversal | 0.00552918 | 0.00318529 | 0.109500 | 4.79932809 | 2673.70760000 | 0.09350312 | 18.55357191 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| TRUMP | long_reversal | 0.00078593 | 0.00253915 | -0.250497 | 0.58580592 | 39893.41709000 | 0.00626670 | 17.94951408 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| DOGE | long_reversal | 0.00094369 | 0.00236506 | 0.032243 | 1.49837772 | 179128.93843850 | 0.00139564 | 14.00499428 | paper_execution_probe | current public venue context does not obviously block a small repeat |
-| SAND | long_reversal | 0.00304780 | 0.00259347 | -0.038292 | 13.90595384 | 613.14744000 | 0.40773227 | 4.20359416 | thin_volume_watch | 24h notional volume is low for repeat observation |
-| ARB | long_reversal | 0.00121095 | 0.00254299 | -0.039519 | 1.20170642 | 859.13662450 | 0.29098981 | 16.40864558 | too_large_for_visible_depth | 250 USD uses too much visible 10 bps depth |
-| TAO | long_reversal | 0.00131585 | 0.00070492 | -0.285606 | 2.29953779 | 15328.73263000 | 0.01630924 | -1.94620179 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
-| UNI | long_reversal | 0.00031287 | 0.00015643 | 0.109500 | 0.77217096 | 17346.67673000 | 0.01441198 | -7.70787096 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
-| WIF | long_reversal | -0.00429863 | 0.00012643 | 0.109500 | 4.34877147 | 11068.75822500 | 0.02258609 | -11.58447147 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
-| DOT | long_reversal | -0.00065930 | 0.00006181 | -0.039042 | 6.77085702 | 16830.50604750 | 0.01485398 | -13.97448502 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
-| FIL | long_reversal | -0.00149054 | 0.00054437 | -0.013368 | 17.29091972 | 3249.27539400 | 0.07694023 | -19.78617972 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
-| SUI | long_reversal | 0.00064799 | -0.00126952 | 0.109500 | 3.28845686 | 89471.44896200 | 0.00279419 | -24.48365686 | label_contradicted | 4h label does not support the market-breadth direction |
-| ETHFI | long_reversal | -0.00648875 | -0.00229602 | 0.109500 | 5.21291500 | 3160.21266600 | 0.07910860 | -36.67311500 | label_contradicted | 4h label does not support the market-breadth direction |
-| AAVE | long_reversal | -0.00014164 | -0.00420208 | 0.016513 | 1.71779716 | 38192.69326500 | 0.00654575 | -51.81400116 | label_contradicted | 4h label does not support the market-breadth direction |
-| LTC | long_reversal | -0.00163513 | -0.00429806 | 0.109500 | 0.46086135 | 37525.81987000 | 0.00666208 | -51.94146135 | label_contradicted | 4h label does not support the market-breadth direction |
-| APT | long_reversal | -0.00477042 | -0.00566488 | -0.037000 | 2.93815190 | 10796.84817300 | 0.02315491 | -67.41800390 | label_contradicted | 4h label does not support the market-breadth direction |
-| OP | long_reversal | -0.00330169 | -0.00484936 | 0.109500 | 12.34060058 | 4767.60913200 | 0.05243718 | -69.33420058 | label_contradicted | 4h label does not support the market-breadth direction |
-| ADA | long_reversal | -0.00659008 | -0.00646917 | -0.332522 | 1.75054705 | 89223.13762500 | 0.00280196 | -72.92388305 | label_contradicted | 4h label does not support the market-breadth direction |
-| LDO | long_reversal | 0.00000000 | -0.00652342 | 0.109500 | 2.59437022 | 7669.86911600 | 0.03259508 | -76.32857022 | label_contradicted | 4h label does not support the market-breadth direction |
-| SEI | long_reversal | -0.00435686 | -0.00764467 | -0.095301 | 4.22072375 | 12925.47278250 | 0.01934165 | -88.23225975 | label_contradicted | 4h label does not support the market-breadth direction |
-| PENGU | long_reversal | 0.01005245 | -0.00990676 | 0.109500 | 2.89645185 | 27492.83061500 | 0.00909328 | -110.46405185 | label_contradicted | 4h label does not support the market-breadth direction |
-| ALGO | long_reversal | -0.00565092 | -0.00987055 | -0.024971 | 12.26861817 | 1293.35348000 | 0.19329596 | -118.86009417 | label_contradicted | 4h label does not support the market-breadth direction |
-| ZK | long_reversal | 0.00077042 | -0.01126733 | 0.109500 | 7.54432290 | 1526.40338400 | 0.16378370 | -128.71762290 | label_contradicted | 4h label does not support the market-breadth direction |
-| ZEC | long_reversal | -0.00511957 | -0.01362943 | -1.016255 | 2.84261739 | 115191.02100000 | 0.00217031 | -142.49648139 | label_contradicted | 4h label does not support the market-breadth direction |
-| DYDX | long_reversal | -0.00427085 | -0.01460357 | 0.109500 | 5.59518814 | 2477.19999000 | 0.10092039 | -160.13088814 | label_contradicted | 4h label does not support the market-breadth direction |
-| FET | long_reversal | -0.00216491 | -0.01736634 | 0.109500 | 3.27615660 | 15494.55847000 | 0.01613470 | -185.43955660 | label_contradicted | 4h label does not support the market-breadth direction |
-| JTO | long_momentum_watch | 0.00030844 | -0.01920455 | 0.109500 | 10.73961179 | 1807.70035000 | 0.13829726 | -211.28511179 | label_contradicted | 4h label does not support the market-breadth direction |
-| WLD | wait_or_fade_watch | -0.01685918 | -0.02182776 | 0.109500 | 0.91283353 | 6703.24853550 | 0.03729535 | -226.69043353 | label_contradicted | 4h label does not support the market-breadth direction |
+| HYPE | long_reversal | 0.01957757 | 0.04969039 | 0.109500 | 0.15764541 | 112794.91236000 | 0.00221641 | 488.24625459 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| INJ | long_reversal | 0.00300905 | 0.04554181 | -0.157592 | 5.85994726 | 11708.91084000 | 0.02135126 | 442.27774874 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| EIGEN | long_reversal | -0.00720621 | 0.03935698 | 0.025973 | 5.55092978 | 5443.43401800 | 0.04592689 | 379.90027022 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| PUMP | long_reversal | 0.00197239 | 0.02038133 | 0.109500 | 6.16332820 | 11909.81360250 | 0.02099109 | 189.14997180 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| FARTCOIN | long_reversal | 0.01072527 | 0.01116484 | 0.109500 | 3.41968026 | 18209.66735700 | 0.01372897 | 99.72871974 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| XPL | long_reversal | -0.00215268 | 0.01031553 | -0.097873 | 1.71609988 | 22117.24417000 | 0.01130340 | 93.88610812 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| SOL | long_reversal | 0.00104408 | 0.00641579 | -0.125588 | 0.14990818 | 241280.36042500 | 0.00103614 | 56.58145182 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| LINK | long_reversal | 0.00114110 | 0.00588302 | 0.109500 | 2.00330545 | 59024.04936000 | 0.00423556 | 48.32689455 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| ETH | long_reversal | 0.00363203 | 0.00458470 | -0.140761 | 0.59187358 | 11609416.23498500 | 0.00002153 | 37.89787042 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| VIRTUAL | long_reversal | 0.00199352 | 0.00381368 | -0.741977 | 3.27295591 | 15923.00398650 | 0.01570056 | 30.25186809 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| RENDER | long_reversal | 0.00552918 | 0.00318529 | -0.115541 | 2.44498778 | 2520.09440000 | 0.09920263 | 21.93549622 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| TRUMP | long_reversal | 0.00078593 | 0.00253915 | -0.209832 | 2.38095238 | 40239.69600000 | 0.00621277 | 15.96868362 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| DOGE | long_reversal | 0.00094369 | 0.00236506 | 0.031385 | 0.11591045 | 120458.85673400 | 0.00207540 | 15.39137755 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| ARB | long_reversal | 0.00121095 | 0.00254299 | -0.066340 | 2.44230065 | 23750.81055900 | 0.01052596 | 15.29052335 | paper_execution_probe | current public venue context does not obviously block a small repeat |
+| TIA | long_reversal | -0.00258235 | 0.00393651 | 0.109500 | 4.74270809 | 8246.61760500 | 0.03031546 | 26.12239191 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| SAND | long_reversal | 0.00304780 | 0.00259347 | 0.109500 | 11.36615391 | 1116.18847550 | 0.22397651 | 6.06854609 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| TAO | long_reversal | 0.00131585 | 0.00070492 | -0.153847 | 2.32585184 | 40649.83772500 | 0.00615009 | -2.57415184 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
+| FIL | long_reversal | -0.00149054 | 0.00054437 | -0.065248 | 3.88555738 | 6605.30715900 | 0.03784835 | -6.14392138 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
+| UNI | long_reversal | 0.00031287 | 0.00015643 | 0.109500 | 0.39849369 | 21018.40036500 | 0.01189434 | -7.33419369 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
+| WIF | long_reversal | -0.00429863 | 0.00012643 | 0.109500 | 1.26510216 | 12979.82136000 | 0.01926067 | -8.50080216 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
+| DOT | long_reversal | -0.00065930 | 0.00006181 | 0.060246 | 5.13964413 | 17390.11451400 | 0.01437598 | -12.79664013 | no_edge_after_rough_cost | 4h label is erased by rough funding, spread, and taker-fee assumptions |
+| SUI | long_reversal | 0.00064799 | -0.00126952 | 0.109500 | 0.13257413 | 51668.00062800 | 0.00483858 | -21.32777413 | label_contradicted | 4h label does not support the market-breadth direction |
+| ETHFI | long_reversal | -0.00648875 | -0.00229602 | 0.109500 | 4.57501389 | 2972.24452900 | 0.08411152 | -36.03521389 | label_contradicted | 4h label does not support the market-breadth direction |
+| LTC | long_reversal | -0.00163513 | -0.00429806 | 0.109500 | 1.15937996 | 46305.35431500 | 0.00539894 | -52.63997996 | label_contradicted | 4h label does not support the market-breadth direction |
+| OP | long_reversal | -0.00330169 | -0.00484936 | -0.142081 | 3.13201441 | 4143.19933200 | 0.06033984 | -58.97684241 | label_contradicted | 4h label does not support the market-breadth direction |
+| ADA | long_reversal | -0.00659008 | -0.00646917 | -0.389898 | 1.17515718 | 116850.41172000 | 0.00213949 | -72.08650118 | label_contradicted | 4h label does not support the market-breadth direction |
+| LDO | long_reversal | 0.00000000 | -0.00652342 | 0.109500 | 4.51841253 | 10284.61205800 | 0.02430816 | -78.25261253 | label_contradicted | 4h label does not support the market-breadth direction |
+| SEI | long_reversal | -0.00435686 | -0.00764467 | -0.047736 | 2.64671451 | 5880.88739250 | 0.04251059 | -86.87544251 | label_contradicted | 4h label does not support the market-breadth direction |
+| PENGU | long_reversal | 0.01005245 | -0.00990676 | 0.109500 | 2.95377345 | 34395.96904500 | 0.00726829 | -110.52137345 | label_contradicted | 4h label does not support the market-breadth direction |
+| ZK | long_reversal | 0.00077042 | -0.01126733 | -0.084750 | 9.61538462 | 1242.74800000 | 0.20116709 | -129.90169662 | label_contradicted | 4h label does not support the market-breadth direction |
+| ZEC | long_reversal | -0.00511957 | -0.01362943 | -2.197118 | 0.21953174 | 63703.77275000 | 0.00392441 | -134.48132774 | label_contradicted | 4h label does not support the market-breadth direction |
+| DYDX | long_reversal | -0.00427085 | -0.01460357 | 0.109500 | 3.65163411 | 227.59673500 | 1.09843404 | -158.18733411 | label_contradicted | 4h label does not support the market-breadth direction |
+| AAVE | long_reversal | -0.01030637 | -0.01740661 | -0.018822 | 2.21046815 | 40209.49145000 | 0.00621744 | -184.19062415 | label_contradicted | 4h label does not support the market-breadth direction |
+| FET | long_reversal | -0.00216491 | -0.01736634 | 0.109500 | 5.72136931 | 7911.81228000 | 0.03159832 | -187.88476931 | label_contradicted | 4h label does not support the market-breadth direction |
+| APT | long_reversal | -0.00691325 | -0.01805838 | -0.010013 | 2.98998356 | 11661.24139400 | 0.02143854 | -191.52806356 | label_contradicted | 4h label does not support the market-breadth direction |
+| ALGO | long_reversal | -0.01130151 | -0.01903308 | 0.109500 | 7.50322149 | 200.93369250 | 1.24419154 | -206.33402149 | label_contradicted | 4h label does not support the market-breadth direction |
+| JTO | long_momentum_watch | 0.00030844 | -0.01920455 | -0.134954 | 7.34987054 | 1596.00090000 | 0.15664152 | -206.77914254 | label_contradicted | 4h label does not support the market-breadth direction |
+| WLD | wait_or_fade_watch | -0.01685918 | -0.02182776 | -0.131875 | 2.82206858 | 20756.45520900 | 0.01204445 | -229.70183658 | label_contradicted | 4h label does not support the market-breadth direction |
 
 ## Interpretation
 

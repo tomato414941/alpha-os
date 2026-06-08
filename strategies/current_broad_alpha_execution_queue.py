@@ -31,6 +31,7 @@ def build_broad_alpha_execution_queue(*, root: Path = ROOT) -> tuple[BroadAlphaE
     rows.extend(_prediction_market_queue(root))
     rows.extend(_liquidation_intensity_queue(root))
     rows.extend(_l2_imbalance_queue(root))
+    rows.extend(_market_breadth_queue(root))
     rows.extend(_options_volatility_queue(root))
     rows.extend(_stablecoin_flow_queue(root))
     rows.extend(_protocol_fee_queue(root))
@@ -164,6 +165,46 @@ def _l2_imbalance_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
             source_path=_relative(path),
             required_record="fresh book snapshot, 1h label, fill/cost check, and repeat-snapshot behavior",
             next_step=f"open or refresh a minimal {row.get('asset', '')} L2 imbalance paper probe only after fresh-state confirmation",
+        )
+        for row in selected
+    )
+
+
+def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
+    path = root / "market_breadth/current_volume_price_dislocation_execution_gate.csv"
+    selected = tuple(
+        row
+        for row in _read_rows(path)
+        if row.get("action") == "paper_execution_probe"
+        and _float(row.get("conservative_net_4h_bps")) > 0.0
+    )[:12]
+    return tuple(
+        BroadAlphaExecutionQueueItem(
+            queue_id=f"market-breadth-{_slug(row.get('symbol', ''))}",
+            lane="market_breadth_dislocation",
+            subject=f"{row.get('symbol', '')}/{row.get('name', '')}",
+            side=row.get("side", ""),
+            action=row.get("action", ""),
+            status=row.get("label_status", ""),
+            score=_fmt(row.get("conservative_net_4h_bps")),
+            size_or_risk=(
+                f"depth10={row.get('near_depth_10bps_notional', '')}; "
+                f"usage250={row.get('visible_depth_usage_250', '')}; "
+                f"spread={row.get('spread_bps', '')}"
+            ),
+            evidence=(
+                f"dir4h={row.get('directional_return_4h', '')}; "
+                f"dir1h={row.get('directional_return_1h', '')}; "
+                f"funding={row.get('annualized_funding', '')}; "
+                f"reason={row.get('reason', '')}"
+            ),
+            checkpoints="15m,1h,4h,repeat",
+            source_path=_relative(path),
+            required_record=(
+                "repeat paper ticket, fill/funding/depth refresh, stop/adverse excursion, "
+                "and cross-asset false-positive check"
+            ),
+            next_step=row.get("next_step", ""),
         )
         for row in selected
     )
@@ -728,6 +769,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "prediction_market_probability": 35.0,
         "liquidation_intensity": 30.0,
         "l2_imbalance_microstructure": 25.0,
+        "market_breadth_dislocation": 22.0,
         "options_volatility": 20.0,
         "defi_lending_yield": 15.0,
         "stablecoin_chain_liquidity_proxy": 10.0,
@@ -738,6 +780,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "cost_adjusted_repeat_probe": 80.0,
         "repeat_probe_opened": 75.0,
         "repeat_paper_probe": 70.0,
+        "paper_execution_probe": 45.0,
         "paper_check_pure_probability": 35.0,
         "cost_adjusted_event_window_probe": 30.0,
         "thin_event_window_support": 5.0,
