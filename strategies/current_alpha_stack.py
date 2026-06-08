@@ -1590,6 +1590,7 @@ def _defi_yield_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 def _yield_peg_risk_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "defi_yield" / "current_yield_peg_risk_join.csv")
+    covered_peg_symbols = _covered_peg_anomaly_symbols(root)
     tickets = sorted(
         (
             row
@@ -1606,11 +1607,18 @@ def _yield_peg_risk_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         reverse=True,
     )
     output: list[AlphaStackRow] = []
-    for ticket in tickets[:6]:
+    seen_peg_symbols: set[str] = set()
+    for ticket in tickets:
         chain = ticket.get("chain", "")
         project = ticket.get("project", "")
         symbol = ticket.get("symbol", "")
         peg_symbol = ticket.get("peg_symbol", "")
+        normalized_peg_symbol = _normalize_symbol(peg_symbol or symbol)
+        if normalized_peg_symbol in covered_peg_symbols:
+            continue
+        if normalized_peg_symbol in seen_peg_symbols:
+            continue
+        seen_peg_symbols.add(normalized_peg_symbol)
         output.append(
             AlphaStackRow(
                 opportunity=f"{chain.lower().replace(' ', '_')}_{project}_{symbol.lower()}_yield_peg",
@@ -1638,6 +1646,8 @@ def _yield_peg_risk_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 ),
             )
         )
+        if len(output) >= 6:
+            break
     return tuple(output)
 
 
@@ -2406,6 +2416,18 @@ def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
         return tuple(csv.DictReader(handle))
 
 
+def _covered_peg_anomaly_symbols(root: Path) -> set[str]:
+    return {
+        _normalize_symbol(row.get("symbol", ""))
+        for row in _read_rows(root / "anomaly_stress" / "current_peg_anomaly_tradeability.csv")
+        if row.get("status") == "peg_anomaly_mechanics_watch"
+    }
+
+
+def _normalize_symbol(symbol: str) -> str:
+    return "".join(ch for ch in symbol.upper() if ch.isalnum())
+
+
 def _float(value: str | None) -> float:
     return float(value) if value else 0.0
 
@@ -2447,7 +2469,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "cross_market_event_probability_anomaly": 78.0,
         "cross_market_execution_spread_anomaly": 72.0,
         "peg_anomaly_tradeability_candidate": 72.0,
-        "peg_anomaly_mechanics_watch": 58.0,
+        "peg_anomaly_mechanics_watch": 40.0,
         "peg_anomaly_stale_or_unrouted": 42.0,
         "peg_anomaly_deprioritize": 35.0,
         "paper_short_candidate": 72.0,
@@ -2525,8 +2547,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_oi_unwind_watch": 59.0,
         "paper_basis_funding_dislocation_watch": 59.0,
         "paper_derivatives_momentum_risk_watch": 56.0,
-        "paper_yield_depeg_conflict_watch": 60.0,
-        "paper_yield_premium_conflict_watch": 58.0,
+        "paper_yield_depeg_conflict_watch": 42.0,
+        "paper_yield_premium_conflict_watch": 40.0,
         "yield_supply_stress_watch": 55.0,
         "paper_yield_without_peg_stress_watch": 54.0,
         "paper_base_yield_watch": 60.0,
