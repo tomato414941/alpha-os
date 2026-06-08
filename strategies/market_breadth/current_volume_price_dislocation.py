@@ -56,10 +56,13 @@ def build_volume_price_dislocation_rows(
     pages: int = 2,
     per_page: int = 250,
     min_market_cap: float = 100_000_000.0,
-) -> tuple[VolumePriceDislocationRow, ...]:
+) -> tuple[VolumePriceDislocationRow, ...] | None:
     raw_rows: list[dict[str, object]] = []
     for page in range(1, pages + 1):
-        raw_rows.extend(_fetch_market_page(page=page, per_page=per_page))
+        page_rows = _fetch_market_page(page=page, per_page=per_page)
+        if page_rows is None:
+            return None
+        raw_rows.extend(page_rows)
     rows = tuple(
         _build_row(row)
         for row in raw_rows
@@ -157,20 +160,25 @@ def write_volume_price_dislocation_md(
     return output_path
 
 
-def _fetch_market_page(*, page: int, per_page: int) -> tuple[dict[str, object], ...]:
-    response = requests.get(
-        COINGECKO_MARKETS_URL,
-        params={
-            "vs_currency": "usd",
-            "order": "market_cap_desc",
-            "per_page": per_page,
-            "page": page,
-            "price_change_percentage": "1h,24h,7d,30d",
-        },
-        headers={"User-Agent": "Mozilla/5.0"},
-        timeout=30,
-    )
-    response.raise_for_status()
+def _fetch_market_page(*, page: int, per_page: int) -> tuple[dict[str, object], ...] | None:
+    try:
+        response = requests.get(
+            COINGECKO_MARKETS_URL,
+            params={
+                "vs_currency": "usd",
+                "order": "market_cap_desc",
+                "per_page": per_page,
+                "page": page,
+                "price_change_percentage": "1h,24h,7d,30d",
+            },
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=30,
+        )
+        if response.status_code in {403, 429}:
+            return None
+        response.raise_for_status()
+    except requests.RequestException:
+        return None
     return tuple(response.json())
 
 
@@ -303,6 +311,9 @@ def main() -> None:
         per_page=args.per_page,
         min_market_cap=args.min_market_cap,
     )
+    if rows is None:
+        print("market_breadth_source_unavailable_keep_existing")
+        return
     write_volume_price_dislocation_csv(rows, output_path=args.output_path)
     write_volume_price_dislocation_md(rows, output_path=args.markdown_output_path, top=args.top)
     for row in rows[: args.top]:

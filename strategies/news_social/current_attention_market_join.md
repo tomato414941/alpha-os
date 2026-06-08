@@ -4,7 +4,7 @@ This joins CoinGecko trending attention to current Hyperliquid perp market state
 
 | symbol | name | rank | 24h change | funding | mark/oracle | carry action | obs | score | reason |
 | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |
-| AAVE | Aave | 8 | 0.9123 | 0.032853 | -0.000694 | long_carry_reversion_watch | 6 | 23.690893 | trending asset overlaps with persistent carry/reversion perp state |
+| AAVE | Aave | 10 | 2.5970 | 0.032853 | -0.000694 | long_carry_reversion_watch | 6 | 22.027830 | trending asset overlaps with persistent carry/reversion perp state |
 
 ## Interpretation
 

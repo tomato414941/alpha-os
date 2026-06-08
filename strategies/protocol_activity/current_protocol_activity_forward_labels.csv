@@ -1,3 +1,4 @@
 timestamp,symbol,action,direction_hint,score,raw_return_15m,raw_return_1h,directional_return_15m,directional_return_1h,label_status
-2026-06-08T11:35:09.310356+00:00,ZEC,protocol_activity_funding_overlap,1,46.91745409,-0.00834579,,-0.00834579,,labeled_15m_pending_1h
-2026-06-08T12:19:50.917603+00:00,BTC,protocol_activity_watch,1,36.16413326,,,,,pending_15m
+2026-06-08T12:22:36.092439+00:00,ZEC,protocol_activity_funding_overlap,1,44.07332820,-0.00142251,,-0.00142251,,labeled_15m_pending_1h
+2026-06-08T12:30:51.245971+00:00,BTC,protocol_activity_watch,1,35.16413326,,,,,pending_15m
+2026-06-08T12:30:51.245971+00:00,NEAR,protocol_activity_watch,1,28.38110571,,,,,pending_15m

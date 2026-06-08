@@ -4,8 +4,8 @@ This turns protocol fee-growth lag candidates that pass the current execution co
 
 | token | protocol | side | score | notional | price 7d | fee growth 7d | funding | spread bps | depth 10bps USD | next step |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| AAVE | Aave V3 | long_token | 87.9800 | 1000 | -21.82 | 129.80 | -0.0505 | 2.6867 | 42507 | start AAVE paper observation now and label 4h,12h,24h returns with funding, spread, and depth context |
-| CRV | Curve DEX | long_token | 59.9474 | 1000 | -8.57 | 210.10 | 0.1095 | 1.5021 | 20772 | start CRV paper observation now and label 4h,12h,24h returns with funding, spread, and depth context |
+| AAVE | Aave V3 | long_token | 87.9820 | 1000 | -21.16 | 129.82 | 0.1095 | 3.7375 | 36369 | start AAVE paper observation now and label 4h,12h,24h returns with funding, spread, and depth context |
+| CRV | Curve DEX | long_token | 57.6620 | 1000 | -5.51 | 222.41 | 0.1095 | 1.9812 | 40183 | start CRV paper observation now and label 4h,12h,24h returns with funding, spread, and depth context |
 
 ## Falsification
 

@@ -4,26 +4,26 @@ This ranks public CoinGecko crypto categories by 24h market-cap change, scale, a
 
 | category | 24h change | market cap | volume 24h | top coins | action | score |
 | --- | ---: | ---: | ---: | --- | --- | ---: |
-| Arcade Games | 93.6801 | 1309672684 | 97936979 | audiera;hamster-kombat;pepecoin-2 | sector_momentum_watch | 1602.6888 |
-| Telegram Apps | 62.4058 | 1691802941 | 156835367 | audiera;floki;catizen | sector_momentum_watch | 1087.3466 |
-| OpenServ Ecosystem | 72.2570 | 2127822 | 223767 | solrouter;better;cobot | sector_momentum_watch | 843.7979 |
-| Bridged Stablecoin | -99.8558 | 7745 | 8 | binance-bridged-usdt-bnb-smart-chain;usdt0;binance-bridged-usdc-bnb-smart-chain | sector_stress_watch | 484.0086 |
-| Privacy | 23.7942 | 29446086183 | 3030868001 | zcash;monero;chainlink | sector_momentum_watch | 474.7083 |
-| ERC 404 | 35.5104 | 1955044 | 44296 | pandora;defrogs;pundi-x-purse | sector_momentum_watch | 388.3956 |
-| NFT Lending/Borrowing | -28.3816 | 11635322 | 2656487 | alpha-quark-token | sector_stress_watch | 382.8696 |
-| Market-Making Solution | 32.7405 | 2654349 | 133711 | milk-money;human-protocol;gamma-strategies | sector_momentum_watch | 378.1564 |
-| Groypad Ecosystem | 37.6057 | 459658 | 7868 | gotta-go-fast;long-capital;durovs-dog | sector_momentum_watch | 359.4478 |
-| Gaming (GameFi) | 18.6529 | 4949133234 | 575007531 | audiera;the9bit;floki | sector_momentum_watch | 344.2248 |
-| Buidlpad Launchpad | 18.3926 | 459724355 | 112022676 | falcon-finance-ff;sahara-ai;lombard-protocol | sector_momentum_watch | 307.3739 |
-| Quantum-Resistant | 15.6045 | 8493709352 | 1074040641 | zcash;algorand;starknet | sector_momentum_watch | 295.8635 |
-| NFT | 15.3746 | 6164193760 | 741217897 | audiera;render-token;fetch-ai | sector_momentum_watch | 286.8874 |
-| PAAL AI Launchpad | 21.0261 | 6320566 | 1693164 | paal-ai;ait-protocol;vaulttech | sector_momentum_watch | 273.9591 |
-| MEV Protection | 16.6435 | 584287811 | 16140727 | gnosis;railgun;cow-protocol | sector_momentum_watch | 265.8725 |
-| Zero Knowledge (ZK) | 13.1417 | 12062860956 | 1635055211 | zcash;humanity;polygon-ecosystem-token | sector_momentum_watch | 253.5696 |
-| Four.meme Ecosystem (BNB Memes) | 13.9273 | 1775304763 | 623110935 | siren-2;bianrensheng;test-3 | sector_momentum_watch | 251.3022 |
-| Sticker-Themed Coins | 18.5890 | 21623787 | 526037 | utya;paper-plane;cubigator | sector_momentum_watch | 242.6967 |
-| DeFAI | 14.3862 | 766754128 | 94917307 | velvet;derive;ribbita-by-virtuals | sector_momentum_watch | 242.5803 |
-| Privacy Coins | 11.9136 | 13570813839 | 1177538191 | zcash;monero;decred | sector_momentum_watch | 228.7839 |
+| Arcade Games | 96.0761 | 1325874996 | 98159030 | audiera;hamster-kombat;pepecoin-2 | sector_momentum_watch | 1644.2886 |
+| Telegram Apps | 63.9060 | 1707430601 | 155760963 | audiera;floki;catizen | sector_momentum_watch | 1113.5499 |
+| OpenServ Ecosystem | 72.6098 | 2132180 | 223802 | solrouter;better;cobot | sector_momentum_watch | 847.9876 |
+| Bridged Stablecoin | -99.8556 | 7758 | 8 | binance-bridged-usdt-bnb-smart-chain;usdt0;binance-bridged-usdc-bnb-smart-chain | sector_stress_watch | 484.1269 |
+| Privacy | 24.0092 | 29497230178 | 3021722726 | zcash;monero;chainlink | sector_momentum_watch | 478.9846 |
+| ERC 404 | 35.8298 | 1959653 | 44227 | pandora;defrogs;pundi-x-purse | sector_momentum_watch | 391.9021 |
+| NFT Lending/Borrowing | -28.1424 | 11674168 | 2628287 | alpha-quark-token | sector_stress_watch | 379.5542 |
+| Market-Making Solution | 32.8360 | 2656259 | 131703 | milk-money;human-protocol;gamma-strategies | sector_momentum_watch | 379.0539 |
+| Gaming (GameFi) | 19.4575 | 4982691254 | 574824246 | audiera;the9bit;floki | sector_momentum_watch | 359.1263 |
+| Groypad Ecosystem | 37.5454 | 459457 | 7873 | gotta-go-fast;long-capital;durovs-dog | sector_momentum_watch | 358.8749 |
+| Buidlpad Launchpad | 18.6804 | 460841894 | 107884892 | falcon-finance-ff;sahara-ai;lombard-protocol | sector_momentum_watch | 311.8979 |
+| NFT | 16.2214 | 6209434596 | 749099546 | audiera;render-token;fetch-ai | sector_momentum_watch | 302.8140 |
+| PAAL AI Launchpad | 22.3079 | 6387505 | 378692 | paal-ai;ait-protocol;vaulttech | sector_momentum_watch | 276.2523 |
+| MEV Protection | 16.7706 | 584924483 | 15942000 | gnosis;railgun;cow-protocol | sector_momentum_watch | 267.8206 |
+| Quantum-Resistant | 13.9930 | 8375304215 | 1135877618 | zcash;algorand;starknet | sector_momentum_watch | 265.5629 |
+| Sticker-Themed Coins | 20.0355 | 21887557 | 531116 | utya;paper-plane;cubigator | sector_momentum_watch | 261.7721 |
+| Data Availability | 13.1492 | 3550656407 | 790954241 | near;unibase;celestia | sector_momentum_watch | 242.5820 |
+| Four.meme Ecosystem (BNB Memes) | 13.2203 | 1764286789 | 620693719 | siren-2;bianrensheng;test-3 | sector_momentum_watch | 238.4861 |
+| Zero Knowledge (ZK) | 12.1394 | 11955993639 | 1720758472 | zcash;humanity;polygon-ecosystem-token | sector_momentum_watch | 234.4518 |
+| Account Abstraction | -12.8942 | 394770353 | 241553452 | trust-wallet-token;home;iotex | sector_stress_watch | 218.9350 |
 
 ## Interpretation
 

@@ -4,7 +4,7 @@ This converts rough prediction-market probability gaps into paper tickets with e
 
 | question | side | ask | estimated payout | edge after ask | max loss | ask depth 5c | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | buy_yes | 0.2350 | 0.5000 | 0.2650 | 0.2350 | 22500.00 | 56.6200 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1100 | 0.3600 | 0.2500 | 0.1100 | 116205.19 | 82.1200 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
 
 ## Caveat
 

@@ -4,8 +4,9 @@ This joins protocol developer/community activity to current Hyperliquid perp sta
 
 | symbol | action | commits 4w | telegram | funding | carry action | obs | score | reason |
 | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- |
-| ZEC | protocol_activity_funding_overlap | 144 | 0 | -0.741535 |  | 0 | 46.917454 | protocol activity overlaps material current funding state |
-| BTC | protocol_activity_watch | 279 | 0 | 0.109500 |  | 0 | 36.164133 | protocol has strong current non-price activity and is tradable |
+| ZEC | protocol_activity_funding_overlap | 144 | 0 | -0.741535 |  | 0 | 44.073328 | protocol activity overlaps material current funding state |
+| BTC | protocol_activity_watch | 279 | 0 | 0.109500 |  | 0 | 35.164133 | protocol has strong current non-price activity and is tradable |
+| NEAR | protocol_activity_watch | 108 | 0 | 0.109500 |  | 0 | 28.381106 | protocol has strong current non-price activity and is tradable |
 
 ## Interpretation
 

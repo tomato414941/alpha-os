@@ -4,26 +4,26 @@ This checks visible CLOB depth for unsettled current microstructure monitor mark
 
 | question | outcome | bid | ask | spread | top bid size | top ask size | bid depth 5c | ask depth 5c | score | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| US-Iran nuclear deal by June 30? | Yes | 0.2200 | 0.2300 | 0.0100 | 208.00 | 18274.13 | 41209.31 | 51270.60 | 41.1093 | visible depth exists near both sides |
-| US-Iran nuclear deal by June 30? | No | 0.7700 | 0.7800 | 0.0100 | 18274.13 | 208.00 | 51270.60 | 41209.31 | 41.1093 | visible depth exists near both sides |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | Yes | 0.7700 | 0.7800 | 0.0100 | 5921.05 | 3321.93 | 34999.10 | 23702.45 | 23.6025 | visible depth exists near both sides |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | No | 0.2200 | 0.2300 | 0.0100 | 3321.93 | 5921.05 | 23702.45 | 34999.10 | 23.6025 | visible depth exists near both sides |
-| US announces new Iran agreement/ceasefire extension by June 9? | Yes | 0.1020 | 0.1140 | 0.0120 | 394.81 | 32.64 | 22380.42 | 20693.16 | 20.5732 | visible depth exists near both sides |
-| US announces new Iran agreement/ceasefire extension by June 9? | No | 0.8860 | 0.8980 | 0.0120 | 32.64 | 394.81 | 20693.16 | 22380.42 | 20.5732 | visible depth exists near both sides |
-| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | Yes | 0.2320 | 0.2350 | 0.0030 | 318.77 | 253.71 | 5363.46 | 22500.00 | 5.3335 | visible depth exists near both sides |
-| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | No | 0.7650 | 0.7680 | 0.0030 | 253.71 | 318.77 | 23500.00 | 5363.46 | 5.3335 | visible depth exists near both sides |
-| US announces new Iran agreement/ceasefire extension by June 12? | Yes | 0.2100 | 0.2300 | 0.0200 | 1138.41 | 13.65 | 10749.54 | 5154.74 | 4.9547 | visible depth exists near both sides |
-| US announces new Iran agreement/ceasefire extension by June 12? | No | 0.7700 | 0.7900 | 0.0200 | 13.65 | 1138.41 | 5154.74 | 10749.54 | 4.9547 | visible depth exists near both sides |
-| Bab el-Mandeb Strait effectively closed by June 30? | No | 0.8970 | 0.9010 | 0.0040 | 5.00 | 5.00 | 3438.01 | 18877.30 | 3.3980 | visible depth exists near both sides |
-| Bab el-Mandeb Strait effectively closed by June 30? | Yes | 0.0990 | 0.1030 | 0.0040 | 5.00 | 5.00 | 18818.30 | 2766.01 | 2.7260 | visible depth exists near both sides |
-| Israel closes its airspace by June 15? | No | 0.7000 | 0.7200 | 0.0200 | 1895.66 | 44.00 | 4624.64 | 2534.26 | 2.3343 | visible depth exists near both sides |
-| Israel closes its airspace by June 15? | Yes | 0.2800 | 0.3000 | 0.0200 | 44.00 | 1895.66 | 1690.52 | 4624.64 | 1.4905 | visible depth exists near both sides |
-| Israel closes its airspace by June 30? | Yes | 0.3900 | 0.4000 | 0.0100 | 117.83 | 9.09 | 946.52 | 5005.41 | 0.8465 | visible near-top depth is thin |
-| Israel closes its airspace by June 30? | No | 0.6000 | 0.6100 | 0.0100 | 9.09 | 117.83 | 5005.41 | 946.52 | 0.8465 | visible near-top depth is thin |
-| Will the price of Bitcoin be above $58,000 on June 8? | Yes | 0.9960 | 0.9970 | 0.0010 | 3145.74 | 1281.00 | 17772.39 | 24677.95 | 17.7624 | visible depth exists near both sides |
-| Will the price of Bitcoin be above $58,000 on June 8? | No | 0.0030 | 0.0040 | 0.0010 | 1281.00 | 3145.74 | 24677.95 | 17772.39 | 17.7624 | visible depth exists near both sides |
-| Iran closes its airspace by June 8? | Yes | 0.9990 | 0.0000 | 0.0000 | 610805.52 | 0.00 | 3212117.53 | 0.00 | 0.0000 | visible near-top depth is thin |
-| Iran closes its airspace by June 8? | No | 0.0000 | 0.0010 | 0.0000 | 0.00 | 610805.52 | 0.00 | 3212117.53 | 0.0000 | visible near-top depth is thin |
+| Will the U.S. invade Iran before 2027? | No | 0.8200 | 0.8300 | 0.0100 | 11755.50 | 802.73 | 148176.04 | 314574.62 | 148.0760 | visible depth exists near both sides |
+| Will the U.S. invade Iran before 2027? | Yes | 0.1700 | 0.1800 | 0.0100 | 802.73 | 11755.50 | 307753.62 | 134969.03 | 134.8690 | visible depth exists near both sides |
+| Strait of Hormuz traffic returns to normal by end of June? | Yes | 0.1000 | 0.1100 | 0.0100 | 6298.69 | 6734.00 | 907354.32 | 116205.19 | 116.1052 | visible depth exists near both sides |
+| Strait of Hormuz traffic returns to normal by end of June? | No | 0.8900 | 0.9000 | 0.0100 | 6734.00 | 6298.69 | 116205.19 | 907354.32 | 116.1052 | visible depth exists near both sides |
+| US-Iran nuclear deal by June 30? | No | 0.7800 | 0.8000 | 0.0200 | 13606.45 | 4025.41 | 59837.71 | 53587.71 | 53.3877 | visible depth exists near both sides |
+| US-Iran nuclear deal by June 30? | Yes | 0.2000 | 0.2200 | 0.0200 | 4025.41 | 13606.45 | 41441.84 | 59837.71 | 41.2418 | visible depth exists near both sides |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | No | 0.2300 | 0.2400 | 0.0100 | 1124.52 | 11541.98 | 26492.88 | 27676.00 | 26.3929 | visible depth exists near both sides |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | Yes | 0.7600 | 0.7700 | 0.0100 | 11541.98 | 1124.52 | 27676.00 | 26392.88 | 26.2929 | visible depth exists near both sides |
+| US announces new Iran agreement/ceasefire extension by June 9? | Yes | 0.0970 | 0.0980 | 0.0010 | 173.00 | 36.90 | 24085.78 | 26003.36 | 24.0758 | visible depth exists near both sides |
+| US announces new Iran agreement/ceasefire extension by June 9? | No | 0.9020 | 0.9030 | 0.0010 | 36.90 | 173.00 | 26003.36 | 24085.78 | 24.0758 | visible depth exists near both sides |
+| Bab el-Mandeb Strait effectively closed by June 30? | Yes | 0.1030 | 0.1130 | 0.0100 | 5.00 | 98.15 | 12649.47 | 10849.15 | 10.7492 | visible depth exists near both sides |
+| Bab el-Mandeb Strait effectively closed by June 30? | No | 0.8870 | 0.8970 | 0.0100 | 98.15 | 5.00 | 10849.15 | 12649.47 | 10.7492 | visible depth exists near both sides |
+| US announces new Iran agreement/ceasefire extension by June 12? | Yes | 0.2000 | 0.2200 | 0.0200 | 7923.01 | 786.12 | 10476.77 | 6170.28 | 5.9703 | visible depth exists near both sides |
+| US announces new Iran agreement/ceasefire extension by June 12? | No | 0.7800 | 0.8000 | 0.0200 | 786.12 | 7923.01 | 6170.28 | 14558.77 | 5.9703 | visible depth exists near both sides |
+| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | Yes | 0.2290 | 0.2300 | 0.0010 | 1143.00 | 100.00 | 3991.49 | 28178.09 | 3.9815 | visible depth exists near both sides |
+| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | No | 0.7700 | 0.7710 | 0.0010 | 100.00 | 1143.00 | 28178.09 | 3991.49 | 3.9815 | visible depth exists near both sides |
+| Israel closes its airspace by June 15? | Yes | 0.2200 | 0.2400 | 0.0200 | 126.98 | 210.00 | 3986.86 | 21741.84 | 3.7869 | visible depth exists near both sides |
+| Israel closes its airspace by June 15? | No | 0.7600 | 0.7800 | 0.0200 | 210.00 | 126.98 | 21741.84 | 3986.86 | 3.7869 | visible depth exists near both sides |
+| Israel closes its airspace by June 30? | Yes | 0.3700 | 0.3800 | 0.0100 | 37.68 | 15.00 | 1761.31 | 3780.23 | 1.6613 | visible depth exists near both sides |
+| Israel closes its airspace by June 30? | No | 0.6200 | 0.6300 | 0.0100 | 15.00 | 37.68 | 3780.23 | 1761.31 | 1.6613 | visible depth exists near both sides |
 
 ## Interpretation
 

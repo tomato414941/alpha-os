@@ -4,7 +4,7 @@ This marks event-probability paper tickets against the current prediction-market
 
 | question | side | entry ask | bid | ask | bid pnl | mid pnl | edge after ask | source quality | score | status |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |
-| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | buy_yes | 0.2350 | 0.2320 | 0.2350 | -0.0030 | -0.0015 | 0.2650 | source_quality_fail | 41.4250 | paper_outcome_source_quality_watch |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1100 | 0.1000 | 0.1100 | -0.0100 | -0.0050 | 0.2500 | source_quality_pass | 54.7500 | paper_outcome_active_watch |
 
 ## Caveat
 

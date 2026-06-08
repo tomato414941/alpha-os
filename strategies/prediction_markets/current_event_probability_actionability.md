@@ -4,4 +4,4 @@ This separates rough event-probability edge from candidates that are ready for a
 
 | question | side | status | score | bid | ask | spread | edge after ask | depth 5c | source | refresh | reason |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
-| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | no_trade_until_source_quality | event_probability_source_quality_blocked | 33.3000 | 0.2320 | 0.2350 | 0.0030 | 0.2650 | 22500 | source_quality_fail |  | rough probability edge is not backed by enough fresh independent sources |
+| Strait of Hormuz traffic returns to normal by end of June? | paper_event_probability_after_refresh_check | event_probability_candidate_after_refresh_check | 77.7000 | 0.1000 | 0.1100 | 0.0100 | 0.2500 | 116205 | source_quality_pass | paper_outcome_survived_refresh | rough edge, source quality, quote, depth, and refreshed mark all pass before fill checks |

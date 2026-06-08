@@ -4,26 +4,26 @@ This labels book-plus-trade microstructure observations against Hyperliquid 15m 
 
 | asset | action | dir | pressure | book imb | trade imb | raw 15m | dir 15m | raw 1h | dir 1h | status |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| MEGA | aligned_pressure_watch | 1 | 0.3098 | 0.1551 | 0.4645 | 0.018580 | 0.018580 | 0.003704 | 0.003704 | labeled_1h |
-| HYPE | book_trade_divergence_watch | 1 | 0.4358 | -0.1284 | 1.0000 | 0.015835 | 0.015835 | 0.027150 | 0.027150 | labeled_1h |
-| NEAR | aligned_pressure_watch | 1 | 0.4815 | 0.4798 | 0.4831 | 0.012189 | 0.012189 | 0.038059 | 0.038059 | labeled_1h |
-| SUI | aligned_pressure_watch | 1 | 0.1863 | 0.2828 | 0.0899 | 0.011085 | 0.011085 | 0.013071 | 0.013071 | labeled_1h |
-| MON | aligned_pressure_watch | 1 | 0.5502 | 0.5584 | 0.5421 | 0.008851 | 0.008851 | 0.008990 | 0.008990 | labeled_1h |
-| CHIP | book_trade_divergence_watch | 1 | 0.2801 | -0.2004 | 0.7606 | 0.008362 | 0.008362 | 0.015275 | 0.015275 | labeled_1h |
-| BERA | book_trade_divergence_watch | 1 | 0.1182 | 0.3605 | -0.1241 | 0.007052 | 0.007052 | 0.009291 | 0.009291 | labeled_1h |
-| SEI | aligned_pressure_watch | 1 | 0.2139 | 0.1292 | 0.2986 | 0.006735 | 0.006735 | 0.007412 | 0.007412 | labeled_1h |
-| ETH | book_trade_divergence_watch | 1 | 0.4775 | -0.0449 | 1.0000 | 0.006051 | 0.006051 | 0.007805 | 0.007805 | labeled_1h |
-| APT | book_trade_divergence_watch | 1 | 0.4162 | -0.0996 | 0.9319 | 0.003640 | 0.003640 | 0.006977 | 0.006977 | labeled_1h |
-| SOL | aligned_pressure_watch | 1 | 0.7286 | 0.4572 | 1.0000 | 0.003323 | 0.003323 | 0.005590 | 0.005590 | labeled_1h |
-| ARB | aligned_pressure_watch | 1 | 0.3874 | 0.0532 | 0.7216 | 0.003319 | 0.003319 | 0.006146 | 0.006146 | labeled_1h |
-| BNB | aligned_pressure_watch | 1 | 0.5114 | 0.0821 | 0.9407 | 0.001412 | 0.001412 | 0.001361 | 0.001361 | labeled_1h |
-| XMR | aligned_pressure_watch | 1 | 0.5573 | 0.5397 | 0.5750 | -0.000859 | -0.000859 | 0.017386 | 0.017386 | labeled_1h |
-| ADA | book_trade_divergence_watch | -1 | -0.3325 | -0.6984 | 0.0334 | 0.002364 | -0.002364 | 0.004604 | -0.004604 | labeled_1h |
-| BTC | book_trade_divergence_watch | -1 | -0.2765 | 0.4196 | -0.9727 | 0.002757 | -0.002757 | 0.003523 | -0.003523 | labeled_1h |
-| POL | book_trade_divergence_watch | -1 | -0.4512 | 0.0976 | -1.0000 | 0.003352 | -0.003352 | 0.003098 | -0.003098 | labeled_1h |
-| STRK | book_trade_divergence_watch | -1 | -0.0414 | -0.5768 | 0.4940 | 0.004182 | -0.004182 | 0.001195 | -0.001195 | labeled_1h |
-| OP | book_trade_divergence_watch | -1 | -0.0214 | 0.4189 | -0.4616 | 0.006299 | -0.006299 | 0.010919 | -0.010919 | labeled_1h |
-| STX | aligned_pressure_watch | -1 | -0.2766 | -0.2751 | -0.2782 | 0.008348 | -0.008348 | 0.009052 | -0.009052 | labeled_1h |
+| NEAR | aligned_pressure_watch | 1 | 0.8025 | 0.6523 | 0.9526 |  |  |  |  | pending_15m |
+| HYPE | aligned_pressure_watch | 1 | 0.7656 | 0.5313 | 1.0000 |  |  |  |  | pending_15m |
+| SOL | aligned_pressure_watch | 1 | 0.7038 | 0.4076 | 1.0000 |  |  |  |  | pending_15m |
+| SEI | aligned_pressure_watch | 1 | 0.7019 | 0.4038 | 1.0000 |  |  |  |  | pending_15m |
+| BTC | aligned_pressure_watch | 1 | 0.5821 | 0.1643 | 1.0000 |  |  |  |  | pending_15m |
+| ETH | aligned_pressure_watch | 1 | 0.5055 | 0.1090 | 0.9020 |  |  |  |  | pending_15m |
+| ADA | aligned_pressure_watch | 1 | 0.4817 | 0.0589 | 0.9045 |  |  |  |  | pending_15m |
+| ARB | aligned_pressure_watch | -1 | -0.4561 | -0.4803 | -0.4319 |  |  |  |  | pending_15m |
+| POL | aligned_pressure_watch | 1 | 0.4213 | 0.2801 | 0.5625 |  |  |  |  | pending_15m |
+| MON | book_trade_divergence_watch | 1 | 0.3612 | 0.7653 | -0.0429 |  |  |  |  | pending_15m |
+| MEGA | aligned_pressure_watch | -1 | -0.3196 | -0.2932 | -0.3459 |  |  |  |  | pending_15m |
+| OP | aligned_pressure_watch | -1 | -0.3140 | -0.0466 | -0.5814 |  |  |  |  | pending_15m |
+| STRK | book_trade_divergence_watch | -1 | -0.2869 | 0.4048 | -0.9787 |  |  |  |  | pending_15m |
+| CHIP | book_trade_divergence_watch | 1 | 0.2583 | 0.5580 | -0.0413 |  |  |  |  | pending_15m |
+| BERA | aligned_pressure_watch | 1 | 0.2569 | 0.3540 | 0.1598 |  |  |  |  | pending_15m |
+| XMR | book_trade_divergence_watch | -1 | -0.2398 | 0.0935 | -0.5731 |  |  |  |  | pending_15m |
+| STX | aligned_pressure_watch | 1 | 0.2287 | 0.2079 | 0.2495 |  |  |  |  | pending_15m |
+| SUI | book_trade_divergence_watch | -1 | -0.1921 | 0.3782 | -0.7623 |  |  |  |  | pending_15m |
+| BNB | book_trade_divergence_watch | 1 | 0.0991 | 0.2368 | -0.0385 |  |  |  |  | pending_15m |
+| APT | book_trade_divergence_watch | 1 | 0.0110 | 0.3716 | -0.3495 |  |  |  |  | pending_15m |
 
 ## Interpretation
 
