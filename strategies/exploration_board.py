@@ -30,6 +30,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_method_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
         _exchange_stablecoin_inflow_readiness_row(root),
+        _options_volatility_survival_row(root),
         _fundamental_sentiment_cross_section_row(root),
         _multimodal_btc_eth_feature_alignment_row(root),
         _sentiment_contagion_negative_control_row(root),
@@ -381,6 +382,33 @@ def _exchange_stablecoin_inflow_readiness_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="direct exchange stablecoin inflow is not separated from chain stablecoin migration",
         next_step="run current exchange stablecoin inflow readiness after stablecoin exchange inflow proxy",
+    )
+
+
+def _options_volatility_survival_row(root: Path) -> ExplorationRow:
+    path = root / "options_volatility" / "current_options_volatility_survival.csv"
+    best = _best_numeric_row(path, key="survival_score")
+    if best:
+        return ExplorationRow(
+            lane="options_volatility_survival",
+            status=best.get("status", "options_volatility_survival"),
+            strongest_current_signal=(
+                f"{best.get('candidate_id', '')}: "
+                f"score={best.get('survival_score', '')}, "
+                f"iv={best.get('atm_iv', '')}, "
+                f"rv24={best.get('realized_vol_24h', '')}, "
+                f"premium={best.get('iv_premium_24h', '')}, "
+                f"max_loss={best.get('max_loss_pct', '')}"
+            ),
+            main_gap=best.get("missing_work", "options candidate still needs hedge and quote evidence"),
+            next_step=best.get("next_probe", "paper-check the top options volatility survival candidate"),
+        )
+    return ExplorationRow(
+        lane="options_volatility_survival",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="cheap-IV rows are not separated by quote, premium, depth, and hedge survival",
+        next_step="run current options volatility survival after volatility actionability",
     )
 
 

@@ -104,6 +104,7 @@ DEFAULT_COMMANDS = (
     ("strategies.options_volatility.current_options_volatility_paper_tickets",),
     ("strategies.options_volatility.current_volatility_actionability",),
     ("strategies.options_volatility.current_volatility_hedge_candidates",),
+    ("strategies.options_volatility.current_options_volatility_survival",),
     ("strategies.prediction_markets.current_event_probability_refresh",),
     ("strategies.prediction_markets.current_event_probability_actionability",),
     ("strategies.prediction_markets.current_event_crypto_hedge_candidates",),
