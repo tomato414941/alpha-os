@@ -1511,6 +1511,24 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _anomaly_stress_row(root: Path) -> ExplorationRow:
+    tradeability_path = root / "anomaly_stress" / "current_peg_anomaly_tradeability.csv"
+    tradeability = _best_numeric_row(tradeability_path, key="score")
+    if tradeability:
+        return ExplorationRow(
+            lane="anomaly_stress",
+            status=tradeability.get("status", "peg_anomaly_tradeability"),
+            strongest_current_signal=(
+                f"stablecoin_liquidity: {tradeability.get('symbol', '')}, "
+                f"side={tradeability.get('side', '')}, score={tradeability.get('score', '')}, "
+                f"pool_matches={tradeability.get('dex_pool_match_count', '')}, "
+                f"yield_conflicts={tradeability.get('yield_conflict_count', '')}"
+            ),
+            main_gap=tradeability.get(
+                "reason",
+                "peg anomaly needs route, quote freshness, redemption, and executable depth checks",
+            ),
+            next_step=tradeability.get("next_step", "run peg anomaly tradeability checks"),
+        )
     path = root / "anomaly_stress" / "current_cross_market_stress_anomaly.csv"
     best = _best_numeric_row(path, key="score")
     if best:

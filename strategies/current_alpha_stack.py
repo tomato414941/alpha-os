@@ -28,6 +28,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_options_volatility_stacks(root),
         _prediction_market_event_model_stack(root),
         _cross_market_stress_anomaly_stack(root),
+        *_peg_anomaly_tradeability_stacks(root),
         *_futures_basis_stacks(root),
         *_derivatives_positioning_stacks(root),
         *_cross_exchange_funding_stacks(root),
@@ -405,17 +406,20 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
 
 
 def _cross_market_stress_anomaly_stack(root: Path) -> AlphaStackRow | None:
+    status_values = {
+        "cross_market_peg_stress_anomaly",
+        "cross_market_lending_stress_anomaly",
+        "cross_market_yield_peg_anomaly",
+        "cross_market_volatility_mispricing_watch",
+        "cross_market_event_probability_anomaly",
+        "cross_market_execution_spread_anomaly",
+    }
+    if (root / "anomaly_stress" / "current_peg_anomaly_tradeability.csv").exists():
+        status_values = status_values - {"cross_market_peg_stress_anomaly"}
     anomaly = _best_by_score(
         root / "anomaly_stress" / "current_cross_market_stress_anomaly.csv",
         score_key="score",
-        status_values={
-            "cross_market_peg_stress_anomaly",
-            "cross_market_lending_stress_anomaly",
-            "cross_market_yield_peg_anomaly",
-            "cross_market_volatility_mispricing_watch",
-            "cross_market_event_probability_anomaly",
-            "cross_market_execution_spread_anomaly",
-        },
+        status_values=status_values,
     )
     if not anomaly:
         return None
@@ -440,6 +444,57 @@ def _cross_market_stress_anomaly_stack(root: Path) -> AlphaStackRow | None:
         ),
         next_step=anomaly.get("next_step", "run a specific falsification test for the top anomaly"),
     )
+
+
+def _peg_anomaly_tradeability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "anomaly_stress" / "current_peg_anomaly_tradeability.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "peg_anomaly_tradeability_candidate",
+                "peg_anomaly_mechanics_watch",
+                "peg_anomaly_stale_or_unrouted",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:6]:
+        symbol = ticket.get("symbol", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_peg_anomaly_tradeability",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=2 if _intish(ticket.get("yield_conflict_count")) > 0 else 1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="anomaly_stress + stablecoin_liquidity",
+                evidence=(
+                    f"{symbol}: price={ticket.get('price', '')}, "
+                    f"peg_deviation={ticket.get('peg_deviation', '')}, "
+                    f"pool_matches={ticket.get('dex_pool_match_count', '')}, "
+                    f"best_pool={ticket.get('best_pool', '')}, "
+                    f"pool_reserve={ticket.get('best_pool_reserve_usd', '')}, "
+                    f"yield_conflicts={ticket.get('yield_conflict_count', '')}"
+                ),
+                conflict=ticket.get(
+                    "reason",
+                    "peg anomaly needs a route, quote freshness, redemption path, and executable depth",
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"check {symbol} route, quote freshness, redemption path, and executable depth",
+                ),
+            )
+        )
+    return tuple(output)
 
 
 def _futures_basis_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
@@ -1744,6 +1799,11 @@ def _on_chain_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 def _stablecoin_peg_stress_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "stablecoin_liquidity" / "current_peg_stress_screen.csv")
+    tradeability_symbols = {
+        row.get("symbol", "").lower()
+        for row in _read_rows(root / "anomaly_stress" / "current_peg_anomaly_tradeability.csv")
+        if row.get("symbol")
+    }
     tickets = sorted(
         (
             row
@@ -1754,6 +1814,7 @@ def _stablecoin_peg_stress_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 "paper_premium_mean_reversion_watch",
                 "peg_supply_stress_watch",
             }
+            and row.get("symbol", "").lower() not in tradeability_symbols
         ),
         key=lambda row: _float(row.get("score")),
         reverse=True,
@@ -1982,6 +2043,13 @@ def _float(value: str | None) -> float:
     return float(value) if value else 0.0
 
 
+def _intish(value: str | None) -> int:
+    try:
+        return int(float(value)) if value else 0
+    except ValueError:
+        return 0
+
+
 def _abs_float(value: str | None) -> float:
     return abs(_float(value))
 
@@ -2003,6 +2071,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "cross_market_volatility_mispricing_watch": 76.0,
         "cross_market_event_probability_anomaly": 78.0,
         "cross_market_execution_spread_anomaly": 72.0,
+        "peg_anomaly_tradeability_candidate": 72.0,
+        "peg_anomaly_mechanics_watch": 58.0,
+        "peg_anomaly_stale_or_unrouted": 42.0,
+        "peg_anomaly_deprioritize": 35.0,
         "paper_short_candidate": 72.0,
         "paper_long_candidate": 72.0,
         "paper_short_put_spread_candidate": 68.0,

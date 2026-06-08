@@ -11,4 +11,5 @@ spread dislocations.
 
 ```bash
 uv run python -m strategies.anomaly_stress.current_cross_market_stress_anomaly
+uv run python -m strategies.anomaly_stress.current_peg_anomaly_tradeability
 ```
