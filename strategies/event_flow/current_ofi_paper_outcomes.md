@@ -4,17 +4,17 @@ This checks opened paper tickets against the latest available public marks. It i
 
 | ticket | status | decision | asset | venue | entry | current | dir bps | outcome | missing evidence | next step |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- |
-| ofi-paper-01-eth-short | ready | paper_short | ETH |  | 1711.700000000000 | 1711.700000000000 | -0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| ofi-paper-02-sui-short | ready | paper_short | SUI |  | 0.767800000000 | 0.767800000000 | -0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| ofi-paper-03-bnb-short | ready | paper_short | BNB |  | 609.590000000000 | 609.590000000000 | -0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
+| ofi-paper-01-eth-short | ready | paper_short | ETH |  | 1711.700000000000 | 1695.200000000000 | 96.39539639 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
+| ofi-paper-02-sui-short | ready | paper_short | SUI |  | 0.767800000000 | 0.761320000000 | 84.39697838 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
+| ofi-paper-03-bnb-short | ready | paper_short | BNB |  | 609.590000000000 | 606.500000000000 | 50.68980790 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 
 ## Summary
 
 - ready: 3
-- wins: 0
+- wins: 3
 - losses: 0
-- flat: 3
+- flat: 0
 - observations: 0
 - pending: 0
-- best ready mark: ofi-paper-01-eth-short ETH -0.00000000bps paper_mark_flat
-- worst ready mark: ofi-paper-01-eth-short ETH -0.00000000bps paper_mark_flat
+- best ready mark: ofi-paper-01-eth-short ETH 96.39539639bps paper_mark_win
+- worst ready mark: ofi-paper-03-bnb-short BNB 50.68980790bps paper_mark_win
