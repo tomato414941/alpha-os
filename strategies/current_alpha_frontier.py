@@ -278,6 +278,35 @@ def _build_lane(rule: LaneRule, *, alpha_rows: tuple[dict[str, str], ...]) -> Fr
                 next_probe=rule.next_probe,
             )
     if rule.lane == "directional ML / RL policy learning":
+        expansion_rows = _read_rows(ROOT / "policy_learning" / "current_policy_expansion_targets.csv")
+        if expansion_rows:
+            actionable = tuple(
+                row
+                for row in expansion_rows
+                if row.get("decision")
+                in {
+                    "expand_supported_preference_now",
+                    "collect_expansion_labels",
+                    "repeat_seed_before_expansion",
+                }
+            )
+            best_pool = actionable or expansion_rows
+            best = max(best_pool, key=lambda row: _float(row.get("expansion_score")))
+            best_score = _float(best.get("expansion_score"))
+            active_candidates = len(actionable) or len(expansion_rows)
+            return FrontierLane(
+                lane=rule.lane,
+                current_status=best.get("decision", "policy_expansion_ready"),
+                frontier_score=rule.base_priority
+                + min(active_candidates * 1.0, 12.0)
+                + min(best_score / 10.0, 12.0),
+                active_candidates=active_candidates,
+                best_score=best_score,
+                best_opportunity=best.get("target_id", ""),
+                evidence_sources="policy_learning/current_policy_expansion_targets",
+                missing_work=rule.missing_work,
+                next_probe="expand OOS-supported action preferences into adjacent current lanes and collect fresh rewards",
+            )
         oos_rows = _read_rows(ROOT / "policy_learning" / "current_action_preference_oos_check.csv")
         if oos_rows:
             supported = tuple(
