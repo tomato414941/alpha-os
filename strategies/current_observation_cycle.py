@@ -262,6 +262,7 @@ DEFAULT_COMMANDS = (
     ("strategies.current_cost_survival_cross_section",),
     ("strategies.current_alpha_promotion_frontier",),
     ("strategies.current_alpha_promotion_worklist",),
+    ("strategies.current_alpha_repeat_fill_survival",),
     ("strategies.current_cost_adjusted_cluster_repeat_plan",),
     ("strategies.current_split_first_cluster_lane_plan",),
     ("strategies.current_split_first_lane_repeat_queue",),

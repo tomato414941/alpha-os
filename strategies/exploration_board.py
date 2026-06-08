@@ -65,6 +65,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _cost_survival_cross_section_row(root),
         _alpha_promotion_frontier_row(root),
         _alpha_promotion_worklist_row(root),
+        _alpha_repeat_fill_survival_row(root),
         _cost_adjusted_cluster_repeat_plan_row(root),
         _split_first_cluster_lane_plan_row(root),
         _split_first_lane_repeat_queue_row(root),
@@ -1600,6 +1601,33 @@ def _alpha_promotion_worklist_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="promotion frontier has not been reduced to a non-duplicate worklist",
         next_step="run current alpha promotion worklist after promotion frontier",
+    )
+
+
+def _alpha_repeat_fill_survival_row(root: Path) -> ExplorationRow:
+    path = root / "current_alpha_repeat_fill_survival.csv"
+    best = _best_numeric_row(path, key="survival_score")
+    if best:
+        return ExplorationRow(
+            lane="alpha_repeat_fill_survival",
+            status=best.get("status", "alpha_repeat_fill_survival"),
+            strongest_current_signal=(
+                f"{best.get('asset', '')}: "
+                f"{best.get('decision', '')}, "
+                f"score={best.get('survival_score', '')}, "
+                f"first_net={best.get('first_repeat_net_after_cost_bps', '')}, "
+                f"second_net={best.get('second_repeat_net_after_cost_bps', '')}, "
+                f"second={best.get('second_repeat_outcome', '')}"
+            ),
+            main_gap=best.get("required_evidence", "repeat row still lacks fill and stop evidence"),
+            next_step=best.get("next_step", "rerun repeat fill survival after fresh repeat marks"),
+        )
+    return ExplorationRow(
+        lane="alpha_repeat_fill_survival",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="repeat/fill worklist rows have not been checked against repeat evidence",
+        next_step="run current alpha repeat fill survival after promotion worklist",
     )
 
 
