@@ -13,8 +13,8 @@ This checks opened paper tickets against the latest available public marks. It i
 | paper-07-fartcoin-volume-dislocation | ready | paper_long | FARTCOIN | HL | 0.115150000000 | 0.115440000000 | 25.18454190 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-08-xpl-volume-dislocation | ready | paper_long | XPL | HL | 0.070094000000 | 0.069442000000 | -93.01794733 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | paper-09-sol-volume-dislocation | ready | paper_long | SOL | HL | 65.737000000000 | 66.264000000000 | 80.16794195 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
-| paper-10-arbusdt-intraday-derivatives | ready | paper_short | ARBUSDT |  | 0.081465000000 | 0.082525000000 | -130.11722826 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
-| paper-11-arbusdt-intraday-derivatives | ready | paper_short | ARBUSDT |  | 0.081465000000 | 0.082525000000 | -130.11722826 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
+| paper-10-arb-intraday-derivatives | pending | paper_short | ARB |  | 0.082460000000 | 0.082460000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| paper-11-arb-intraday-derivatives | pending | paper_short | ARB |  | 0.082460000000 | 0.082460000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-12-virtual-volume-dislocation | ready | paper_long | VIRTUAL | HL | 0.579990000000 | 0.582650000000 | 45.86285970 | paper_mark_win | fill, funding, stop, and adverse excursion still missing | record fill, funding, stop, and adverse-excursion assumptions before promotion |
 | paper-13-eth-volume-dislocation | ready | paper_long | ETH | HL | 1669.100000000000 | 1667.800000000000 | -7.78862860 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | paper-14-event-event-probability | ready | paper_long | EVENT | prediction_market | 0.100000 | 0.100000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
@@ -44,9 +44,9 @@ This checks opened paper tickets against the latest available public marks. It i
 | paper-38-stable-derivatives-positioning | ready | paper_observe | STABLE |  | 0.033084000000 | 0.033096000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-39-zec-derivatives-positioning | pending | paper_observe | ZEC |  | 429.220000000000 | 425.810000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-40-zec-attention-event | pending | paper_long | ZEC |  | 429.220000000000 | 425.810000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| paper-41-usdt-derivatives-positioning | ready | paper_observe | USDT |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
+| paper-41-sol-derivatives-positioning | ready | paper_observe | SOL |  | 66.264000000000 | 66.264000000000 |  | observe_mark_flat | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
 | paper-42-stable-derivatives-positioning | ready | paper_observe | STABLE |  | 0.033084000000 | 0.033096000000 |  | observe_mark_moved | observation-only ticket; directional promotion is not allowed | record the context move only; do not promote without a directional ticket |
-| paper-43-labusdtm-derivatives-positioning | ready | paper_observe | LABUSDTM |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
+| paper-43-lab-derivatives-positioning | ready | paper_observe | LAB |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | paper-44-pengu-derivatives-positioning | pending | paper_observe | PENGU |  | 0.006843000000 | 0.006847000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | paper-45-ethereum-defi-yield | ready | paper_observe | ETHEREUM |  |  |  |  | missing_current_mark | entry or current mark is missing | fill missing current mark before judging the ticket |
 | paper-46-btc-options-volatility | pending | paper_observe | BTC |  | 63429.000000000000 | 63420.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
@@ -57,11 +57,11 @@ This checks opened paper tickets against the latest available public marks. It i
 
 ## Summary
 
-- ready: 37
+- ready: 35
 - wins: 16
-- losses: 10
+- losses: 8
 - flat: 1
-- observations: 4
-- pending: 13
+- observations: 5
+- pending: 15
 - best ready mark: paper-03-inj-volume-dislocation INJ 191.51475694bps paper_mark_win
 - worst ready mark: paper-17-event-event-probability EVENT -344.82758621bps paper_mark_loss

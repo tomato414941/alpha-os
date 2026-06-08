@@ -280,11 +280,14 @@ def _asset(*, evidence: str, opportunity: str) -> str:
         if "/" in subject:
             left, right = subject.split("/", 1)
             right_symbol = re.sub(r"[^A-Za-z0-9]", "", right.split()[0])
-            if right_symbol.isupper() and 2 <= len(right_symbol) <= 12:
+            if right_symbol.isupper() and 2 <= len(right_symbol) <= 12 and right_symbol not in {"AI"}:
                 return right_symbol
             left_symbol = re.sub(r"[^A-Za-z0-9]", "", left.split()[-1])
             if left_symbol:
                 return left_symbol.upper()
+        derivative_symbol = _derivative_base_symbol(subject)
+        if derivative_symbol:
+            return derivative_symbol
         option_match = re.match(r"^((?:BTC|ETH))\s+\d{4}-\d{2}-\d{2}\b", subject)
         if option_match:
             return option_match.group(1)
@@ -293,6 +296,16 @@ def _asset(*, evidence: str, opportunity: str) -> str:
             return source_symbol_match.group(1)
         return subject
     return opportunity.split("_", 1)[0].upper()
+
+
+def _derivative_base_symbol(value: str) -> str:
+    match = re.search(r"\b([A-Z0-9]{2,12})-(?:USDT|USD|USDC)\b", value)
+    if match:
+        return match.group(1)
+    match = re.search(r"\b([A-Z0-9]{2,12})(?:USDTM|USDT|USD|USDC)\b", value)
+    if match:
+        return match.group(1)
+    return ""
 
 
 def _venue(*, evidence: str, sources: str) -> str:
