@@ -115,6 +115,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - checks opened paper tickets against latest public marks after checkpoints
 - `current_paper_ticket_outcomes.md`
   - latest paper-ticket mark outcomes and remaining evidence gaps
+- `current_paper_ticket_action_queue.py`
+  - turns paper-ticket outcomes into promotion, repeat, deprioritization, or wait actions
+- `current_paper_ticket_action_queue.md`
+  - latest action queue from paper-ticket outcomes
 - `current_observation_cycle.py`
   - refreshes current stack, plan, ticket outcomes, symbol queues, and board
     without reopening paper tickets unless `--open-new-tickets` is passed;

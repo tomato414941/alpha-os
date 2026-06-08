@@ -24,6 +24,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _paper_probe_plan_row(root),
         _paper_tickets_row(root),
         _paper_ticket_outcomes_row(root),
+        _paper_ticket_action_queue_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -169,6 +170,31 @@ def _paper_ticket_outcomes_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="opened paper tickets have not been checked against current marks",
         next_step="run current paper ticket outcomes after ticket checkpoints mature",
+    )
+
+
+def _paper_ticket_action_queue_row(root: Path) -> ExplorationRow:
+    path = root / "current_paper_ticket_action_queue.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="paper_ticket_action_queue",
+            status=best.get("action", "paper_ticket_action"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}, "
+                f"outcome={best.get('outcome', '')}"
+            ),
+            main_gap=best.get("reason", "paper-ticket action still needs follow-up evidence"),
+            next_step=best.get("next_step", "run the top paper-ticket action"),
+        )
+    return ExplorationRow(
+        lane="paper_ticket_action_queue",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="paper-ticket outcomes have not been converted into next actions",
+        next_step="run current paper ticket action queue after outcomes",
     )
 
 
