@@ -4,21 +4,21 @@ This labels source-specific follow-up observations against subsequent Hyperliqui
 
 | asset | source | action | dir | priority | raw 15m | dir 15m | raw 1h | dir 1h | status |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| NEAR | exchange_catalyst | network_event_watch | 1 | 8.3498 | 0.001128 | 0.001128 |  |  | labeled_15m_pending_1h |
-| NEAR | on_chain_flow | chain_flow_reversal_watch | 1 | 8.3498 | 0.001128 | 0.001128 |  |  | labeled_15m_pending_1h |
-| SUI | on_chain_flow | chain_flow_reversal_watch | 1 | 3.6307 | 0.000711 | 0.000711 |  |  | labeled_15m_pending_1h |
-| SOL | exchange_catalyst | exchange_removal_watch | -1 | 5.2019 | -0.000593 | 0.000593 |  |  | labeled_15m_pending_1h |
-| BTC | on_chain_flow | chain_flow_reversal_watch | 1 | 3.0455 | -0.000301 | -0.000301 |  |  | labeled_15m_pending_1h |
-| BNB | l2_imbalance | visible_book_imbalance | 1 | 4.8127 | -0.000352 | -0.000352 |  |  | labeled_15m_pending_1h |
-| BNB | on_chain_flow | chain_flow_reversal_watch | 1 | 4.8127 | -0.000352 | -0.000352 |  |  | labeled_15m_pending_1h |
-| ETH | on_chain_flow | chain_flow_reversal_watch | 1 | 3.9347 | -0.000540 | -0.000540 |  |  | labeled_15m_pending_1h |
-| SOL | on_chain_flow | chain_flow_reversal_watch | 1 | 5.2019 | -0.000593 | -0.000593 |  |  | labeled_15m_pending_1h |
-| WLD | l2_imbalance | visible_book_imbalance | 1 | 2.3679 | -0.000711 | -0.000711 |  |  | labeled_15m_pending_1h |
-| XMR | l2_imbalance | visible_book_imbalance | 1 | 2.3874 | -0.000820 | -0.000820 |  |  | labeled_15m_pending_1h |
-| APT | on_chain_flow | chain_flow_reversal_watch | 1 | 3.3984 | -0.000900 | -0.000900 |  |  | labeled_15m_pending_1h |
-| ARB | on_chain_flow | chain_flow_reversal_watch | 1 | 3.7070 | -0.001096 | -0.001096 |  |  | labeled_15m_pending_1h |
-| HYPE | on_chain_flow | chain_flow_reversal_watch | 1 | 2.6935 | -0.002088 | -0.002088 |  |  | labeled_15m_pending_1h |
-| ADA | on_chain_flow | chain_flow_reversal_watch | 1 | 3.4842 | 0.000000 | 0.000000 |  |  | labeled_15m_pending_1h |
+| NEAR | exchange_catalyst | network_event_watch | 1 | 8.3498 | 0.007428 | 0.007428 | 0.016689 | 0.016689 | labeled_1h |
+| NEAR | on_chain_flow | chain_flow_reversal_watch | 1 | 8.3498 | 0.007428 | 0.007428 | 0.016689 | 0.016689 | labeled_1h |
+| XMR | l2_imbalance | visible_book_imbalance | 1 | 2.3874 | 0.004133 | 0.004133 | 0.015415 | 0.015415 | labeled_1h |
+| HYPE | on_chain_flow | chain_flow_reversal_watch | 1 | 2.6935 | 0.003969 | 0.003969 | 0.003889 | 0.003889 | labeled_1h |
+| WLD | l2_imbalance | visible_book_imbalance | 1 | 2.3679 | 0.003326 | 0.003326 | 0.001339 | 0.001339 | labeled_1h |
+| SUI | on_chain_flow | chain_flow_reversal_watch | 1 | 3.6307 | 0.001945 | 0.001945 | -0.001838 | -0.001838 | labeled_1h |
+| SOL | exchange_catalyst | exchange_removal_watch | -1 | 5.2019 | -0.000380 | 0.000380 | -0.002769 | 0.002769 | labeled_1h |
+| SOL | on_chain_flow | chain_flow_reversal_watch | 1 | 5.2019 | -0.000380 | -0.000380 | -0.002769 | -0.002769 | labeled_1h |
+| ETH | on_chain_flow | chain_flow_reversal_watch | 1 | 3.9347 | -0.000720 | -0.000720 | -0.000900 | -0.000900 | labeled_1h |
+| BTC | on_chain_flow | chain_flow_reversal_watch | 1 | 3.0455 | -0.000809 | -0.000809 | -0.000841 | -0.000841 | labeled_1h |
+| ADA | on_chain_flow | chain_flow_reversal_watch | 1 | 3.4842 | -0.001172 | -0.001172 | -0.003516 | -0.003516 | labeled_1h |
+| ARB | on_chain_flow | chain_flow_reversal_watch | 1 | 3.7070 | -0.001583 | -0.001583 | -0.006821 | -0.006821 | labeled_1h |
+| BNB | l2_imbalance | visible_book_imbalance | 1 | 4.8127 | -0.001709 | -0.001709 | -0.002798 | -0.002798 | labeled_1h |
+| BNB | on_chain_flow | chain_flow_reversal_watch | 1 | 4.8127 | -0.001709 | -0.001709 | -0.002798 | -0.002798 | labeled_1h |
+| APT | on_chain_flow | chain_flow_reversal_watch | 1 | 3.3984 | -0.002999 | -0.002999 | -0.007196 | -0.007196 | labeled_1h |
 
 ## Interpretation
 

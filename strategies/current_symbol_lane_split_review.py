@@ -227,7 +227,12 @@ def _support_state(row: dict[str, str]) -> str:
         return "paper_1h_supported"
     if "volume_dislocation_execution_probe" in text:
         return "paper_execution_gated"
-    if "paper_execution_probe" in text or "small_paper_probe" in text or "microstructure_small_paper_probe" in text:
+    if (
+        "paper_execution_probe" in text
+        or "small_paper_probe" in text
+        or "microstructure_small_paper_probe" in text
+        or "small_repeat_paper_check" in text
+    ):
         return "paper_execution_gated"
     if "aligned_pressure_watch" in text or "book_trade_divergence_watch" in text:
         return "microstructure_label_pending"
