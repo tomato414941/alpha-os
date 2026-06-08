@@ -42,8 +42,8 @@ def build_clob_depth_rows(
         market = _fetch_market(market_id)
         yes_token_id, no_token_id = _token_ids(market.get("clobTokenIds"))
         question = str(market.get("question") or "")
-        rows.append(_build_depth_row(market_id=market_id, question=question, outcome="Yes", token_id=yes_token_id))
-        rows.append(_build_depth_row(market_id=market_id, question=question, outcome="No", token_id=no_token_id))
+        rows.append(_try_build_depth_row(market_id=market_id, question=question, outcome="Yes", token_id=yes_token_id))
+        rows.append(_try_build_depth_row(market_id=market_id, question=question, outcome="No", token_id=no_token_id))
     return tuple(sorted(rows, key=lambda row: row.visible_depth_score, reverse=True))
 
 
@@ -179,6 +179,60 @@ def _build_depth_row(
         ask_depth_to_5c=ask_depth_to_5c,
         visible_depth_score=(min(bid_depth_to_5c, ask_depth_to_5c) / 1_000.0) - (spread * 10.0),
         reason=_reason(bid_depth_to_5c=bid_depth_to_5c, ask_depth_to_5c=ask_depth_to_5c, spread=spread),
+    )
+
+
+def _try_build_depth_row(
+    *,
+    market_id: str,
+    question: str,
+    outcome: str,
+    token_id: str,
+) -> ClobDepthRow:
+    if not token_id:
+        return _unavailable_depth_row(
+            market_id=market_id,
+            question=question,
+            outcome=outcome,
+            token_id=token_id,
+            reason="missing CLOB token id",
+        )
+    try:
+        return _build_depth_row(market_id=market_id, question=question, outcome=outcome, token_id=token_id)
+    except requests.RequestException as exc:
+        status_code = getattr(exc.response, "status_code", None)
+        suffix = f"HTTP {status_code}" if status_code is not None else exc.__class__.__name__
+        return _unavailable_depth_row(
+            market_id=market_id,
+            question=question,
+            outcome=outcome,
+            token_id=token_id,
+            reason=f"CLOB book unavailable: {suffix}",
+        )
+
+
+def _unavailable_depth_row(
+    *,
+    market_id: str,
+    question: str,
+    outcome: str,
+    token_id: str,
+    reason: str,
+) -> ClobDepthRow:
+    return ClobDepthRow(
+        market_id=market_id,
+        question=question,
+        outcome=outcome,
+        token_id=token_id,
+        best_bid=0.0,
+        best_ask=0.0,
+        spread=0.0,
+        top_bid_size=0.0,
+        top_ask_size=0.0,
+        bid_depth_to_5c=0.0,
+        ask_depth_to_5c=0.0,
+        visible_depth_score=0.0,
+        reason=reason,
     )
 
 
