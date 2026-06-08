@@ -2773,6 +2773,8 @@ def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "market_breadth" / "current_volume_price_dislocation.csv")
     labels = _read_rows(root / "market_breadth" / "current_volume_price_dislocation_labels.csv")
     execution_rows = _read_rows(root / "market_breadth" / "current_volume_price_dislocation_execution_gate.csv")
+    action_rows = _paper_action_by_opportunity(root)
+    fill_risk_rows = _paper_fill_risk_by_opportunity(root)
     candidates_by_symbol = {row.get("symbol", ""): row for row in rows}
     execution_by_symbol = {row.get("symbol", ""): row for row in execution_rows}
     tickets = (
@@ -2797,18 +2799,36 @@ def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     output: list[AlphaStackRow] = []
     for ticket in tickets[:8]:
         symbol = ticket.get("symbol", "")
+        opportunity = f"{symbol.lower()}_volume_price_dislocation"
         candidate = candidates_by_symbol.get(symbol, ticket)
         execution = execution_by_symbol.get(symbol, {})
-        status = _market_breadth_status(ticket, execution=execution)
+        action = action_rows.get(opportunity, {})
+        fill_risk = fill_risk_rows.get(opportunity, {})
+        status = _paper_checked_status(
+            fallback=_market_breadth_status(ticket, execution=execution),
+            action=action,
+            fill_risk=fill_risk,
+        )
         output.append(
             AlphaStackRow(
-                opportunity=f"{symbol.lower()}_volume_price_dislocation",
+                opportunity=opportunity,
                 status=status,
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
                     status,
-                    source_count=3 if execution else 2 if ticket.get("label_status") else 1,
-                    raw_score=_market_breadth_raw_score(ticket=ticket, execution=execution),
+                    source_count=(
+                        3
+                        + (1 if action else 0)
+                        + (1 if fill_risk else 0)
+                        if execution
+                        else 2 if ticket.get("label_status") else 1
+                    ),
+                    raw_score=_market_breadth_raw_score(
+                        ticket=ticket,
+                        execution=execution,
+                        action=action,
+                        fill_risk=fill_risk,
+                    ),
                 ),
                 sources="market_breadth + market_price_context",
                 evidence=(
@@ -2821,9 +2841,19 @@ def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     f"price30d={candidate.get('price_change_30d', '')}"
                     f"{_market_breadth_label_evidence(ticket)}"
                     f"{_market_breadth_execution_evidence(execution)}"
+                    f"{_paper_action_evidence(action)}"
+                    f"{_paper_fill_risk_evidence(fill_risk)}"
                 ),
-                conflict=_market_breadth_conflict(ticket, execution=execution),
-                next_step=_market_breadth_next_step(ticket, execution=execution),
+                conflict=_paper_checked_conflict(
+                    fallback=_market_breadth_conflict(ticket, execution=execution),
+                    action=action,
+                    fill_risk=fill_risk,
+                ),
+                next_step=_paper_checked_next_step(
+                    fallback=_market_breadth_next_step(ticket, execution=execution),
+                    action=action,
+                    fill_risk=fill_risk,
+                ),
             )
         )
     return tuple(output)
@@ -2861,7 +2891,19 @@ def _market_breadth_execution_rank(execution: dict[str, str]) -> int:
     }.get(execution.get("action", ""), 0)
 
 
-def _market_breadth_raw_score(*, ticket: dict[str, str], execution: dict[str, str]) -> float:
+def _market_breadth_raw_score(
+    *,
+    ticket: dict[str, str],
+    execution: dict[str, str],
+    action: dict[str, str],
+    fill_risk: dict[str, str],
+) -> float:
+    if _paper_source_rank(action) > _paper_source_rank(fill_risk) and action.get("directional_return_bps"):
+        return _float(action.get("directional_return_bps"))
+    if fill_risk:
+        return _float(fill_risk.get("estimated_net_after_cost_bps"))
+    if action:
+        return _float(action.get("directional_return_bps"))
     net_4h_bps = _float(execution.get("conservative_net_4h_bps"))
     return _float(ticket.get("score")) + min(max(net_4h_bps, 0.0) / 10.0, 50.0)
 
@@ -2975,6 +3017,146 @@ def _market_breadth_next_step(label: dict[str, str], *, execution: dict[str, str
     if status == "volume_dislocation_4h_contradicted_pending_12h":
         return f"do not promote {symbol} without a fresh non-overlapping positive label"
     return label.get("next_step", f"paper-label {symbol} market-breadth dislocation")
+
+
+def _paper_action_by_opportunity(root: Path) -> dict[str, dict[str, str]]:
+    rows = []
+    for rank, relative_path in (
+        (1, "current_paper_ticket_action_queue.csv"),
+        (1, "current_symbol_lane_paper_action_queue.csv"),
+        (2, "current_promoted_ticket_repeat_action_queue.csv"),
+        (2, "current_symbol_lane_promoted_repeat_action_queue.csv"),
+        (3, "current_second_promoted_ticket_repeat_action_queue.csv"),
+    ):
+        rows.extend(_with_source_rank(_read_rows(root / relative_path), rank=rank))
+    return _latest_paper_checked_row_by_opportunity(rows, score_column="priority")
+
+
+def _paper_fill_risk_by_opportunity(root: Path) -> dict[str, dict[str, str]]:
+    rows = []
+    for rank, relative_path in (
+        (1, "current_paper_ticket_fill_risk_check.csv"),
+        (1, "current_symbol_lane_paper_fill_risk_check.csv"),
+        (2, "current_promoted_ticket_repeat_fill_risk_check.csv"),
+        (2, "current_symbol_lane_promoted_repeat_fill_risk_check.csv"),
+        (3, "current_second_promoted_ticket_repeat_fill_risk_check.csv"),
+    ):
+        rows.extend(_with_source_rank(_read_rows(root / relative_path), rank=rank))
+    return _latest_paper_checked_row_by_opportunity(rows, score_column="estimated_net_after_cost_bps")
+
+
+def _with_source_rank(rows: tuple[dict[str, str], ...], *, rank: int) -> list[dict[str, str]]:
+    output = []
+    for row in rows:
+        ranked = dict(row)
+        ranked["_source_rank"] = str(rank)
+        output.append(ranked)
+    return output
+
+
+def _latest_paper_checked_row_by_opportunity(
+    rows: list[dict[str, str]],
+    *,
+    score_column: str,
+) -> dict[str, dict[str, str]]:
+    output: dict[str, dict[str, str]] = {}
+    sorted_rows = sorted(
+        rows,
+        key=lambda row: (
+            _float(row.get("_source_rank")),
+            _float(row.get(score_column)),
+            _float(row.get("directional_return_bps")),
+        ),
+        reverse=True,
+    )
+    for row in sorted_rows:
+        opportunity = row.get("opportunity", "")
+        if not opportunity or opportunity in output:
+            continue
+        output[opportunity] = row
+    return output
+
+
+def _paper_checked_status(
+    *,
+    fallback: str,
+    action: dict[str, str],
+    fill_risk: dict[str, str],
+) -> str:
+    if _paper_source_rank(action) > _paper_source_rank(fill_risk) and action.get("action") == "deprioritize_or_repeat_once":
+        return "paper_mark_loss_deprioritize"
+    risk_action = fill_risk.get("risk_action", "")
+    if risk_action == "cost_adjusted_paper_probe":
+        return "paper_repeat_cost_adjusted_probe"
+    if risk_action == "cost_adjusted_edge_failed":
+        return "paper_repeat_cost_adjusted_failed"
+    action_value = action.get("action", "")
+    if action_value == "promote_to_fill_and_risk_check":
+        return "paper_mark_win_needs_fill_risk"
+    if action_value == "deprioritize_or_repeat_once":
+        return "paper_mark_loss_deprioritize"
+    if action_value:
+        return action_value
+    return fallback
+
+
+def _paper_action_evidence(action: dict[str, str]) -> str:
+    if not action:
+        return ""
+    return (
+        f"; paper_action={action.get('action', '')}, "
+        f"outcome={action.get('outcome', '')}, "
+        f"paper_bps={action.get('directional_return_bps', '')}"
+    )
+
+
+def _paper_source_rank(row: dict[str, str]) -> int:
+    return int(_float(row.get("_source_rank")))
+
+
+def _paper_fill_risk_evidence(fill_risk: dict[str, str]) -> str:
+    if not fill_risk:
+        return ""
+    return (
+        f"; fill_risk={fill_risk.get('risk_action', '')}, "
+        f"net_after_cost_bps={fill_risk.get('estimated_net_after_cost_bps', '')}, "
+        f"spread_bps={fill_risk.get('spread_bps', '')}, "
+        f"depth_usage={fill_risk.get('visible_depth_usage', '')}"
+    )
+
+
+def _paper_checked_conflict(
+    *,
+    fallback: str,
+    action: dict[str, str],
+    fill_risk: dict[str, str],
+) -> str:
+    if _paper_source_rank(action) > _paper_source_rank(fill_risk) and action.get("action") == "deprioritize_or_repeat_once":
+        return "latest repeat paper mark moved against the candidate direction; older fill-risk pass is stale"
+    if fill_risk.get("risk_action") == "cost_adjusted_paper_probe":
+        return "repeat paper mark survives rough spread, taker-fee, funding, and visible-depth checks; stop behavior, adverse excursion, and realized fills are still missing"
+    if fill_risk.get("risk_action") == "cost_adjusted_edge_failed":
+        return "latest repeat paper mark does not survive rough spread, taker-fee, and funding haircut"
+    if action.get("action") == "promote_to_fill_and_risk_check":
+        return "paper mark moved in the candidate direction, but fill, funding, stop, and adverse-excursion checks are still missing"
+    if action.get("action") == "deprioritize_or_repeat_once":
+        return "paper mark moved against the candidate direction; only independent support should justify another repeat"
+    return fallback
+
+
+def _paper_checked_next_step(
+    *,
+    fallback: str,
+    action: dict[str, str],
+    fill_risk: dict[str, str],
+) -> str:
+    if _paper_source_rank(action) > _paper_source_rank(fill_risk) and action.get("action") == "deprioritize_or_repeat_once":
+        return action.get("next_step", "deprioritize unless independent support justifies another repeat")
+    if fill_risk.get("next_step"):
+        return fill_risk["next_step"]
+    if action.get("next_step"):
+        return action["next_step"]
+    return fallback
 
 
 def _news_event_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
@@ -4216,6 +4398,8 @@ def _candidate_validation_repeat_stacks(root: Path) -> tuple[AlphaStackRow, ...]
 
 
 def _candidate_validation_repeat_execution_gate_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    action_rows = _paper_action_by_opportunity(root)
+    fill_risk_rows = _paper_fill_risk_by_opportunity(root)
     rows = sorted(
         (
             row
@@ -4231,16 +4415,23 @@ def _candidate_validation_repeat_execution_gate_stacks(root: Path) -> tuple[Alph
         source = row.get("source", "")
         venue = row.get("venue", "")
         trade_direction = row.get("trade_direction", "unknown")
-        status = row.get("gate_action", "")
+        opportunity = f"{asset.lower()}_{venue.lower()}_{_safe_fragment(source)}_repeat_execution_gate"
+        action = action_rows.get(opportunity, {})
+        fill_risk = fill_risk_rows.get(opportunity, {})
+        status = _paper_checked_status(
+            fallback=row.get("gate_action", ""),
+            action=action,
+            fill_risk=fill_risk,
+        )
         output.append(
             AlphaStackRow(
-                opportunity=f"{asset.lower()}_{venue.lower()}_{_safe_fragment(source)}_repeat_execution_gate",
+                opportunity=opportunity,
                 status=status,
                 side=f"{trade_direction}_{_safe_fragment(source)}_repeat_paper_check",
                 priority_score=_priority_score(
                     status,
-                    source_count=_intish(row.get("label_count")),
-                    raw_score=_float(row.get("rough_net15_bps")),
+                    source_count=_intish(row.get("label_count")) + (1 if action else 0) + (1 if fill_risk else 0),
+                    raw_score=_repeat_execution_raw_score(row=row, action=action, fill_risk=fill_risk),
                 ),
                 sources="candidate_validation + execution_context",
                 evidence=(
@@ -4252,18 +4443,43 @@ def _candidate_validation_repeat_execution_gate_stacks(root: Path) -> tuple[Alph
                     f"spread={row.get('spread_bps', '')}, "
                     f"depth10={row.get('near_depth_10bps_notional', '')}, "
                     f"rough_net15_bps={row.get('rough_net15_bps', '')}"
+                    f"{_paper_action_evidence(action)}"
+                    f"{_paper_fill_risk_evidence(fill_risk)}"
                 ),
-                conflict=(
-                    "repeat execution gate uses rough public spread and taker-cost haircut only; "
-                    "1h confirmation, realized fills, funding PnL, stop behavior, and adverse selection are missing"
+                conflict=_paper_checked_conflict(
+                    fallback=(
+                        "repeat execution gate uses rough public spread and taker-cost haircut only; "
+                        "1h confirmation, realized fills, funding PnL, stop behavior, and adverse selection are missing"
+                    ),
+                    action=action,
+                    fill_risk=fill_risk,
                 ),
-                next_step=row.get(
-                    "next_step",
-                    f"paper-check {venue} {asset}/{source} with 1h label and fill logs",
+                next_step=_paper_checked_next_step(
+                    fallback=row.get(
+                        "next_step",
+                        f"paper-check {venue} {asset}/{source} with 1h label and fill logs",
+                    ),
+                    action=action,
+                    fill_risk=fill_risk,
                 ),
             )
         )
     return tuple(output)
+
+
+def _repeat_execution_raw_score(
+    *,
+    row: dict[str, str],
+    action: dict[str, str],
+    fill_risk: dict[str, str],
+) -> float:
+    if _paper_source_rank(action) > _paper_source_rank(fill_risk) and action.get("directional_return_bps"):
+        return _float(action.get("directional_return_bps"))
+    if fill_risk:
+        return _float(fill_risk.get("estimated_net_after_cost_bps"))
+    if action:
+        return _float(action.get("directional_return_bps"))
+    return _float(row.get("rough_net15_bps"))
 
 
 def _repeat_summary_opportunity(group_key: str) -> str:
@@ -4420,6 +4636,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "public_treasury_concentration_watch": 54.0,
         "small_paper_probe": 60.0,
         "small_paper_probe_pending_1h": 45.0,
+        "paper_repeat_cost_adjusted_probe": 78.0,
+        "paper_mark_win_needs_fill_risk": 64.0,
+        "paper_repeat_cost_adjusted_failed": 34.0,
+        "paper_mark_loss_deprioritize": 24.0,
         "microstructure_small_paper_probe": 72.0,
         "aligned_pressure_watch": 64.0,
         "book_trade_divergence_watch": 58.0,
