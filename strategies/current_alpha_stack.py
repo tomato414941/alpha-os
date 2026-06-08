@@ -2347,55 +2347,143 @@ def _attention_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "market_breadth" / "current_volume_price_dislocation.csv")
-    tickets = sorted(
-        (
-            row
-            for row in rows
-            if row.get("status")
-            in {
-                "volume_reversal_candidate",
-                "capitulation_reversal_watch",
-                "breakout_continuation_watch",
-                "chase_risk",
-            }
-        ),
-        key=lambda row: _float(row.get("score")),
-        reverse=True,
+    labels = _read_rows(root / "market_breadth" / "current_volume_price_dislocation_labels.csv")
+    candidates_by_symbol = {row.get("symbol", ""): row for row in rows}
+    tickets = (
+        _ranked_market_breadth_labels(labels)
+        if labels
+        else sorted(
+            (
+                row
+                for row in rows
+                if row.get("status")
+                in {
+                    "volume_reversal_candidate",
+                    "capitulation_reversal_watch",
+                    "breakout_continuation_watch",
+                    "chase_risk",
+                }
+            ),
+            key=lambda row: _float(row.get("score")),
+            reverse=True,
+        )
     )
     output: list[AlphaStackRow] = []
     for ticket in tickets[:8]:
         symbol = ticket.get("symbol", "")
+        candidate = candidates_by_symbol.get(symbol, ticket)
+        status = _market_breadth_status(ticket)
         output.append(
             AlphaStackRow(
                 opportunity=f"{symbol.lower()}_volume_price_dislocation",
-                status=ticket.get("status", ""),
+                status=status,
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
-                    ticket.get("status", ""),
-                    source_count=1,
+                    status,
+                    source_count=2 if ticket.get("label_status") else 1,
                     raw_score=_float(ticket.get("score")),
                 ),
                 sources="market_breadth + market_price_context",
                 evidence=(
                     f"{symbol}: "
                     f"name={ticket.get('name', '')}, "
-                    f"rank={ticket.get('market_cap_rank', '')}, "
-                    f"vol_mcap={ticket.get('volume_to_market_cap', '')}, "
-                    f"price24h={ticket.get('price_change_24h', '')}, "
-                    f"price7d={ticket.get('price_change_7d', '')}, "
-                    f"price30d={ticket.get('price_change_30d', '')}"
+                    f"rank={candidate.get('market_cap_rank', '')}, "
+                    f"vol_mcap={candidate.get('volume_to_market_cap', '')}, "
+                    f"price24h={candidate.get('price_change_24h', '')}, "
+                    f"price7d={candidate.get('price_change_7d', '')}, "
+                    f"price30d={candidate.get('price_change_30d', '')}"
+                    f"{_market_breadth_label_evidence(ticket)}"
                 ),
-                conflict=(
-                    "volume/price dislocation can be a liquidation bounce, news reaction, or crowded trap; "
-                    "needs forward labels, venue depth, and execution cost checks"
-                ),
-                next_step=ticket.get(
-                    "next_step",
-                    f"paper-label {symbol} market-breadth dislocation",
-                ),
+                conflict=_market_breadth_conflict(ticket),
+                next_step=_market_breadth_next_step(ticket),
             )
         )
     return tuple(output)
+
+
+def _ranked_market_breadth_labels(rows: tuple[dict[str, str], ...]) -> list[dict[str, str]]:
+    return sorted(
+        rows,
+        key=lambda row: (
+            _market_breadth_label_rank(row),
+            _float(row.get("directional_return_4h")),
+            _float(row.get("directional_return_1h")),
+            _float(row.get("score")),
+        ),
+        reverse=True,
+    )
+
+
+def _market_breadth_label_rank(row: dict[str, str]) -> int:
+    dir_4h = _float(row.get("directional_return_4h"))
+    dir_1h = _float(row.get("directional_return_1h"))
+    if dir_4h > 0.0 and dir_1h > 0.0:
+        return 4
+    if dir_4h > 0.0:
+        return 3
+    if dir_1h > 0.0:
+        return 2
+    if row.get("directional_return_1h", "") != "":
+        return 1
+    return 0
+
+
+def _market_breadth_status(ticket: dict[str, str]) -> str:
+    if not ticket.get("label_status"):
+        return ticket.get("status", "")
+    dir_4h = _float(ticket.get("directional_return_4h"))
+    dir_1h = _float(ticket.get("directional_return_1h"))
+    if dir_4h > 0.0 and dir_1h > 0.0:
+        return "volume_dislocation_4h_supported_pending_12h"
+    if dir_4h > 0.0:
+        return "volume_dislocation_delayed_4h_support"
+    if dir_1h > 0.0:
+        return "volume_dislocation_1h_only_watch"
+    if ticket.get("directional_return_1h", "") != "":
+        return "volume_dislocation_4h_contradicted_pending_12h"
+    return ticket.get("status", "")
+
+
+def _market_breadth_label_evidence(label: dict[str, str]) -> str:
+    if not label.get("label_status"):
+        return ""
+    return (
+        f"; label={label.get('label_status', '')}, "
+        f"dir1h={label.get('directional_return_1h', '')}, "
+        f"dir4h={label.get('directional_return_4h', '')}, "
+        f"source={label.get('price_source', '')}"
+    )
+
+
+def _market_breadth_conflict(label: dict[str, str]) -> str:
+    base = (
+        "volume/price dislocation can be a liquidation bounce, news reaction, or crowded trap; "
+        "venue depth, fees, funding, stop behavior, and repeat labels are still required"
+    )
+    status = _market_breadth_status(label)
+    if status == "volume_dislocation_4h_supported_pending_12h":
+        return f"{base}; current 1h and 4h labels support the direction, but 12h confirmation is pending"
+    if status == "volume_dislocation_delayed_4h_support":
+        return f"{base}; current 4h label supports the direction after a weak or negative 1h mark"
+    if status == "volume_dislocation_1h_only_watch":
+        return f"{base}; current 1h label is positive but 4h is weak, negative, or pending"
+    if status == "volume_dislocation_4h_contradicted_pending_12h":
+        return f"{base}; current short-horizon labels contradict the direction"
+    return base
+
+
+def _market_breadth_next_step(label: dict[str, str]) -> str:
+    symbol = label.get("symbol", "")
+    status = _market_breadth_status(label)
+    if status == "volume_dislocation_4h_supported_pending_12h":
+        return f"repeat {symbol} volume-dislocation label and add execution cost, funding, depth, and stop checks"
+    if status == "volume_dislocation_delayed_4h_support":
+        return f"repeat {symbol} delayed 4h volume-dislocation label and check stop behavior"
+    if status == "volume_dislocation_1h_only_watch":
+        return f"wait for stronger {symbol} 4h/12h confirmation before promotion"
+    if status == "volume_dislocation_4h_contradicted_pending_12h":
+        return f"do not promote {symbol} without a fresh non-overlapping positive label"
+    return label.get("next_step", f"paper-label {symbol} market-breadth dislocation")
 
 
 def _news_event_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
@@ -3013,6 +3101,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "attention_breakout_continuation_watch": 58.0,
         "attention_capitulation_reversal_watch": 56.0,
         "attention_chase_risk": 50.0,
+        "volume_dislocation_4h_supported_pending_12h": 66.0,
+        "volume_dislocation_delayed_4h_support": 52.0,
+        "volume_dislocation_1h_only_watch": 44.0,
+        "volume_dislocation_4h_contradicted_pending_12h": 26.0,
         "volume_reversal_candidate": 60.0,
         "capitulation_reversal_watch": 55.0,
         "breakout_continuation_watch": 58.0,

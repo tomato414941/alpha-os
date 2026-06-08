@@ -11,6 +11,7 @@ import requests
 
 ROOT = Path(__file__).resolve().parent
 COINGECKO_MARKET_CHART_URL = "https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
+HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info"
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,7 @@ class VolumePriceDislocationLabelRow:
     directional_return_4h: float | None
     directional_return_12h: float | None
     directional_return_24h: float | None
+    price_source: str
     label_status: str
 
 
@@ -44,7 +46,18 @@ def build_volume_price_dislocation_label_rows(
         coin_id: _fetch_prices(coin_id)
         for coin_id in sorted({row.get("coin_id", "") for row in observations if row.get("coin_id", "")})
     }
-    rows = tuple(_build_label(row=row, prices=prices.get(row.get("coin_id", ""), ())) for row in observations)
+    candles = {
+        symbol: _fetch_hyperliquid_candles(asset=symbol, start=_earliest_observed_at(observations))
+        for symbol in sorted({row.get("symbol", "") for row in observations if row.get("symbol", "")})
+    }
+    rows = tuple(
+        _build_label(
+            row=row,
+            prices=prices.get(row.get("coin_id", ""), ()),
+            candles=candles.get(row.get("symbol", ""), ()),
+        )
+        for row in observations
+    )
     return tuple(sorted(rows, key=_sort_key, reverse=True))
 
 
@@ -75,6 +88,7 @@ def write_volume_price_dislocation_labels_csv(
                 "directional_return_4h",
                 "directional_return_12h",
                 "directional_return_24h",
+                "price_source",
                 "label_status",
             )
         )
@@ -98,6 +112,7 @@ def write_volume_price_dislocation_labels_csv(
                     _format_optional(row.directional_return_4h),
                     _format_optional(row.directional_return_12h),
                     _format_optional(row.directional_return_24h),
+                    row.price_source,
                     row.label_status,
                 )
             )
@@ -120,14 +135,17 @@ def write_volume_price_dislocation_labels_md(
         )
         handle.write(f"- total rows: `{len(rows)}`\n")
         handle.write(f"- labeled 1h rows: `{len(labeled_1h)}`\n\n")
-        handle.write("| observed at | symbol | status | dir | score | dir 1h | dir 4h | dir 12h | dir 24h | label status |\n")
-        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n")
+        handle.write(
+            "| observed at | symbol | status | dir | score | dir 1h | dir 4h | dir 12h | "
+            "dir 24h | source | label status |\n"
+        )
+        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n")
         for row in rows[:top]:
             handle.write(
                 f"| {row.observed_at} | {row.symbol} | {row.status} | {row.direction} | "
                 f"{row.score:.4f} | {_format_optional(row.directional_return_1h)} | "
                 f"{_format_optional(row.directional_return_4h)} | {_format_optional(row.directional_return_12h)} | "
-                f"{_format_optional(row.directional_return_24h)} | {row.label_status} |\n"
+                f"{_format_optional(row.directional_return_24h)} | {row.price_source} | {row.label_status} |\n"
             )
     return output_path
 
@@ -136,6 +154,7 @@ def _build_label(
     *,
     row: dict[str, str],
     prices: tuple[tuple[float, float], ...],
+    candles: tuple[dict[str, float], ...],
 ) -> VolumePriceDislocationLabelRow:
     observed_at = _parse_datetime(row.get("observed_at", ""))
     direction = int(row.get("direction") or "0")
@@ -144,6 +163,14 @@ def _build_label(
     raw_4h = _forward_return(prices, start_price, observed_at + timedelta(hours=4))
     raw_12h = _forward_return(prices, start_price, observed_at + timedelta(hours=12))
     raw_24h = _forward_return(prices, start_price, observed_at + timedelta(hours=24))
+    price_source = "coingecko"
+    if raw_1h is None:
+        start_price = _close_at_or_after(candles, observed_at) or start_price
+        raw_1h = _candle_forward_return(candles, observed_at, observed_at + timedelta(hours=1))
+        raw_4h = _candle_forward_return(candles, observed_at, observed_at + timedelta(hours=4))
+        raw_12h = _candle_forward_return(candles, observed_at, observed_at + timedelta(hours=12))
+        raw_24h = _candle_forward_return(candles, observed_at, observed_at + timedelta(hours=24))
+        price_source = "hyperliquid" if raw_1h is not None else "unavailable"
     return VolumePriceDislocationLabelRow(
         observed_at=observed_at.isoformat(),
         symbol=row.get("symbol", ""),
@@ -162,6 +189,7 @@ def _build_label(
         directional_return_4h=_directional(raw_4h, direction),
         directional_return_12h=_directional(raw_12h, direction),
         directional_return_24h=_directional(raw_24h, direction),
+        price_source=price_source,
         label_status=_label_status(raw_1h=raw_1h, raw_4h=raw_4h, raw_12h=raw_12h, raw_24h=raw_24h),
     )
 
@@ -180,6 +208,41 @@ def _fetch_prices(coin_id: str) -> tuple[tuple[float, float], ...]:
     return tuple((float(timestamp), float(price)) for timestamp, price in response.json().get("prices", ()))
 
 
+def _fetch_hyperliquid_candles(
+    *,
+    asset: str,
+    start: datetime,
+) -> tuple[dict[str, float], ...]:
+    try:
+        response = requests.post(
+            HYPERLIQUID_INFO_URL,
+            json={
+                "type": "candleSnapshot",
+                "req": {
+                    "coin": asset,
+                    "interval": "15m",
+                    "startTime": int((start - timedelta(minutes=30)).timestamp() * 1000),
+                    "endTime": int(datetime.now(UTC).timestamp() * 1000),
+                },
+            },
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException:
+        return ()
+    payload = response.json()
+    if not isinstance(payload, list):
+        return ()
+    return tuple(
+        {
+            "timestamp": float(row["t"]),
+            "end_timestamp": float(row["T"]),
+            "close": float(row["c"]),
+        }
+        for row in payload
+    )
+
+
 def _forward_return(
     prices: tuple[tuple[float, float], ...],
     start_price: float,
@@ -193,11 +256,31 @@ def _forward_return(
     return target_price / start_price - 1.0
 
 
+def _candle_forward_return(
+    candles: tuple[dict[str, float], ...],
+    start: datetime,
+    target: datetime,
+) -> float | None:
+    start_close = _close_at_or_after(candles, start)
+    end_close = _close_at_or_after(candles, target)
+    if start_close is None or end_close is None:
+        return None
+    return end_close / start_close - 1.0
+
+
 def _price_at_or_after(prices: tuple[tuple[float, float], ...], target: datetime) -> float | None:
     target_ms = target.timestamp() * 1000
     for timestamp_ms, price in prices:
         if timestamp_ms >= target_ms:
             return price
+    return None
+
+
+def _close_at_or_after(candles: tuple[dict[str, float], ...], target: datetime) -> float | None:
+    target_ms = target.timestamp() * 1000
+    for candle in candles:
+        if candle["timestamp"] >= target_ms:
+            return candle["close"]
     return None
 
 
@@ -229,6 +312,13 @@ def _sort_key(row: VolumePriceDislocationLabelRow) -> tuple[bool, float, float]:
         row.directional_return_1h or -1.0,
         row.score,
     )
+
+
+def _earliest_observed_at(rows: tuple[dict[str, str], ...]) -> datetime:
+    parsed = tuple(_parse_datetime(row.get("observed_at", "")) for row in rows if row.get("observed_at", ""))
+    if not parsed:
+        return datetime.now(UTC) - timedelta(days=3)
+    return min(parsed)
 
 
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:

@@ -1480,6 +1480,22 @@ def _news_social_row(root: Path) -> ExplorationRow:
 
 def _market_breadth_row(root: Path) -> ExplorationRow:
     path = root / "market_breadth" / "current_volume_price_dislocation.csv"
+    label = _best_market_breadth_label_row(root / "market_breadth" / "current_volume_price_dislocation_labels.csv")
+    if label:
+        return ExplorationRow(
+            lane="market_breadth",
+            status=_market_breadth_label_status(label),
+            strongest_current_signal=(
+                f"{label.get('symbol', '')}/{label.get('name', '')}: "
+                f"{label.get('side', '')}, "
+                f"dir1h={label.get('directional_return_1h', '')}, "
+                f"dir4h={label.get('directional_return_4h', '')}, "
+                f"source={label.get('price_source', '')}, "
+                f"score={label.get('score', '')}"
+            ),
+            main_gap="volume-price dislocation labels still need repeat windows, venue depth, fees, funding, stops, and false-breakout separation",
+            next_step=f"repeat-label {label.get('symbol', '')} market-breadth dislocation with execution costs",
+        )
     best = _best_numeric_row(path, key="score")
     if best:
         return ExplorationRow(
@@ -3524,6 +3540,51 @@ def _chain_stablecoin_label_rank(status: str) -> int:
         "mixed_chain_migration_direction": 2,
         "chain_migration_direction_contradicted": 1,
     }.get(status, 0)
+
+
+def _best_market_breadth_label_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("directional_return_1h", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            _market_breadth_label_rank(row),
+            float(row.get("directional_return_4h") or "-inf"),
+            float(row.get("directional_return_1h") or "-inf"),
+            float(row.get("score") or "0"),
+        ),
+    )
+
+
+def _market_breadth_label_rank(row: dict[str, str]) -> int:
+    dir_4h = float(row.get("directional_return_4h") or "0")
+    dir_1h = float(row.get("directional_return_1h") or "0")
+    if dir_4h > 0.0 and dir_1h > 0.0:
+        return 4
+    if dir_4h > 0.0:
+        return 3
+    if dir_1h > 0.0:
+        return 2
+    return 1
+
+
+def _market_breadth_label_status(row: dict[str, str]) -> str:
+    rank = _market_breadth_label_rank(row)
+    if rank == 4:
+        return "volume_dislocation_4h_supported_pending_12h"
+    if rank == 3:
+        return "volume_dislocation_delayed_4h_support"
+    if rank == 2:
+        return "volume_dislocation_1h_only_watch"
+    return "volume_dislocation_4h_contradicted_pending_12h"
 
 
 def _best_chain_tvl_market_context_row(path: Path) -> dict[str, str] | None:
