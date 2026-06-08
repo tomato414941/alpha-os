@@ -64,6 +64,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _cost_adjusted_alpha_clusters_row(root),
         _cost_survival_cross_section_row(root),
         _alpha_promotion_frontier_row(root),
+        _alpha_promotion_worklist_row(root),
         _cost_adjusted_cluster_repeat_plan_row(root),
         _split_first_cluster_lane_plan_row(root),
         _split_first_lane_repeat_queue_row(root),
@@ -1573,6 +1574,32 @@ def _alpha_promotion_frontier_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="paper candidates and modern-lane blockers are not summarized in one promotion view",
         next_step="run current alpha promotion frontier after cost survival and modern-lane survival checks",
+    )
+
+
+def _alpha_promotion_worklist_row(root: Path) -> ExplorationRow:
+    path = root / "current_alpha_promotion_worklist.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="alpha_promotion_worklist",
+            status=best.get("work_kind", "alpha_promotion_work"),
+            strongest_current_signal=(
+                f"{best.get('work_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"{best.get('action', '')}, "
+                f"priority={best.get('priority', '')}, "
+                f"status={best.get('status', '')}"
+            ),
+            main_gap=best.get("required_evidence", "top promotion work still needs evidence"),
+            next_step=best.get("next_step", "execute the top alpha promotion work item"),
+        )
+    return ExplorationRow(
+        lane="alpha_promotion_worklist",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="promotion frontier has not been reduced to a non-duplicate worklist",
+        next_step="run current alpha promotion worklist after promotion frontier",
     )
 
 
