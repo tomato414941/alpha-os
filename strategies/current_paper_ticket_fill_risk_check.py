@@ -269,6 +269,14 @@ def _risk_action(
             "no current public execution context for the promoted paper ticket",
             "refresh execution context before repeating this ticket",
         )
+    if context.get("action") == "not_hyperliquid" or not context.get("spread_bps") or not context.get(
+        "near_depth_10bps_notional"
+    ):
+        return (
+            "missing_execution_context",
+            "current public execution context lacks tradable spread/depth",
+            "refresh tradable venue context before repeating this ticket",
+        )
     if visible_depth_usage is not None and visible_depth_usage > 0.10:
         return (
             "depth_too_thin_for_probe",

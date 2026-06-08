@@ -68,7 +68,11 @@ def build_broad_alpha_fill_audit_tickets(
         for row in rows
     )
     active_ticket_ids = {ticket.ticket_id for ticket in tickets}
-    carried_forward = tuple(ticket for ticket in existing.values() if ticket.ticket_id not in active_ticket_ids)
+    carried_forward = tuple(
+        ticket
+        for ticket in existing.values()
+        if ticket.ticket_id not in active_ticket_ids and _has_entry_mark(ticket.entry_mark)
+    )
     return tickets + carried_forward
 
 
@@ -265,6 +269,13 @@ def _existing_tickets(path: Path | None) -> tuple[BroadAlphaFillAuditTicket, ...
             )
         )
     return tuple(rows)
+
+
+def _has_entry_mark(value: str) -> bool:
+    try:
+        return float(value) > 0.0
+    except ValueError:
+        return False
 
 
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
