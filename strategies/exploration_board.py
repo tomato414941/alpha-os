@@ -1351,6 +1351,21 @@ def _best_token_unlock_paper_ticket(path: Path) -> dict[str, str] | None:
 
 
 def _prediction_markets_row(root: Path) -> ExplorationRow:
+    paper_ticket_path = root / "prediction_markets" / "current_event_probability_paper_tickets.csv"
+    best_paper_ticket = _best_prediction_market_probability_paper_ticket(paper_ticket_path)
+    if best_paper_ticket:
+        return ExplorationRow(
+            lane="prediction_markets",
+            status=best_paper_ticket.get("status", "paper_event_probability_ticket"),
+            strongest_current_signal=(
+                f"{best_paper_ticket.get('suggested_side', '')}: {best_paper_ticket.get('question', '')}, "
+                f"ask={best_paper_ticket.get('entry_ask', '')}, "
+                f"edge_after_ask={best_paper_ticket.get('edge_after_ask', '')}, "
+                f"ask_depth_5c={best_paper_ticket.get('ask_depth_to_5c', '')}"
+            ),
+            main_gap="paper ticket still uses a rough headline probability and has no fill, fee, queue, or adverse-selection proof",
+            next_step="paper-check source freshness, duplicate headlines, queue/fill assumptions, and outcome movement before any live action",
+        )
     gap_path = root / "prediction_markets" / "current_event_probability_gap.csv"
     best_gap = _best_prediction_market_probability_gap(gap_path)
     if best_gap:
@@ -1492,6 +1507,20 @@ def _best_prediction_market_probability_gap(path: Path) -> dict[str, str] | None
             row
             for row in csv.DictReader(handle)
             if row.get("status") in {"paper_probability_gap_candidate", "probability_gap_watch"}
+        )
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("score") or "0"))
+
+
+def _best_prediction_market_probability_paper_ticket(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("status") in {"paper_event_probability_ticket", "event_probability_watch"}
         )
     if not rows:
         return None

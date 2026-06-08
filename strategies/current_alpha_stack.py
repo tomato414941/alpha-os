@@ -233,6 +233,11 @@ def _options_volatility_next_step(ticket: dict[str, str]) -> str:
 
 
 def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
+    paper_ticket = _best_by_score(
+        root / "prediction_markets" / "current_event_probability_paper_tickets.csv",
+        score_key="score",
+        status_values={"paper_event_probability_ticket", "event_probability_watch"},
+    )
     gap = _best_by_score(
         root / "prediction_markets" / "current_event_probability_gap.csv",
         score_key="score",
@@ -245,6 +250,27 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
     )
     if not ticket:
         return None
+    if paper_ticket:
+        return AlphaStackRow(
+            opportunity="prediction_market_event_model",
+            status=paper_ticket.get("status", "paper_event_probability_ticket"),
+            side=f"{paper_ticket.get('suggested_side', '')}: {paper_ticket.get('question', '')}",
+            priority_score=_priority_score(
+                paper_ticket.get("status", ""),
+                source_count=4,
+                raw_score=_float(paper_ticket.get("score")),
+            ),
+            sources="prediction_markets + external_news + probability_gap + clob_depth",
+            evidence=(
+                f"ask={paper_ticket.get('entry_ask', '')}, "
+                f"estimated_payout={paper_ticket.get('estimated_payout_probability', '')}, "
+                f"edge_after_ask={paper_ticket.get('edge_after_ask', '')}, "
+                f"max_loss={paper_ticket.get('max_loss_per_share', '')}, "
+                f"ask_depth_5c={paper_ticket.get('ask_depth_to_5c', '')}"
+            ),
+            conflict="paper ticket still depends on rough headline probability, source timing, fill quality, fees, and adverse-selection behavior",
+            next_step="paper-check source freshness, duplicate headlines, queue/fill assumptions, and outcome movement before any live action",
+        )
     if gap:
         return AlphaStackRow(
             opportunity="prediction_market_event_model",
@@ -1850,6 +1876,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_event_model_candidate": 75.0,
         "paper_probability_gap_candidate": 78.0,
         "probability_gap_watch": 62.0,
+        "paper_event_probability_ticket": 82.0,
+        "event_probability_watch": 65.0,
         "paper_short_candidate": 72.0,
         "paper_long_candidate": 72.0,
         "paper_short_put_spread_candidate": 68.0,

@@ -1,0 +1,3 @@
+market_id,question,suggested_side,outcome_to_buy,entry_ask,estimated_payout_probability,edge_after_ask,max_loss_per_share,ask_depth_to_5c,visible_depth_score,probability_gap,confidence_score,score,status,reason
+2296152,Israel closes its airspace by June 15?,buy_no,No,0.450000,0.750000,0.300000,0.450000,10633.160000,10.33316000,-0.315000,46.000000,83.03316000,paper_event_probability_ticket,rough probability edge remains after crossing the current ask
+947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,buy_yes,Yes,0.550000,0.660000,0.110000,0.550000,13775.110000,6.24917000,0.115000,28.400000,48.77511000,event_probability_watch,rough probability edge exists but needs stronger confidence or depth
