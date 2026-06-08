@@ -34,6 +34,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _portable_microstructure_horizon_candidates_row(root),
         _research_backed_alpha_expansion_plan_row(root),
         _exchange_stablecoin_inflow_readiness_row(root),
+        _stablecoin_flow_probe_candidates_row(root),
         _options_volatility_survival_row(root),
         _fundamental_sentiment_cross_section_row(root),
         _multimodal_btc_eth_feature_alignment_row(root),
@@ -500,6 +501,31 @@ def _exchange_stablecoin_inflow_readiness_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="direct exchange stablecoin inflow is not separated from chain stablecoin migration",
         next_step="run current exchange stablecoin inflow readiness after stablecoin exchange inflow proxy",
+    )
+
+
+def _stablecoin_flow_probe_candidates_row(root: Path) -> ExplorationRow:
+    path = root / "stablecoin_liquidity" / "current_stablecoin_flow_probe_candidates.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="stablecoin_flow_probe_candidates",
+            status=best.get("status", "stablecoin_flow_probe_candidate"),
+            strongest_current_signal=(
+                f"{best.get('candidate_id', '')}: "
+                f"{best.get('candidate_type', '')}, "
+                f"priority={best.get('priority', '')}, "
+                f"flow={best.get('flow_direction', '')}"
+            ),
+            main_gap=best.get("required_record", "stablecoin-flow candidate still needs labels or direct flow data"),
+            next_step=best.get("next_step", "run the strongest stablecoin-flow probe candidate"),
+        )
+    return ExplorationRow(
+        lane="stablecoin_flow_probe_candidates",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="stablecoin-flow readiness has not been converted into data-probe and proxy-label candidates",
+        next_step="run current stablecoin flow probe candidates after exchange inflow readiness",
     )
 
 
