@@ -33,6 +33,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_peg_anomaly_tradeability_stacks(root),
         *_futures_basis_stacks(root),
         *_derivatives_positioning_stacks(root),
+        *_binance_derivatives_feature_prior_stacks(root),
         *_cross_exchange_funding_stacks(root),
         *_perp_crowding_stacks(root),
         *_hyperliquid_dislocation_actionability_stacks(root),
@@ -674,6 +675,72 @@ def _derivatives_positioning_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         if len(output) >= 6:
             break
     return tuple(output)
+
+
+def _binance_derivatives_feature_prior_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        _read_rows(root / "p0_parallel" / "binance_derivatives_signal_summary.csv"),
+        key=_binance_derivatives_feature_priority,
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:5]:
+        feature = row.get("feature", "")
+        direction = _binance_feature_direction(row)
+        output.append(
+            AlphaStackRow(
+                opportunity=f"binance_um_{feature}_feature_prior",
+                status="historical_derivatives_feature_prior",
+                side=direction,
+                priority_score=_priority_score(
+                    "historical_derivatives_feature_prior",
+                    source_count=1,
+                    raw_score=_binance_derivatives_feature_priority(row),
+                ),
+                sources="p0_parallel + binance_derivatives_history",
+                evidence=(
+                    f"{feature}: obs={row.get('observations', '')}, "
+                    f"corr={row.get('correlation_to_next_return', '')}, "
+                    f"low_mean={row.get('low_bucket_mean_next_return', '')}, "
+                    f"low_hit={row.get('low_bucket_hit_rate', '')}, "
+                    f"high_mean={row.get('high_bucket_mean_next_return', '')}, "
+                    f"high_hit={row.get('high_bucket_hit_rate', '')}"
+                ),
+                conflict=(
+                    "this is a 2024Q1 Binance USD-M historical feature prior, "
+                    "not a current trade; it can be regime-specific and excludes execution costs"
+                ),
+                next_step=(
+                    f"rerun {feature} on recent windows, split by symbol/regime, "
+                    "and only then join to current execution gates"
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _binance_derivatives_feature_priority(row: dict[str, str]) -> float:
+    high_mean = _float(row.get("high_bucket_mean_next_return"))
+    low_mean = _float(row.get("low_bucket_mean_next_return"))
+    high_hit = _float(row.get("high_bucket_hit_rate"))
+    low_hit = _float(row.get("low_bucket_hit_rate"))
+    correlation = _abs_float(row.get("correlation_to_next_return"))
+    return abs(high_mean - low_mean) * 10_000.0 + abs(high_hit - low_hit) * 20.0 + correlation * 25.0
+
+
+def _binance_feature_direction(row: dict[str, str]) -> str:
+    feature = row.get("feature", "")
+    high_mean = _float(row.get("high_bucket_mean_next_return"))
+    low_mean = _float(row.get("low_bucket_mean_next_return"))
+    high_hit = _float(row.get("high_bucket_hit_rate"))
+    low_hit = _float(row.get("low_bucket_hit_rate"))
+    if high_mean > low_mean and high_hit >= low_hit:
+        return f"long_high_{feature}"
+    if low_mean > high_mean and low_hit >= high_hit:
+        return f"long_low_{feature}"
+    if high_mean > low_mean:
+        return f"mean_prefers_high_{feature}"
+    return f"mean_prefers_low_{feature}"
 
 
 def _protocol_fundamental_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
@@ -2600,6 +2667,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_oi_unwind_watch": 59.0,
         "paper_basis_funding_dislocation_watch": 59.0,
         "paper_derivatives_momentum_risk_watch": 56.0,
+        "historical_derivatives_feature_prior": 44.0,
         "paper_yield_depeg_conflict_watch": 42.0,
         "paper_yield_premium_conflict_watch": 40.0,
         "yield_supply_stress_watch": 55.0,

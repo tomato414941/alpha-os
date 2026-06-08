@@ -152,6 +152,7 @@ STOP_TOKENS = {
     "PRESSURE",
     "PRICE",
     "POSITIONING",
+    "PRIORITY",
     "POLITICAL",
     "POLITICAL_EVENT",
     "PROBE",
@@ -385,6 +386,8 @@ def _cluster_next_step(*, symbol: str, status: str, rows: list[dict[str, str]]) 
 
 
 def _symbols_for_stack_row(row: dict[str, str]) -> tuple[str, ...]:
+    if row.get("status") == "historical_derivatives_feature_prior":
+        return ()
     symbols: set[str] = set()
     symbols.update(_symbols_from_evidence_head(row.get("evidence", "")))
     symbols.update(_symbols_from_free_text(row.get("opportunity", "")))
