@@ -970,7 +970,7 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
     if best_actionable:
         return ExplorationRow(
             lane="liquidation_flow",
-            status="current_okx_actionability_review",
+            status="okx_monitor_actionability_review",
             strongest_current_signal=(
                 f"{best_actionable.get('asset', '')}: {best_actionable.get('action', '')}, "
                 f"score={best_actionable.get('actionability_score', '')}, "
@@ -978,8 +978,8 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
                 f"near_depth5={best_actionable.get('near_touch_depth_5bps', '')}, "
                 f"note={best_actionable.get('note', '')}"
             ),
-            main_gap="actionability is still based on visible depth and short monitor labels only",
-            next_step="repeat JTO/ONDO/LTC labels and add real fee/slippage assumptions before paper sizing",
+            main_gap="monitor actionability is historical monitor context, not the latest liquidation event; current-event intensity is tracked separately",
+            next_step="refresh monitor samples or label the latest liquidation-intensity events before paper sizing",
         )
     best_monitor = _best_numeric_row(monitor_path, key="mean_cascade_score")
     if best_monitor:
