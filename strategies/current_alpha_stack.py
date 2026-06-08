@@ -23,6 +23,7 @@ class AlphaStackRow:
 
 def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
     rows = [
+        *_factor_hypothesis_template_stacks(root),
         _btc_risk_off_short_stack(root),
         *_public_treasury_stacks(root),
         _mstr_btc_relative_value_stack(root),
@@ -126,6 +127,37 @@ def write_alpha_stack_md(rows: tuple[AlphaStackRow, ...], *, output_path: Path) 
                 f"{row.sources} | {_escape(row.evidence)} | {_escape(row.conflict)} | {_escape(row.next_step)} |\n"
             )
     return output_path
+
+
+def _factor_hypothesis_template_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        _read_rows(root / "llm_factor_generation" / "current_factor_hypothesis_templates.csv"),
+        key=lambda row: _float(row.get("priority_score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:8]:
+        template_id = row.get("template_id", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{template_id}_template",
+                status=row.get("status", ""),
+                side="factor_hypothesis_template",
+                priority_score=_priority_score(
+                    row.get("status", ""),
+                    source_count=3,
+                    raw_score=_float(row.get("priority_score")),
+                ),
+                sources="llm_factor_generation + current_alpha_stack",
+                evidence=(
+                    f"{row.get('lane', '')}: inputs={row.get('input_features', '')}; "
+                    f"transform={row.get('transformation', '')}; seeds={row.get('seed_opportunities', '')}"
+                ),
+                conflict=row.get("failure_mode", ""),
+                next_step=row.get("next_step", ""),
+            )
+        )
+    return tuple(output)
 
 
 def _btc_risk_off_short_stack(root: Path) -> AlphaStackRow | None:

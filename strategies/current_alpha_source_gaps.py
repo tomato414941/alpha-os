@@ -105,6 +105,9 @@ def build_alpha_source_gaps(
     book_depth_walk_forward_path: Path = ROOT / "event_flow" / "book_depth_walk_forward_check.csv",
     news_event_forward_labels_path: Path = ROOT / "news_social" / "current_news_event_forward_labels.csv",
     news_event_quality_gate_path: Path = ROOT / "news_social" / "current_news_event_quality_gate.csv",
+    factor_hypothesis_templates_path: Path = (
+        ROOT / "llm_factor_generation" / "current_factor_hypothesis_templates.csv"
+    ),
 ) -> tuple[AlphaSourceGap, ...]:
     probe_rows = _read_rows(data_source_probe_path)
     policy_sample_count = len(_read_rows(policy_samples_path))
@@ -112,6 +115,7 @@ def build_alpha_source_gaps(
     book_depth_walk_forward_rows = _read_rows(book_depth_walk_forward_path)
     news_event_forward_label_rows = _read_rows(news_event_forward_labels_path)
     news_event_quality_gate_rows = _read_rows(news_event_quality_gate_path)
+    factor_hypothesis_template_rows = _read_rows(factor_hypothesis_templates_path)
     rows = tuple(
         _build_gap(
             rule,
@@ -121,6 +125,7 @@ def build_alpha_source_gaps(
             book_depth_walk_forward_rows=book_depth_walk_forward_rows,
             news_event_forward_label_rows=news_event_forward_label_rows,
             news_event_quality_gate_rows=news_event_quality_gate_rows,
+            factor_hypothesis_template_rows=factor_hypothesis_template_rows,
         )
         for rule in GAP_RULES
     )
@@ -194,6 +199,7 @@ def _build_gap(
     book_depth_walk_forward_rows: tuple[dict[str, str], ...],
     news_event_forward_label_rows: tuple[dict[str, str], ...],
     news_event_quality_gate_rows: tuple[dict[str, str], ...],
+    factor_hypothesis_template_rows: tuple[dict[str, str], ...],
 ) -> AlphaSourceGap:
     available = _available_probe_rows(probe_rows, rule)
     missing_required = tuple(name for name in rule.required_probe_names if not _probe_available(probe_rows, name=name))
@@ -243,6 +249,15 @@ def _build_gap(
         )
         priority = rule.base_priority + 12.0
         next_probe = "repeat news-event labels with duplicate-source, stale-headline, and execution-cost checks"
+    elif rule.gap_id == "llm_factor_generation" and factor_hypothesis_template_rows:
+        best = max(factor_hypothesis_template_rows, key=lambda row: _float(row.get("priority_score")))
+        status = "templates_generated"
+        coverage = (
+            f"templates={len(factor_hypothesis_template_rows)} "
+            f"top={best.get('template_id', '')} score={best.get('priority_score', '')}"
+        )
+        priority = rule.base_priority + 13.0
+        next_probe = "route the top generated templates into concrete data labels and reject duplicate formula variants"
     elif rule.gap_id == "lob_ofi_hierarchical_model" and book_depth_screen_rows:
         best = max(book_depth_screen_rows, key=lambda row: _float(row.get("mean_next_return")))
         status = "feature_screen_ready"

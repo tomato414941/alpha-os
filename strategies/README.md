@@ -66,6 +66,9 @@ Promote code to the library only after multiple strategies need the same shape.
 - `news_social/`
   - crypto RSS news-event, Fear & Greed, and CoinGecko trending attention
     screens
+- `llm_factor_generation/`
+  - LLM-assisted factor hypothesis templates generated from the current alpha
+    stack for validation, not trade instructions
 - `market_breadth/`
   - broad CoinGecko volume-price dislocation screen for reversal,
     continuation, and chase-risk candidates
