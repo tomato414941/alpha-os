@@ -306,21 +306,26 @@ def _token_unlock_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
 
 def _defi_lending_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
     path = root / "defi_lending/current_lending_stress_actionability.csv"
+    risk_path = root / "defi_lending/current_lending_yield_risk_check.csv"
+    risks = {
+        (row.get("chain", ""), row.get("loan_asset", ""), row.get("collateral_asset", "")): row
+        for row in _read_rows(risk_path)
+    }
     return tuple(
         BroadAlphaExecutionQueueItem(
             queue_id=f"defi-lending-{_slug(row.get('chain', ''))}-{_slug(row.get('loan_asset', ''))}-{_slug(row.get('collateral_asset', ''))}",
             lane="defi_lending_yield",
             subject=f"{row.get('chain', '')} {row.get('loan_asset', '')}/{row.get('collateral_asset', '')}",
             side=row.get("side", ""),
-            action=row.get("side", ""),
-            status=row.get("status", ""),
-            score=_fmt(row.get("score")),
-            size_or_risk=f"liquidity_usd={row.get('liquidity_usd', '')}; utilization={row.get('utilization', '')}",
-            evidence=f"supply_apy={row.get('avg_net_supply_apy', '')}; borrow_apy={row.get('avg_net_borrow_apy', '')}",
+            action=_defi_lending_action(row=row, risk=risks.get((row.get("chain", ""), row.get("loan_asset", ""), row.get("collateral_asset", "")), {})),
+            status=_defi_lending_status(row=row, risk=risks.get((row.get("chain", ""), row.get("loan_asset", ""), row.get("collateral_asset", "")), {})),
+            score=_defi_lending_score(row=row, risk=risks.get((row.get("chain", ""), row.get("loan_asset", ""), row.get("collateral_asset", "")), {})),
+            size_or_risk=_defi_lending_size_or_risk(row=row, risk=risks.get((row.get("chain", ""), row.get("loan_asset", ""), row.get("collateral_asset", "")), {})),
+            evidence=_defi_lending_evidence(row=row, risk=risks.get((row.get("chain", ""), row.get("loan_asset", ""), row.get("collateral_asset", "")), {})),
             checkpoints="withdrawal_path,rate_persistence,risk_check",
-            source_path=_relative(path),
-            required_record="withdrawal path, rate persistence, gas, oracle, liquidation, and smart-contract risk",
-            next_step=row.get("next_step", ""),
+            source_path=_relative(risk_path if risks.get((row.get("chain", ""), row.get("loan_asset", ""), row.get("collateral_asset", ""))) else path),
+            required_record="withdrawal path, rate persistence, gas, oracle, liquidation, smart-contract risk, and position sizing",
+            next_step=_defi_lending_next_step(row=row, risk=risks.get((row.get("chain", ""), row.get("loan_asset", ""), row.get("collateral_asset", "")), {})),
         )
         for row in _read_rows(path)
         if row.get("side") == "paper_lend_after_risk_check"
@@ -426,6 +431,54 @@ def _stablecoin_next_step(
     if risk:
         return risk.get("next_step", "")
     return outcome.get("next_step") or row.get("next_step", "")
+
+
+def _defi_lending_action(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return risk.get("risk_action", "")
+    return row.get("side", "")
+
+
+def _defi_lending_status(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return f"{row.get('status', '')}:{risk.get('risk_action', '')}"
+    return row.get("status", "")
+
+
+def _defi_lending_score(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return _fmt(risk.get("risk_score"))
+    return _fmt(row.get("score"))
+
+
+def _defi_lending_size_or_risk(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return (
+            f"notional={risk.get('paper_notional_usd', '')}; "
+            f"liquidity={risk.get('liquidity_usd', '')}; "
+            f"usage={risk.get('capacity_usage', '')}; "
+            f"util={risk.get('utilization', '')}; "
+            f"lltv={risk.get('lltv', '')}"
+        )
+    return f"liquidity_usd={row.get('liquidity_usd', '')}; utilization={row.get('utilization', '')}"
+
+
+def _defi_lending_evidence(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return (
+            f"apy={risk.get('supply_apy', '')}; "
+            f"avg_apy={risk.get('avg_net_supply_apy', '')}; "
+            f"spike={risk.get('supply_apy_spike_ratio', '')}; "
+            f"collateral={risk.get('collateral_category', '')}; "
+            f"reason={risk.get('reason', '')}"
+        )
+    return f"supply_apy={row.get('avg_net_supply_apy', '')}; borrow_apy={row.get('avg_net_borrow_apy', '')}"
+
+
+def _defi_lending_next_step(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return risk.get("next_step", "")
+    return row.get("next_step", "")
 
 
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:

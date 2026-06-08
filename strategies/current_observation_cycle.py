@@ -50,6 +50,7 @@ DEFAULT_COMMANDS = (
     ("strategies.defi_yield.current_yield_peg_risk_join",),
     ("strategies.defi_lending.current_morpho_lending_rates",),
     ("strategies.defi_lending.current_lending_stress_actionability",),
+    ("strategies.defi_lending.current_lending_yield_risk_check",),
     ("strategies.protocol_fundamentals.current_protocol_fee_screen",),
     ("strategies.protocol_fundamentals.current_protocol_fee_valuation",),
     ("strategies.protocol_fundamentals.current_protocol_fee_price_context",),
