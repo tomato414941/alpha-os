@@ -62,6 +62,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_market_breadth_stacks(root),
         *_protocol_activity_stacks(root),
         *_on_chain_flow_stacks(root),
+        *_wallet_entity_flow_actionability_stacks(root),
         *_wallet_entity_flow_stacks(root),
         *_execution_edge_mode_stacks(root),
         *_chain_stablecoin_migration_stacks(root),
@@ -2839,6 +2840,8 @@ def _on_chain_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 
 def _wallet_entity_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    if (root / "wallet_entity_flow" / "current_seed_wallet_flow_actionability.csv").exists():
+        return ()
     rows = _read_rows(root / "wallet_entity_flow" / "current_hyperliquid_seed_wallet_flow.csv")
     tickets = sorted(
         (
@@ -2885,6 +2888,59 @@ def _wallet_entity_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 next_step=ticket.get(
                     "next_step",
                     f"label {wallet_label}/{coin} wallet-flow pressure and compare against market-wide flow",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _wallet_entity_flow_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "wallet_entity_flow" / "current_seed_wallet_flow_actionability.csv")
+    candidates = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "wallet_position_follow_candidate",
+                "wallet_recent_flow_candidate",
+                "wallet_flow_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for candidate in candidates[:8]:
+        status = candidate.get("status", "")
+        asset = candidate.get("execution_asset", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=candidate.get("candidate_id", ""),
+                status=status,
+                side=candidate.get("side", ""),
+                priority_score=_priority_score(
+                    status,
+                    source_count=2 if status != "wallet_flow_watch" else 1,
+                    raw_score=_float(candidate.get("score")),
+                ),
+                sources="wallet_entity_flow + hyperliquid_public_user_fills + public_mark",
+                evidence=(
+                    f"{asset}: wallet={candidate.get('wallet_label', '')}, "
+                    f"source_coin={candidate.get('source_coin', '')}, "
+                    f"fills={candidate.get('fills', '')}, "
+                    f"net_buy_usd={candidate.get('net_buy_notional', '')}, "
+                    f"net_pnl_after_fees={candidate.get('net_closed_pnl_after_fees', '')}, "
+                    f"position_notional={candidate.get('current_position_notional', '')}, "
+                    f"mark={candidate.get('mark_price', '')}"
+                ),
+                conflict=(
+                    "public seed wallet can be stale, survivorship-biased, copy-crowded, or non-causal; "
+                    "candidate still needs forward labels, funding, spread/depth, and entity-quality controls"
+                ),
+                next_step=candidate.get(
+                    "next_step",
+                    f"paper-label {asset} wallet-flow actionability before promotion",
                 ),
             )
         )
@@ -3970,6 +4026,9 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_delayed_carry_reversion_probe": 60.0,
         "paper_outcome_failed_carry_reversion_probe": 43.0,
         "paper_validated_carry_reversion_candidate": 66.0,
+        "wallet_position_follow_candidate": 68.0,
+        "wallet_recent_flow_candidate": 64.0,
+        "wallet_flow_watch": 50.0,
         "forced_flow_oi_shock_watch": 64.0,
         "liquidation_oi_pressure_watch": 58.0,
         "wide_spread_watch": 55.0,

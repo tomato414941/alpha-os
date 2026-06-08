@@ -52,6 +52,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _policy_action_preference_oos_row(root),
         _wallet_entity_flow_row(root),
         _hyperliquid_seed_wallet_flow_row(root),
+        _hyperliquid_seed_wallet_flow_actionability_row(root),
         _execution_edge_mode_row(root),
         _crypto_market_structure_row(root),
         _basis_term_structure_row(root),
@@ -287,6 +288,39 @@ def _hyperliquid_seed_wallet_flow_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="seed wallets have not been converted into flow observations",
         next_step="run Hyperliquid seed wallet flow probe",
+    )
+
+
+def _hyperliquid_seed_wallet_flow_actionability_row(root: Path) -> ExplorationRow:
+    path = root / "wallet_entity_flow" / "current_seed_wallet_flow_actionability.csv"
+    best = _best_seed_wallet_flow_actionability(path)
+    if best:
+        return ExplorationRow(
+            lane="hyperliquid_seed_wallet_flow_actionability",
+            status=best.get("status", "wallet_flow_actionability"),
+            strongest_current_signal=(
+                f"{best.get('wallet_label', '')}/{best.get('execution_asset', '')}: "
+                f"{best.get('side', '')}, "
+                f"score={best.get('score', '')}, "
+                f"fills={best.get('fills', '')}, "
+                f"net_pnl={best.get('net_closed_pnl_after_fees', '')}, "
+                f"position_usd={best.get('current_position_notional', '')}"
+            ),
+            main_gap=(
+                "public wallet-flow candidates still need forward labels, funding, spread/depth, "
+                "copycat-risk checks, and entity-quality controls"
+            ),
+            next_step=best.get(
+                "next_step",
+                "paper-label wallet-flow actionability before treating it as alpha",
+            ),
+        )
+    return ExplorationRow(
+        lane="hyperliquid_seed_wallet_flow_actionability",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="seed wallet flow has not been filtered into actionability candidates",
+        next_step="run seed wallet flow actionability after seed wallet flow",
     )
 
 
@@ -2922,6 +2956,30 @@ def _best_event_crypto_hedge_reaction_label(path: Path) -> dict[str, str] | None
         key=lambda row: (
             status_rank.get(row.get("reaction_status", ""), 0.0),
             _safe_float(row.get("directional_return_bps")),
+        ),
+    )
+
+
+def _best_seed_wallet_flow_actionability(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    status_rank = {
+        "wallet_position_follow_candidate": 4.0,
+        "wallet_recent_flow_candidate": 3.0,
+        "wallet_flow_watch": 2.0,
+        "wallet_flow_deprioritize": 1.0,
+        "wallet_flow_blocked_untradable_asset": 0.0,
+        "wallet_flow_reject_negative_seed_pnl": -1.0,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            status_rank.get(row.get("status", ""), 0.0),
+            _safe_float(row.get("score")),
         ),
     )
 

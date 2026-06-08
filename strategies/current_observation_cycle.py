@@ -8,6 +8,7 @@ import sys
 DEFAULT_COMMANDS = (
     ("strategies.wallet_entity_flow.current_wallet_entity_flow_access",),
     ("strategies.wallet_entity_flow.current_hyperliquid_seed_wallet_flow",),
+    ("strategies.wallet_entity_flow.current_seed_wallet_flow_actionability",),
     ("strategies.news_social.current_news_event_screen",),
     ("strategies.news_social.current_exchange_catalyst_snapshot",),
     ("strategies.news_social.current_exchange_catalyst_market_join",),

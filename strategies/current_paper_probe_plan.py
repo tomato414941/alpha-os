@@ -218,7 +218,12 @@ def _probe_type(row: dict[str, str]) -> str:
         return "token_unlock_probe"
     if status == "paper_protocol_activity_watch":
         return "protocol_activity_probe"
-    if status == "seed_wallet_flow_watch":
+    if status in {
+        "seed_wallet_flow_watch",
+        "wallet_position_follow_candidate",
+        "wallet_recent_flow_candidate",
+        "wallet_flow_watch",
+    }:
         return "wallet_entity_flow_probe"
     if status.startswith("execution_"):
         return "execution_edge_probe"
