@@ -17,10 +17,16 @@ observed_at,token_symbol,protocol,status,side,direction,priority,start_price,raw
 2026-06-08T00:46:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,93.92628500,0.158975000000,-0.02556743,0.01984896,,,-0.02556743,0.01984896,,,labeled_12h_pending_24h
 2026-06-08T00:46:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,58.56163400,1.750000000000,-0.02834072,0.06363280,,,-0.02834072,0.06363280,,,labeled_12h_pending_24h
 2026-06-08T09:52:00+00:00,HYPE,Hyper Foundation HYPE Staking,fee_decay_price_weakness_context,watch_or_short,-1,11.28817900,61.680000000000,0.04442721,0.04236810,,,-0.04442721,-0.04236810,,,labeled_12h_pending_24h
+2026-06-08T23:36:00+00:00,JUP,Jupiter Perpetual Exchange,fee_growth_price_lag_candidate,long_token,1,95.96522600,0.163521000000,,,,,,,,,pending_4h
+2026-06-08T23:36:00+00:00,AAVE,Aave V3,fee_growth_price_lag_candidate,long_token,1,87.98200000,64.150000000000,,,,,,,,,pending_4h
+2026-06-08T23:36:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,78.30558652,2.590000000000,,,,,,,,,pending_4h
 2026-06-07T22:36:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,77.91078445,2.560000000000,,,,,,,,,pending_4h
 2026-06-08T00:41:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,77.91078445,2.560000000000,,,,,,,,,pending_4h
 2026-06-08T00:46:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,77.82327195,2.580000000000,,,,,,,,,pending_4h
 2026-06-08T09:52:00+00:00,UNI,Uniswap V3,fee_growth_price_lag_candidate,long_token,1,77.82327195,2.580000000000,,,,,,,,,pending_4h
+2026-06-08T23:36:00+00:00,CRV,Curve DEX,fee_growth_price_lag_candidate,long_token,1,59.05823235,0.199734000000,,,,,,,,,pending_4h
+2026-06-08T23:36:00+00:00,MORPHO,Morpho Blue,fee_growth_price_lag_candidate,long_token,1,54.86576850,1.830000000000,,,,,,,,,pending_4h
+2026-06-08T23:36:00+00:00,PENDLE,Pendle,fee_growth_price_lag_candidate,long_token,1,42.93492020,1.280000000000,,,,,,,,,pending_4h
 2026-06-08T00:46:00+00:00,PENDLE,Pendle,fee_growth_price_lag_candidate,long_token,1,40.21415840,1.280000000000,,,,,,,,,pending_4h
 2026-06-08T09:52:00+00:00,PENDLE,Pendle,fee_growth_price_lag_candidate,long_token,1,40.21415840,1.280000000000,,,,,,,,,pending_4h
 2026-06-07T22:36:00+00:00,PENDLE,Pendle,fee_growth_price_lag_candidate,long_token,1,39.23893939,1.260000000000,,,,,,,,,pending_4h
@@ -29,7 +35,9 @@ observed_at,token_symbol,protocol,status,side,direction,priority,start_price,raw
 2026-06-08T00:41:00+00:00,UNI,Uniswap V4,fee_decay_price_weakness_context,watch_or_short,-1,32.19028300,2.560000000000,,,,,,,,,pending_4h
 2026-06-08T00:46:00+00:00,UNI,Uniswap V4,fee_decay_price_weakness_context,watch_or_short,-1,31.97719700,2.580000000000,,,,,,,,,pending_4h
 2026-06-08T09:52:00+00:00,UNI,Uniswap V4,fee_decay_price_weakness_context,watch_or_short,-1,31.97719700,2.580000000000,,,,,,,,,pending_4h
+2026-06-08T23:36:00+00:00,UNI,Uniswap V4,fee_decay_price_weakness_context,watch_or_short,-1,31.90365300,2.590000000000,,,,,,,,,pending_4h
 2026-06-07T22:36:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,10.76355000,66.160000000000,,,,,,,,,pending_4h
 2026-06-08T00:41:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,10.76355000,66.160000000000,,,,,,,,,pending_4h
+2026-06-08T23:36:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,10.70493700,67.490000000000,,,,,,,,,pending_4h
 2026-06-08T00:46:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,9.69898600,66.810000000000,,,,,,,,,pending_4h
 2026-06-08T09:52:00+00:00,SOL,Solana,fee_decay_price_weakness_context,watch_or_short,-1,9.69898600,66.810000000000,,,,,,,,,pending_4h
