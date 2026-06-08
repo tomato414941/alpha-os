@@ -238,7 +238,7 @@ def _build_lane(rule: LaneRule, *, alpha_rows: tuple[dict[str, str], ...]) -> Fr
                 best_opportunity=best.get("candidate_id", ""),
                 evidence_sources="wallet_entity_flow/current_seed_wallet_flow_actionability",
                 missing_work=rule.missing_work,
-                next_probe=rule.next_probe,
+                next_probe="paper-label wallet-flow actionability with funding, spread/depth, copycat-risk, and entity-quality controls",
             )
         if flow_rows:
             best = max(flow_rows, key=lambda row: _float(row.get("score")))

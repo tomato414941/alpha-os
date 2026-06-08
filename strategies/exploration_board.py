@@ -267,7 +267,7 @@ def _wallet_entity_flow_row(root: Path) -> ExplorationRow:
 
 def _hyperliquid_seed_wallet_flow_row(root: Path) -> ExplorationRow:
     path = root / "wallet_entity_flow" / "current_hyperliquid_seed_wallet_flow.csv"
-    best = _best_numeric_row(path, key="score")
+    best = _best_tradable_seed_wallet_flow(path, root=root)
     if best:
         return ExplorationRow(
             lane="hyperliquid_seed_wallet_flow",
@@ -289,6 +289,35 @@ def _hyperliquid_seed_wallet_flow_row(root: Path) -> ExplorationRow:
         main_gap="seed wallets have not been converted into flow observations",
         next_step="run Hyperliquid seed wallet flow probe",
     )
+
+
+def _best_tradable_seed_wallet_flow(path: Path, *, root: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    tradable_assets = {
+        row.get("asset", "").upper()
+        for row in _csv_rows(root / "perp_market_map" / "current_hyperliquid_snapshot.csv")
+        if row.get("asset")
+    }
+    rows = tuple(
+        row
+        for row in _csv_rows(path)
+        if _seed_wallet_execution_asset(row.get("coin", ""), tradable_assets)
+    )
+    if not rows:
+        return _best_numeric_row(path, key="score")
+    return max(rows, key=lambda row: _safe_float(row.get("score")))
+
+
+def _seed_wallet_execution_asset(source_coin: str, tradable_assets: set[str]) -> str:
+    coin = source_coin.upper()
+    if coin in tradable_assets:
+        return coin
+    if ":" in coin:
+        suffix = coin.rsplit(":", 1)[-1]
+        if suffix in tradable_assets:
+            return suffix
+    return ""
 
 
 def _hyperliquid_seed_wallet_flow_actionability_row(root: Path) -> ExplorationRow:
