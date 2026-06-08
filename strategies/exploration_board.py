@@ -375,6 +375,32 @@ def _perp_market_map_row(root: Path) -> ExplorationRow:
     ) + _hyperliquid_dislocation_execution_signal(
         root / "perp_market_map" / "current_hyperliquid_dislocation_execution_check.csv"
     )
+    actionability_path = root / "perp_market_map" / "current_hyperliquid_dislocation_actionability.csv"
+    actionability = _best_hyperliquid_dislocation_actionability_row(actionability_path)
+    if actionability:
+        return ExplorationRow(
+            lane="perp_market_map",
+            status=actionability.get("status", "hyperliquid_dislocation_actionability"),
+            strongest_current_signal=(
+                f"{actionability.get('asset', '')}: "
+                f"{actionability.get('side', '')}, "
+                f"score={actionability.get('score', '')}, "
+                f"current1h={actionability.get('current_outcome_1h', '')} "
+                f"{actionability.get('current_net_1h_bps', '')}, "
+                f"gate={actionability.get('execution_gate', '')}, "
+                f"hist_win1h={actionability.get('history_win_1h', '')}, "
+                f"hist_mean1h={actionability.get('history_mean_net_1h_bps', '')}"
+                f"{okx_signal}"
+            ),
+            main_gap=actionability.get(
+                "reason",
+                "dislocation candidate still needs repeated paper probes, stop behavior, and adverse-selection checks",
+            ),
+            next_step=actionability.get(
+                "next_step",
+                "repeat top Hyperliquid dislocation paper probe with current execution evidence",
+            ),
+        )
     outcome_path = root / "perp_market_map" / "current_crowding_reversion_paper_outcome.csv"
     best_outcome = _best_crowding_outcome_row(outcome_path)
     if best_outcome:
@@ -2658,6 +2684,25 @@ def _best_dislocation_execution_row(path: Path) -> dict[str, str] | None:
             -float(row.get("candidate_size_usd") or "0"),
         ),
     )
+
+
+def _best_hyperliquid_dislocation_actionability_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("status")
+            in {
+                "dislocation_repeat_execution_candidate",
+                "dislocation_repeat_needs_execution_check",
+                "dislocation_single_snapshot_1h_watch",
+            }
+        )
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("score") or "0"))
 
 
 def _best_dislocation_monitor_row(path: Path) -> dict[str, str] | None:

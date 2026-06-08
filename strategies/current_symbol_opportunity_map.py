@@ -127,6 +127,7 @@ STOP_TOKENS = {
     "OKX",
     "OKXSWAP",
     "ON",
+    "ONLY",
     "OFF",
     "OI",
     "OR",

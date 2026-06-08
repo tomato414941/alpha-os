@@ -35,6 +35,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_derivatives_positioning_stacks(root),
         *_cross_exchange_funding_stacks(root),
         *_perp_crowding_stacks(root),
+        *_hyperliquid_dislocation_actionability_stacks(root),
         *_hyperliquid_dislocation_stacks(root),
         *_hyperliquid_oi_shift_stacks(root),
         *_protocol_fundamental_stacks(root),
@@ -793,6 +794,8 @@ def _perp_crowding_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 
 def _hyperliquid_dislocation_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    if (root / "perp_market_map" / "current_hyperliquid_dislocation_actionability.csv").exists():
+        return ()
     rows = _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_candidates.csv")
     labels = _best_hyperliquid_dislocation_labels(
         _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_forward_labels.csv")
@@ -1040,6 +1043,60 @@ def _hyperliquid_dislocation_next_step(
     )
 
 
+def _hyperliquid_dislocation_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "perp_market_map" / "current_hyperliquid_dislocation_actionability.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "dislocation_repeat_execution_candidate",
+                "dislocation_repeat_needs_execution_check",
+                "dislocation_single_snapshot_1h_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:8]:
+        asset = ticket.get("asset", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_{_slug(ticket.get('source_status', ''))}_actionability",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=4,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="perp_market_map",
+                evidence=(
+                    f"{asset}: source={ticket.get('source_status', '')}, "
+                    f"monitor_obs={ticket.get('monitor_observations', '')}, "
+                    f"current15={ticket.get('current_outcome_15m', '')} {ticket.get('current_net_15m_bps', '')}, "
+                    f"current1h={ticket.get('current_outcome_1h', '')} {ticket.get('current_net_1h_bps', '')}, "
+                    f"gate={ticket.get('execution_gate', '')}, "
+                    f"cons_net1h={ticket.get('conservative_net_1h_bps', '')}, "
+                    f"history={ticket.get('history_action', '')}, "
+                    f"hist_win1h={ticket.get('history_win_1h', '')}, "
+                    f"hist_mean1h={ticket.get('history_mean_net_1h_bps', '')}"
+                ),
+                conflict=ticket.get(
+                    "reason",
+                    "dislocation candidate still needs repeated paper probes, stop behavior, and adverse-selection checks",
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"repeat {asset} dislocation paper probe with current execution evidence",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _hyperliquid_oi_shift_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "perp_market_map" / "current_hyperliquid_oi_shift_candidates.csv")
     tickets = sorted(rows, key=lambda row: _float(row.get("score")), reverse=True)
@@ -1176,7 +1233,11 @@ def _perp_crowding_stack_status(
     outcome: dict[str, str],
 ) -> str:
     if outcome.get("outcome_1h") == "paper_1h_win":
+        if outcome.get("outcome_15m") == "paper_15m_loss":
+            return "paper_delayed_carry_reversion_probe"
         return "paper_outcome_supported_carry_reversion_probe"
+    if outcome.get("outcome_1h") == "paper_1h_loss":
+        return "paper_outcome_failed_carry_reversion_probe"
     if outcome.get("outcome_15m") == "paper_15m_win":
         return "paper_short_horizon_supported_carry_reversion_probe"
     if outcome.get("outcome_15m") == "paper_15m_loss":
@@ -2270,6 +2331,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_outcome_supported_carry_reversion_probe": 74.0,
         "paper_short_horizon_supported_carry_reversion_probe": 72.0,
         "paper_executable_carry_reversion_probe": 70.0,
+        "paper_delayed_carry_reversion_probe": 60.0,
         "paper_outcome_failed_carry_reversion_probe": 43.0,
         "paper_validated_carry_reversion_candidate": 66.0,
         "wide_spread_watch": 55.0,
@@ -2286,6 +2348,14 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_dislocation_1h_supported_candidate": 69.0,
         "paper_dislocation_15m_supported_candidate": 64.0,
         "paper_dislocation_15m_failed_candidate": 42.0,
+        "dislocation_repeat_execution_candidate": 61.0,
+        "dislocation_repeat_needs_execution_check": 54.0,
+        "dislocation_single_snapshot_1h_watch": 45.0,
+        "dislocation_15m_only_watch": 38.0,
+        "dislocation_monitor_conflict_relabel": 34.0,
+        "dislocation_failed_1h_confirmation": 32.0,
+        "dislocation_history_deprioritize": 28.0,
+        "dislocation_deprioritize": 24.0,
         "paper_attention_funding_watch": 57.0,
         "attention_price_lag_candidate": 61.0,
         "attention_breakout_continuation_watch": 58.0,
