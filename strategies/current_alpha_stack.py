@@ -581,14 +581,19 @@ def _futures_basis_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
             in {
                 "paper_short_basis_watch",
                 "paper_long_basis_watch",
-                "basis_term_structure_watch",
             }
+            and _abs_float(row.get("basis")) > _float(row.get("bid_ask_spread_pct"))
         ),
         key=lambda row: _float(row.get("score")),
         reverse=True,
     )
     output: list[AlphaStackRow] = []
-    for ticket in tickets[:6]:
+    seen_currency_sides: set[tuple[str, str]] = set()
+    for ticket in tickets:
+        currency_side = (ticket.get("currency", ""), ticket.get("side", ""))
+        if currency_side in seen_currency_sides:
+            continue
+        seen_currency_sides.add(currency_side)
         instrument = ticket.get("instrument_name", "")
         output.append(
             AlphaStackRow(
@@ -613,6 +618,8 @@ def _futures_basis_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 ),
             )
         )
+        if len(output) >= 6:
+            break
     return tuple(output)
 
 
