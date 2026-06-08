@@ -230,6 +230,8 @@ DEFAULT_COMMANDS = (
     ("strategies.event_flow.current_lob_sequence_state_probe",),
     ("strategies.event_flow.current_lob_policy_candidate_survival",),
     ("strategies.event_flow.current_lob_maker_fill_survival",),
+    ("strategies.crypto_pair_spread.current_crypto_pair_spread_tickets", "--preserve-opened-at"),
+    ("strategies.crypto_pair_spread.current_crypto_pair_spread_outcomes",),
     ("strategies.current_cross_modal_alpha_context",),
     ("strategies.current_cross_modal_source_split",),
     ("strategies.llm_factor_generation.current_factor_hypothesis_templates",),

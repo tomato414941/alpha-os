@@ -33,6 +33,7 @@ OUTCOME_PATHS = (
     ("broad_alpha_repeat", ROOT / "current_broad_alpha_repeat_outcomes.csv"),
     ("ofi", ROOT / "event_flow" / "current_ofi_paper_outcomes.csv"),
     ("ofi_repeat", ROOT / "event_flow" / "current_ofi_repeat_outcomes.csv"),
+    ("crypto_pair_spread", ROOT / "crypto_pair_spread" / "current_crypto_pair_spread_outcomes.csv"),
     ("repeat", ROOT / "current_promoted_ticket_repeat_outcomes.csv"),
     ("second_repeat", ROOT / "current_second_promoted_ticket_repeat_outcomes.csv"),
     ("symbol_lane", ROOT / "current_symbol_lane_paper_outcomes.csv"),

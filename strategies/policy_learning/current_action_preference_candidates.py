@@ -238,6 +238,7 @@ def _sample_reward(row: dict[str, str]) -> float:
 def _context_family(opportunity: str) -> str:
     value = opportunity.lower()
     family_tokens = (
+        ("crypto_pair_spread", ("crypto_pair_spread",)),
         ("ofi_execution_survival", ("ofi_execution_survival", "ofi")),
         ("microstructure_flow", ("microstructure", "l2_imbalance", "flow_probe")),
         ("volume_price_dislocation", ("volume_price_dislocation", "volume-dislocation")),
