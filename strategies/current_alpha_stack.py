@@ -25,6 +25,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
     rows = [
         _btc_risk_off_short_stack(root),
         _mstr_btc_relative_value_stack(root),
+        *_crypto_equity_proxy_stacks(root),
         *_volatility_hedge_candidate_stacks(root),
         *_volatility_actionability_stacks(root),
         *_options_volatility_stacks(root),
@@ -188,6 +189,53 @@ def _mstr_btc_relative_value_stack(root: Path) -> AlphaStackRow | None:
         conflict="requires equity borrow/liquidity, corporate-news check, and BTC hedge mapping; prediction market odds are not a direct equity fair-value model",
         next_step="label MSTR/BTC relative returns around BTC-purchase news and compare against borrow, spread, and hedge slippage",
     )
+
+
+def _crypto_equity_proxy_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "crypto_equity_proxy" / "current_crypto_equity_proxy_paper_tickets.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("name") != "mstr_btc_dislocation"
+            and row.get("status")
+            in {
+                "paper_long_candidate",
+                "paper_short_candidate",
+                "paper_relative_value_watch",
+                "paper_risk_context",
+                "eth_treasury_proxy_watch",
+            }
+        ),
+        key=lambda row: _abs_float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:5]:
+        name = ticket.get("name", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=name,
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_abs_float(ticket.get("score")) * 100.0,
+                ),
+                sources="crypto_equity_proxy",
+                evidence=ticket.get("reason", ""),
+                conflict=(
+                    "equity proxies trade on different hours, have borrow/liquidity constraints, "
+                    "and can reflect corporate financing rather than crypto spot demand"
+                ),
+                next_step=(
+                    f"label {name} against BTC/ETH spot, funding, equity-market beta, "
+                    "borrow constraints, and market-hours gaps"
+                ),
+            )
+        )
+    return tuple(output)
 
 
 def _options_volatility_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
@@ -4086,6 +4134,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "expiry_gamma_hedge_watch": 50.0,
         "quote_only_hedge_watch": 42.0,
         "paper_relative_value_watch": 64.0,
+        "eth_treasury_proxy_watch": 66.0,
         "small_paper_probe": 60.0,
         "small_paper_probe_pending_1h": 45.0,
         "microstructure_small_paper_probe": 72.0,

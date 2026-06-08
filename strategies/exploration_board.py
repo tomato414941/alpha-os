@@ -1698,13 +1698,14 @@ def _crypto_equity_proxy_row(root: Path) -> ExplorationRow:
             next_step="label MSTR/BTC, COIN/HOOD beta, and miner stress against BTC/ETH returns and funding context",
         )
     context_path = root / "crypto_equity_proxy" / "current_crypto_equity_proxy_context.csv"
-    best_context = _best_abs_numeric_row(context_path, key="vs_btc_5d")
+    best_context = _best_crypto_equity_proxy_context(context_path)
     signal = "not run yet"
     if best_context:
+        relative_key = "vs_eth_5d" if best_context.get("group") == "eth_treasury_equity" else "vs_btc_5d"
         signal = (
             f"{best_context.get('symbol', '')}: "
             f"group={best_context.get('group', '')}, "
-            f"vs_btc_5d={best_context.get('vs_btc_5d', '')}, "
+            f"{relative_key}={best_context.get(relative_key, '')}, "
             f"ret5d={best_context.get('return_5d', '')}"
         )
     return ExplorationRow(
@@ -1714,6 +1715,19 @@ def _crypto_equity_proxy_row(root: Path) -> ExplorationRow:
         main_gap="crypto-linked equity proxies have not been converted into repeated labels",
         next_step="build paper tickets for proxy lead/lag, MSTR/BTC dislocation, and miner stress",
     )
+
+
+def _best_crypto_equity_proxy_context(path: Path) -> dict[str, str] | None:
+    rows = _csv_rows(path)
+    if not rows:
+        return None
+    return max(rows, key=_crypto_equity_proxy_context_score)
+
+
+def _crypto_equity_proxy_context_score(row: dict[str, str]) -> float:
+    if row.get("group") == "eth_treasury_equity":
+        return abs(_safe_float(row.get("vs_eth_5d")))
+    return abs(_safe_float(row.get("vs_btc_5d")))
 
 
 def _speculative_beta_row(root: Path) -> ExplorationRow:

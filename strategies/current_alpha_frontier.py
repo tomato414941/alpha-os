@@ -118,7 +118,7 @@ LANE_RULES = (
     ),
     LaneRule(
         lane="macro / institutional flow",
-        tokens=("macro", "etf", "institutional", "risk_off", "credit", "vix"),
+        tokens=("macro", "etf", "institutional", "risk_off", "credit", "vix", "crypto_equity_proxy", "treasury"),
         missing_work="timely flow data, regime labels, hedge mapping, and crypto beta decomposition",
         next_probe="join ETF/funding/macro risk-off windows to BTC/ETH and high-beta token labels",
         base_priority=88.0,

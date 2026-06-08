@@ -32,6 +32,8 @@ class ProxySnapshot:
     return_20d: float
     vs_btc_1d: float
     vs_btc_5d: float
+    vs_eth_1d: float
+    vs_eth_5d: float
 
 
 @dataclass(frozen=True)
@@ -47,6 +49,11 @@ ASSETS = (
     ProxyAsset("BTC-USD", "BTC", "crypto"),
     ProxyAsset("ETH-USD", "ETH", "crypto"),
     ProxyAsset("MSTR", "MicroStrategy", "btc_treasury_equity"),
+    ProxyAsset("BMNR", "BitMine Immersion", "eth_treasury_equity"),
+    ProxyAsset("SBET", "SharpLink", "eth_treasury_equity"),
+    ProxyAsset("ETHM", "The Ether Machine", "eth_treasury_equity"),
+    ProxyAsset("BTBT", "Bit Digital", "eth_treasury_equity"),
+    ProxyAsset("BTCS", "BTCS", "eth_treasury_equity"),
     ProxyAsset("COIN", "Coinbase", "exchange_equity"),
     ProxyAsset("HOOD", "Robinhood", "broker_equity"),
     ProxyAsset("IBIT", "iShares Bitcoin Trust", "spot_btc_etf"),
@@ -73,7 +80,18 @@ def build_current_context(
         for asset in ASSETS
     }
     btc = _snapshot_base_returns(raw["BTC-USD"])
-    snapshots = tuple(_snapshot(asset, raw[asset.symbol], btc_return_1d=btc[0], btc_return_5d=btc[1]) for asset in ASSETS)
+    eth = _snapshot_base_returns(raw["ETH-USD"])
+    snapshots = tuple(
+        _snapshot(
+            asset,
+            raw[asset.symbol],
+            btc_return_1d=btc[0],
+            btc_return_5d=btc[1],
+            eth_return_1d=eth[0],
+            eth_return_5d=eth[1],
+        )
+        for asset in ASSETS
+    )
     return snapshots, _build_tickets(snapshots)
 
 
@@ -93,6 +111,8 @@ def write_snapshots_csv(snapshots: tuple[ProxySnapshot, ...], *, output_path: Pa
                 "return_20d",
                 "vs_btc_1d",
                 "vs_btc_5d",
+                "vs_eth_1d",
+                "vs_eth_5d",
             )
         )
         for row in snapshots:
@@ -108,6 +128,8 @@ def write_snapshots_csv(snapshots: tuple[ProxySnapshot, ...], *, output_path: Pa
                     f"{row.return_20d:.8f}",
                     f"{row.vs_btc_1d:.8f}",
                     f"{row.vs_btc_5d:.8f}",
+                    f"{row.vs_eth_1d:.8f}",
+                    f"{row.vs_eth_5d:.8f}",
                 )
             )
     return output_path
@@ -149,13 +171,13 @@ def write_markdown(
                 f"{ticket.score:.4f} | {ticket.reason} |\n"
             )
         handle.write("\n## Proxy Context\n\n")
-        handle.write("| symbol | group | close | 1d | 5d | 20d | vs BTC 1d | vs BTC 5d |\n")
+        handle.write("| symbol | group | close | 1d | 5d | 20d | vs BTC 5d | vs ETH 5d |\n")
         handle.write("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |\n")
         for row in snapshots:
             handle.write(
                 f"| {row.symbol} | {row.group} | {row.close:.4f} | "
                 f"{row.return_1d:.4f} | {row.return_5d:.4f} | "
-                f"{row.return_20d:.4f} | {row.vs_btc_1d:.4f} | {row.vs_btc_5d:.4f} |\n"
+                f"{row.return_20d:.4f} | {row.vs_btc_5d:.4f} | {row.vs_eth_5d:.4f} |\n"
             )
     return output_path
 
@@ -197,6 +219,8 @@ def _snapshot(
     *,
     btc_return_1d: float,
     btc_return_5d: float,
+    eth_return_1d: float,
+    eth_return_5d: float,
 ) -> ProxySnapshot:
     if len(prices) < 2:
         raise ValueError(f"Not enough Yahoo rows for {asset.symbol}")
@@ -214,6 +238,8 @@ def _snapshot(
         return_20d=_return_at(prices, latest_index, 20),
         vs_btc_1d=return_1d - btc_return_1d,
         vs_btc_5d=return_5d - btc_return_5d,
+        vs_eth_1d=return_1d - eth_return_1d,
+        vs_eth_5d=return_5d - eth_return_5d,
     )
 
 
@@ -229,17 +255,66 @@ def _build_tickets(snapshots: tuple[ProxySnapshot, ...]) -> tuple[CryptoEquityPr
     coin = by_symbol["COIN"]
     hood = by_symbol["HOOD"]
     ibit = by_symbol["IBIT"]
+    eth = by_symbol["ETH-USD"]
+    eth_treasuries = tuple(row for row in snapshots if row.group == "eth_treasury_equity")
     miners = tuple(row for row in snapshots if row.group == "miner")
     equity_proxies = (mstr, coin, hood, ibit, *miners)
     avg_proxy_vs_btc_5d = sum(row.vs_btc_5d for row in equity_proxies) / len(equity_proxies)
+    avg_eth_treasury_vs_eth_5d = sum(row.vs_eth_5d for row in eth_treasuries) / len(eth_treasuries)
     avg_miner_vs_btc_5d = sum(row.vs_btc_5d for row in miners) / len(miners)
     tickets = (
         _proxy_lead_ticket(avg_proxy_vs_btc_5d=avg_proxy_vs_btc_5d, btc=btc),
+        _eth_treasury_lead_ticket(
+            avg_eth_treasury_vs_eth_5d=avg_eth_treasury_vs_eth_5d,
+            eth=eth,
+            strongest=max(eth_treasuries, key=lambda row: abs(row.vs_eth_5d)),
+        ),
         _mstr_dislocation_ticket(mstr=mstr, btc=btc),
         _miner_stress_ticket(avg_miner_vs_btc_5d=avg_miner_vs_btc_5d),
         _exchange_beta_ticket(coin=coin, hood=hood, btc=btc),
     )
     return tuple(sorted(tickets, key=lambda ticket: abs(ticket.score), reverse=True))
+
+
+def _eth_treasury_lead_ticket(
+    *,
+    avg_eth_treasury_vs_eth_5d: float,
+    eth: ProxySnapshot,
+    strongest: ProxySnapshot,
+) -> CryptoEquityProxyTicket:
+    score = avg_eth_treasury_vs_eth_5d
+    if score > 0.06 and eth.return_5d < 0.0:
+        return CryptoEquityProxyTicket(
+            name="eth_treasury_proxy_lead",
+            status="paper_long_candidate",
+            side="long_eth",
+            score=score,
+            reason=(
+                "ETH treasury equities outperform ETH while ETH is down; "
+                f"strongest={strongest.symbol} vs_eth_5d={strongest.vs_eth_5d:.4f}"
+            ),
+        )
+    if score < -0.06 and eth.return_5d > -0.03:
+        return CryptoEquityProxyTicket(
+            name="eth_treasury_proxy_lead",
+            status="paper_short_candidate",
+            side="short_eth",
+            score=score,
+            reason=(
+                "ETH treasury equities underperform ETH while ETH has not repriced much; "
+                f"strongest={strongest.symbol} vs_eth_5d={strongest.vs_eth_5d:.4f}"
+            ),
+        )
+    return CryptoEquityProxyTicket(
+        name="eth_treasury_proxy_lead",
+        status="eth_treasury_proxy_watch",
+        side="eth_treasury_vs_eth_context",
+        score=score,
+        reason=(
+            "ETH treasury equities are a current institutional demand proxy; "
+            f"strongest={strongest.symbol} vs_eth_5d={strongest.vs_eth_5d:.4f}"
+        ),
+    )
 
 
 def _proxy_lead_ticket(*, avg_proxy_vs_btc_5d: float, btc: ProxySnapshot) -> CryptoEquityProxyTicket:
