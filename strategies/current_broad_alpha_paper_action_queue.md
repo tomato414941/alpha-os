@@ -13,6 +13,10 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | 50.0000 | broad-paper-sol-paper-short | wait_for_checkpoint | SOL | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-arbusdt-paper-short | wait_for_checkpoint | ARBUSDT | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-arbusdt-paper-long | wait_for_checkpoint | ARBUSDT | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | broad-paper-btc-paper-long | wait_for_checkpoint | BTC | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | broad-paper-wld-paper-short | wait_for_checkpoint | WLD | paper_short |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | broad-paper-pengu-paper-long | wait_for_checkpoint | PENGU | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| 50.0000 | broad-paper-deus-paper-long | wait_for_checkpoint | DEUS | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-fet-paper-long | wait_for_checkpoint | FET | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-fartcoin-paper-long | wait_for_checkpoint | FARTCOIN | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | 50.0000 | broad-paper-ub-paper-long | wait_for_checkpoint | UB | paper_long |  | pending | ticket checkpoint has not matured | wait for the first checkpoint and refresh marks |
@@ -46,5 +50,5 @@ This turns paper-ticket mark outcomes into the next observation work. It is not 
 | 40.0000 | broad-paper-aave-paper-long | keep_observing_quote | AAVE | paper_long | 0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | broad-paper-zro-paper-short | keep_observing_quote | ZRO | paper_short | -0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
 | 40.0000 | broad-paper-eigen-paper-short | keep_observing_quote | EIGEN | paper_short | -0.00000000 | paper_mark_flat | paper mark has not moved | keep observing until quote moves or external evidence changes |
-| -43.9227 | broad-paper-beat-paper-long | deprioritize_or_repeat_once | BEAT | paper_long | -68.92273761 | paper_mark_loss | paper mark moved against the ticket direction | repeat only if the original hypothesis has independent support; otherwise deprioritize |
-| -107.2252 | broad-paper-allo-paper-long | deprioritize_or_repeat_once | ALLO | paper_long | -132.22516056 | paper_mark_loss | paper mark moved against the ticket direction | repeat only if the original hypothesis has independent support; otherwise deprioritize |
+| -49.2068 | broad-paper-beat-paper-long | deprioritize_or_repeat_once | BEAT | paper_long | -74.20681416 | paper_mark_loss | paper mark moved against the ticket direction | repeat only if the original hypothesis has independent support; otherwise deprioritize |
+| -73.2244 | broad-paper-allo-paper-long | deprioritize_or_repeat_once | ALLO | paper_long | -98.22440499 | paper_mark_loss | paper mark moved against the ticket direction | repeat only if the original hypothesis has independent support; otherwise deprioritize |

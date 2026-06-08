@@ -39,6 +39,7 @@ def build_broad_alpha_paper_tickets(
         + _liquidation_intensity_candidates(top_per_source)
         + _btc_funding_candidates(top_per_source)
         + _intraday_derivatives_candidates(top_per_source)
+        + _event_pressure_candidates(top_per_source)
         + _market_breadth_candidates(top_per_source)
         + _option_watch_candidates(top_per_source)
         + _stablecoin_proxy_candidates(top_per_source)
@@ -269,6 +270,41 @@ def _intraday_live_symbols() -> set[str]:
     }
 
 
+def _event_pressure_candidates(top: int) -> tuple[dict[str, str], ...]:
+    attention_prices = _attention_prices()
+    rows = tuple(
+        row
+        for row in _top_rows(ROOT / "news_social" / "current_event_pressure_cluster.csv", "score", top * 2)
+        if _event_pressure_decision(row.get("side", "")) != "paper_observe"
+    )[:top]
+    return tuple(
+        {
+            "source": f"event_pressure:{row.get('symbol', '')}:{row.get('status', '')}",
+            "asset": row.get("symbol", ""),
+            "decision": _event_pressure_decision(row.get("side", "")),
+            "side": "short" if _event_pressure_decision(row.get("side", "")) == "paper_short" else "long",
+            "status": row.get("status", ""),
+            "required_record": "source independence, duplicate filtering, funding, spread/depth, stop, stale-headline check",
+            "next_step": row.get("next_step", ""),
+            "score": row.get("score", ""),
+            "horizon": "15m,1h,4h",
+            "checkpoints": "15m,1h,4h",
+            "size_usd": "100",
+            "entry_mark": attention_prices.get(row.get("symbol", ""), ""),
+            "entry_source": "attention_price_context" if row.get("symbol", "") in attention_prices else "",
+        }
+        for row in rows
+    )
+
+
+def _attention_prices() -> dict[str, str]:
+    return {
+        row.get("symbol", ""): row.get("current_price", "")
+        for row in _read_rows(ROOT / "news_social" / "current_attention_price_context.csv")
+        if row.get("symbol") and row.get("current_price")
+    }
+
+
 def _market_breadth_candidates(top: int) -> tuple[dict[str, str], ...]:
     return tuple(
         _directional_candidate(
@@ -462,6 +498,14 @@ def _intraday_derivatives_decision(action: str) -> str:
     if action == "short_opposite":
         return "paper_short"
     return "paper_long"
+
+
+def _event_pressure_decision(side: str) -> str:
+    if side.startswith("short"):
+        return "paper_short"
+    if side.startswith("long"):
+        return "paper_long"
+    return "paper_observe"
 
 
 def _entry_mark(

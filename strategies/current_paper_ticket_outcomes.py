@@ -48,6 +48,7 @@ def build_paper_ticket_outcomes(
     prediction_market_tickets_path: Path = ROOT
     / "prediction_markets"
     / "current_prediction_market_paper_tickets.csv",
+    attention_price_context_path: Path = ROOT / "news_social" / "current_attention_price_context.csv",
 ) -> tuple[PaperTicketOutcome, ...]:
     checked_at = datetime.now(UTC)
     marks = _load_marks(
@@ -59,8 +60,15 @@ def build_paper_ticket_outcomes(
         event_probability_tickets_path=event_probability_tickets_path,
         prediction_market_tickets_path=prediction_market_tickets_path,
     )
+    attention_marks = _load_attention_price_marks(attention_price_context_path)
     return tuple(
-        _build_outcome(checked_at=checked_at, row=row, marks=marks, event_marks=event_marks)
+        _build_outcome(
+            checked_at=checked_at,
+            row=row,
+            marks=marks,
+            event_marks=event_marks,
+            attention_marks=attention_marks,
+        )
         for row in _read_rows(tickets_path)
     )
 
@@ -161,11 +169,17 @@ def _build_outcome(
     row: dict[str, str],
     marks: dict[tuple[str, str], tuple[str, str]],
     event_marks: dict[str, tuple[str, str]],
+    attention_marks: dict[str, tuple[str, str]],
 ) -> PaperTicketOutcome:
     opened_at = _parse_time(row.get("opened_at", ""))
     elapsed_minutes = (checked_at - opened_at).total_seconds() / 60.0 if opened_at else 0.0
     checkpoint_status = _checkpoint_status(row.get("checkpoints", ""), elapsed_minutes)
-    current_mark, current_source = _current_mark(row=row, marks=marks, event_marks=event_marks)
+    current_mark, current_source = _current_mark(
+        row=row,
+        marks=marks,
+        event_marks=event_marks,
+        attention_marks=attention_marks,
+    )
     raw_bps, dir_bps, outcome, missing = _mark_outcome(
         entry_mark=row.get("entry_mark", ""),
         current_mark=current_mark,
@@ -206,6 +220,7 @@ def _current_mark(
     row: dict[str, str],
     marks: dict[tuple[str, str], tuple[str, str]],
     event_marks: dict[str, tuple[str, str]],
+    attention_marks: dict[str, tuple[str, str]],
 ) -> tuple[str, str]:
     if row.get("asset") == "EVENT":
         event_key = _event_key(row.get("side", ""))
@@ -215,7 +230,12 @@ def _current_mark(
         okx_mark = _okx_current_mark(row.get("asset", ""))
         if okx_mark is not None:
             return okx_mark
-    return _entry_mark(asset=row.get("asset", ""), venue=row.get("venue", ""), marks=marks)
+    mark = _entry_mark(asset=row.get("asset", ""), venue=row.get("venue", ""), marks=marks)
+    if mark[0]:
+        return mark
+    if row.get("opportunity", "").startswith("event_pressure:"):
+        return attention_marks.get(row.get("asset", ""), ("", ""))
+    return "", ""
 
 
 def _load_event_probability_marks(
@@ -237,6 +257,16 @@ def _load_event_probability_marks(
         if question and outcome and ask:
             side = "buy_yes" if outcome == "Yes" else "buy_no"
             marks.setdefault(f"{side}: {question}", (ask, "prediction_market_current_ask"))
+    return marks
+
+
+def _load_attention_price_marks(path: Path) -> dict[str, tuple[str, str]]:
+    marks = {}
+    for row in _read_rows(path):
+        symbol = row.get("symbol", "")
+        mark = row.get("current_price", "")
+        if symbol and mark:
+            marks[symbol] = (mark, "attention_price_context")
     return marks
 
 

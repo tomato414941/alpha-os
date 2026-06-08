@@ -21,10 +21,14 @@ This checks opened paper tickets against the latest available public marks. It i
 | broad-paper-xrp-paper-long | pending | paper_long | XRP |  | 1.177800000000 | 1.177800000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-sol-paper-short | pending | paper_short | SOL |  | 67.469000000000 | 67.469000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-hype-paper-short | ready | paper_short | HYPE |  | 63.504000000000 | 63.504000000000 | -0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
-| broad-paper-beat-paper-long | ready | paper_long | BEAT | OKX | 4.3527 | 4.3227 | -68.92273761 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
-| broad-paper-allo-paper-long | ready | paper_long | ALLO | OKX | 0.39705 | 0.3918 | -132.22516056 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
+| broad-paper-beat-paper-long | ready | paper_long | BEAT | OKX | 4.3527 | 4.3204 | -74.20681416 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
+| broad-paper-allo-paper-long | ready | paper_long | ALLO | OKX | 0.39705 | 0.39315 | -98.22440499 | paper_mark_loss | fill, funding, stop, and adverse excursion still missing | keep or reject based on repeated labels and failure regime |
 | broad-paper-arbusdt-paper-short | pending | paper_short | ARBUSDT |  | 0.082875000000 | 0.082875000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-arbusdt-paper-long | pending | paper_long | ARBUSDT |  | 0.082875000000 | 0.082875000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-btc-paper-long | pending | paper_long | BTC |  | 63490.000000000000 | 63490.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-wld-paper-short | pending | paper_short | WLD |  | 0.551514000000 | 0.550550000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-pengu-paper-long | pending | paper_long | PENGU |  | 0.006914600000 | 0.006912000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-deus-paper-long | pending | paper_long | DEUS |  | 0.038123830000 | 0.038123830000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-jto-paper-short | ready | paper_short | JTO |  | 0.633810000000 | 0.633810000000 | -0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | broad-paper-xpl-paper-long | ready | paper_long | XPL |  | 0.072000000000 | 0.072000000000 | 0.00000000 | paper_mark_flat | fill, funding, stop, and adverse excursion still missing | keep observing until the ticket has a non-flat mark move or stronger quote evidence |
 | broad-paper-fet-paper-long | pending | paper_long | FET |  | 0.213710000000 | 0.213710000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
@@ -56,6 +60,6 @@ This checks opened paper tickets against the latest available public marks. It i
 - losses: 2
 - flat: 15
 - observations: 0
-- pending: 26
+- pending: 30
 - best ready mark: broad-paper-pol-paper-short POL 298.25861430bps paper_mark_win
-- worst ready mark: broad-paper-allo-paper-long ALLO -132.22516056bps paper_mark_loss
+- worst ready mark: broad-paper-allo-paper-long ALLO -98.22440499bps paper_mark_loss
