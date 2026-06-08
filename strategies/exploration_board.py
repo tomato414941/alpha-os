@@ -26,6 +26,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_method_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
         _fundamental_sentiment_cross_section_row(root),
+        _multimodal_btc_eth_feature_alignment_row(root),
         _cross_modal_alpha_context_row(root),
         _cross_modal_source_split_row(root),
         _paper_probe_plan_row(root),
@@ -276,6 +277,42 @@ def _fundamental_sentiment_cross_section_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="fundamental, sentiment, sector, and funding features are not joined cross-sectionally",
         next_step="build one cross-sectional rank table from current feature probes",
+    )
+
+
+def _multimodal_btc_eth_feature_alignment_row(root: Path) -> ExplorationRow:
+    path = root / "current_multimodal_btc_eth_feature_alignment.csv"
+    best = _best_numeric_row(path, key="alignment_score")
+    if best:
+        return ExplorationRow(
+            lane="multimodal_btc_eth_feature_alignment",
+            status=best.get("status", "multimodal_feature_alignment"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"features={best.get('feature_count', '')}, "
+                f"score={best.get('alignment_score', '')}, "
+                f"nlp={best.get('nlp_event_score', '')}, "
+                f"attention={best.get('ticker_attention_score', '')}, "
+                f"stablecoin={best.get('stablecoin_flow_score', '')}, "
+                f"wallet={best.get('wallet_flow_score', '')}, "
+                f"funding={best.get('funding_market_score', '')}, "
+                f"equity={best.get('equity_factor_score', '')}"
+            ),
+            main_gap=best.get(
+                "missing_data",
+                "multimodal row still needs timestamp alignment, ablation, labels, and costs",
+            ),
+            next_step=best.get(
+                "next_probe",
+                "build a leakage-safe BTC/ETH multimodal feature row before model or trade action",
+            ),
+        )
+    return ExplorationRow(
+        lane="multimodal_btc_eth_feature_alignment",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="BTC/ETH multimodal features are not aligned into a single timestamp-aware row",
+        next_step="join NLP/news, attention, stablecoin, wallet, funding, and equity-factor rows for BTC/ETH",
     )
 
 

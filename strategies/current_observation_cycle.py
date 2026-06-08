@@ -276,6 +276,7 @@ DEFAULT_COMMANDS = (
     ("strategies.current_alpha_method_frontier",),
     ("strategies.current_research_backed_alpha_expansion_plan",),
     ("strategies.current_fundamental_sentiment_cross_section",),
+    ("strategies.current_multimodal_btc_eth_feature_alignment",),
     ("strategies.exploration_board",),
 )
 
