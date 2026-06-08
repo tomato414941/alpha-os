@@ -1,0 +1,4 @@
+priority,ticket_id,action,asset,opportunity,decision,directional_return_bps,outcome,reason,next_step
+50.00000000,broad-repeat-chip-long-broad-paper-chip-paper-long,wait_for_checkpoint,CHIP,broad_fill_audit_repeat:broad-fill-audit-chip-long-50bps-stop:1h,paper_long,,pending,ticket checkpoint has not matured,wait for the first checkpoint and refresh marks
+50.00000000,broad-repeat-hype-long-broad-paper-hype-paper-long,wait_for_checkpoint,HYPE,broad_fill_audit_repeat:broad-fill-audit-hype-long-50bps-stop:1h,paper_long,,pending,ticket checkpoint has not matured,wait for the first checkpoint and refresh marks
+50.00000000,broad-repeat-inj-long-broad-paper-inj-paper-long,wait_for_checkpoint,INJ,broad_fill_audit_repeat:broad-fill-audit-inj-long-50bps-stop:15m,paper_long,,pending,ticket checkpoint has not matured,wait for the first checkpoint and refresh marks

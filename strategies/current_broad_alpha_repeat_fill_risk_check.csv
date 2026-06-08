@@ -1,0 +1,1 @@
+ticket_id,action,asset,opportunity,decision,candidate_size_usd,directional_return_bps,spread_bps,near_depth_10bps_notional,visible_depth_usage,annualized_funding,estimated_funding_1h_bps,estimated_round_trip_cost_bps,estimated_net_after_cost_bps,risk_action,reason,next_step
