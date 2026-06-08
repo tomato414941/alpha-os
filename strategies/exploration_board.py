@@ -25,6 +25,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_source_gaps_row(root),
         _factor_hypothesis_templates_row(root),
         _factor_template_validation_queue_row(root),
+        _ofi_execution_survival_row(root),
         _alpha_method_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
         _fundamental_sentiment_cross_section_row(root),
@@ -246,6 +247,34 @@ def _factor_template_validation_queue_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="factor templates are not routed to concrete validation artifacts",
         next_step="run current factor template validation queue after template generation",
+    )
+
+
+def _ofi_execution_survival_row(root: Path) -> ExplorationRow:
+    path = root / "event_flow" / "current_ofi_execution_survival.csv"
+    best = _best_numeric_row(path, key="survival_score")
+    if best:
+        return ExplorationRow(
+            lane="ofi_execution_survival",
+            status=best.get("status", "ofi_execution_survival"),
+            strongest_current_signal=(
+                f"{best.get('asset', '')}: "
+                f"{best.get('action', '')}, "
+                f"mode={best.get('execution_mode', '')}, "
+                f"score={best.get('survival_score', '')}, "
+                f"maker_net={best.get('maker_net_bps', '')}, "
+                f"net15={best.get('l2_net_15m_bps', '')}, "
+                f"net1h={best.get('l2_net_1h_bps', '')}"
+            ),
+            main_gap=best.get("missing_work", "OFI execution survival still needs fill and queue evidence"),
+            next_step=best.get("next_probe", "paper-check the top OFI execution-survival candidate"),
+        )
+    return ExplorationRow(
+        lane="ofi_execution_survival",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="book-depth cost sweep is not joined to current L2 imbalance states",
+        next_step="run current OFI execution survival after L2 paper gate and book-depth cost sweep",
     )
 
 

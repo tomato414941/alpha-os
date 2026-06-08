@@ -83,6 +83,8 @@ DEFAULT_COMMANDS = (
     ("strategies.market_making.current_l2_imbalance_monitor",),
     ("strategies.market_making.current_l2_imbalance_forward_labels",),
     ("strategies.market_making.current_l2_imbalance_paper_gate",),
+    ("strategies.event_flow.book_depth_execution_cost_sweep",),
+    ("strategies.event_flow.current_ofi_execution_survival",),
     ("strategies.sector_rotation.current_coingecko_category_rotation",),
     ("strategies.sector_rotation.current_category_tradable_forward_labels",),
     ("strategies.sector_rotation.current_category_perp_context",),
