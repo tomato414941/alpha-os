@@ -35,10 +35,11 @@ def build_followup_execution_context_rows(
     *,
     queue_path: Path = ROOT / "current_followup_queue.csv",
     top: int = 30,
+    broad_action_queue_path: Path = ROOT.parent / "current_broad_alpha_paper_action_queue.csv",
     broad_fill_risk_path: Path = ROOT.parent / "current_broad_alpha_paper_fill_risk_check.csv",
 ) -> tuple[FollowupExecutionContextRow, ...]:
     queue_rows = tuple(row for row in _read_rows(queue_path) if row.get("asset") != "*")[:top]
-    queue_rows = _append_missing_broad_context_rows(queue_rows, broad_fill_risk_path)
+    queue_rows = _append_broad_context_rows(queue_rows, broad_action_queue_path, broad_fill_risk_path)
     market_by_asset = _fetch_hyperliquid_market_contexts()
     observed_at = datetime.now(UTC).isoformat()
     rows = tuple(
@@ -291,12 +292,26 @@ def _sort_key(row: FollowupExecutionContextRow) -> tuple[int, float, float]:
     )
 
 
-def _append_missing_broad_context_rows(
+def _append_broad_context_rows(
     queue_rows: tuple[dict[str, str], ...],
+    broad_action_queue_path: Path,
     broad_fill_risk_path: Path,
 ) -> tuple[dict[str, str], ...]:
     seen_assets = {row.get("asset", "") for row in queue_rows}
     extra_rows: list[dict[str, str]] = []
+    for row in _read_rows(broad_action_queue_path):
+        asset = row.get("asset", "")
+        if row.get("action") != "promote_to_fill_and_risk_check" or not asset or asset in seen_assets:
+            continue
+        extra_rows.append(
+            {
+                "priority": row.get("directional_return_bps", ""),
+                "asset": asset,
+                "source": "broad_alpha_paper",
+                "followup_type": "promoted_action_context",
+            }
+        )
+        seen_assets.add(asset)
     for row in _read_rows(broad_fill_risk_path):
         asset = row.get("asset", "")
         if row.get("risk_action") != "missing_execution_context" or not asset or asset in seen_assets:
@@ -351,12 +366,18 @@ def main() -> None:
         type=Path,
         default=ROOT.parent / "current_broad_alpha_paper_fill_risk_check.csv",
     )
+    parser.add_argument(
+        "--broad-action-queue-path",
+        type=Path,
+        default=ROOT.parent / "current_broad_alpha_paper_action_queue.csv",
+    )
     parser.add_argument("--top", type=int, default=30)
     args = parser.parse_args()
 
     rows = build_followup_execution_context_rows(
         queue_path=args.queue_path,
         top=args.top,
+        broad_action_queue_path=args.broad_action_queue_path,
         broad_fill_risk_path=args.broad_fill_risk_path,
     )
     write_followup_execution_context_csv(rows, output_path=args.output_path)
