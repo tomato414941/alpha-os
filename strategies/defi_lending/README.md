@@ -10,11 +10,12 @@ and collateral-specific stress.
 
 ```bash
 uv run python -m strategies.defi_lending.current_morpho_lending_rates
+uv run python -m strategies.defi_lending.current_lending_stress_actionability
 ```
 
 ## Current Status
 
-This is a current snapshot screen only. It does not yet model liquidation risk,
-oracle risk, collateral drawdown, withdrawal queues, rate persistence, or gas
-costs.
-
+This is current snapshot work only. The actionability check separates visible
+remaining lending capacity from no-liquidity stress, but it still does not model
+liquidation risk, oracle risk, collateral drawdown, withdrawal queues, rate
+persistence, or gas costs.

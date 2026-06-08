@@ -40,6 +40,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_protocol_fee_price_context_stacks(root),
         *_yield_peg_risk_stacks(root),
         *_defi_yield_stacks(root),
+        *_lending_stress_actionability_stacks(root),
         *_defi_lending_stacks(root),
         *_dex_pool_flow_stacks(root),
         *_news_event_stacks(root),
@@ -416,6 +417,8 @@ def _cross_market_stress_anomaly_stack(root: Path) -> AlphaStackRow | None:
     }
     if (root / "anomaly_stress" / "current_peg_anomaly_tradeability.csv").exists():
         status_values = status_values - {"cross_market_peg_stress_anomaly"}
+    if (root / "defi_lending" / "current_lending_stress_actionability.csv").exists():
+        status_values = status_values - {"cross_market_lending_stress_anomaly"}
     anomaly = _best_by_score(
         root / "anomaly_stress" / "current_cross_market_stress_anomaly.csv",
         score_key="score",
@@ -1487,6 +1490,8 @@ def _dex_pool_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 
 def _defi_lending_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    if (root / "defi_lending" / "current_lending_stress_actionability.csv").exists():
+        return ()
     rows = _read_rows(root / "defi_lending" / "current_morpho_lending_rates.csv")
     tickets = sorted(
         (
@@ -1539,6 +1544,57 @@ def _defi_lending_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         )
         if len(output) >= 6:
             break
+    return tuple(output)
+
+
+def _lending_stress_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "defi_lending" / "current_lending_stress_actionability.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "lending_rate_candidate_after_risk_check",
+                "lending_stress_mechanics_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:6]:
+        chain = ticket.get("chain", "")
+        loan = ticket.get("loan_asset", "")
+        collateral = ticket.get("collateral_asset", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{chain.lower()}_{loan.lower()}_{collateral.lower()}_lending_actionability",
+                status=ticket.get("status", ""),
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=1,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="defi_lending",
+                evidence=(
+                    f"{chain} {loan}/{collateral}: util={ticket.get('utilization', '')}, "
+                    f"supply={ticket.get('supply_usd', '')}, borrow={ticket.get('borrow_usd', '')}, "
+                    f"liquidity={ticket.get('liquidity_usd', '')}, "
+                    f"avg_supply_apy={ticket.get('avg_net_supply_apy', '')}, "
+                    f"avg_borrow_apy={ticket.get('avg_net_borrow_apy', '')}"
+                ),
+                conflict=ticket.get(
+                    "reason",
+                    "lending stress needs capacity, exit liquidity, collateral, oracle, and withdrawal checks",
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"check {chain} {loan}/{collateral} lending capacity and risk mechanics",
+                ),
+            )
+        )
     return tuple(output)
 
 
@@ -2137,6 +2193,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_yield_without_peg_stress_watch": 54.0,
         "paper_base_yield_watch": 60.0,
         "paper_incentive_yield_watch": 52.0,
+        "lending_rate_candidate_after_risk_check": 62.0,
+        "lending_stress_mechanics_watch": 50.0,
+        "lending_stress_no_liquidity_risk": 38.0,
+        "lending_stress_deprioritize": 32.0,
         "paper_borrow_liquidity_stress_watch": 60.0,
         "paper_stable_lending_yield_watch": 58.0,
         "borrow_demand_context_watch": 52.0,

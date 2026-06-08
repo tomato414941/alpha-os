@@ -890,6 +890,27 @@ def _dex_pool_flow_row(root: Path) -> ExplorationRow:
 
 
 def _defi_lending_row(root: Path) -> ExplorationRow:
+    actionability_path = root / "defi_lending" / "current_lending_stress_actionability.csv"
+    actionability = _best_numeric_row(actionability_path, key="score")
+    if actionability:
+        return ExplorationRow(
+            lane="defi_lending",
+            status=actionability.get("status", "lending_stress_actionability"),
+            strongest_current_signal=(
+                f"{actionability.get('chain', '')} "
+                f"{actionability.get('loan_asset', '')}/{actionability.get('collateral_asset', '')}: "
+                f"util={actionability.get('utilization', '')}, "
+                f"liquidity={actionability.get('liquidity_usd', '')}, "
+                f"avg_supply={actionability.get('avg_net_supply_apy', '')}, "
+                f"avg_borrow={actionability.get('avg_net_borrow_apy', '')}, "
+                f"score={actionability.get('score', '')}"
+            ),
+            main_gap=actionability.get(
+                "reason",
+                "lending stress still needs capacity, exit liquidity, collateral, oracle, withdrawal, gas, and smart-contract checks",
+            ),
+            next_step=actionability.get("next_step", "run lending stress actionability check"),
+        )
     path = root / "defi_lending" / "current_morpho_lending_rates.csv"
     rows = tuple(row for row in _csv_rows(path) if row.get("status") != "lending_context_watch")
     best = max(rows, key=lambda row: float(row.get("score") or "-inf")) if rows else None
