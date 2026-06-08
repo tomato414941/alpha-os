@@ -4,26 +4,26 @@ This repeats the Polymarket microstructure screen over a short window. It is a p
 
 | action | question | obs | mean score | min score | spread | midpoint | 1d change | vol24h | liquidity |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| information_flow_watch | Iran closes its airspace by June 8? | 3 | 31.049412 | 31.049412 | 0.0010 | 0.9975 | 0.9680 | 6283327.44 | 2385815.65 |
-| information_flow_watch | Iran closes its airspace by June 15? | 3 | 28.938915 | 28.938915 | 0.0010 | 0.9995 | 0.9100 | 1292341.91 | 1308245.07 |
-| information_flow_watch | Iran closes its airspace by June 30? | 3 | 26.880955 | 26.880955 | 0.0010 | 0.9995 | 0.8130 | 907333.10 | 1364124.34 |
-| information_flow_watch | Israel closes its airspace by June 15? | 3 | 20.175619 | 20.175619 | 0.0300 | 0.5650 | 0.5000 | 1804559.99 | 52290.00 |
-| information_flow_watch | Denmark vs. Ukraine: O/U 2.5 | 3 | 20.008986 | 20.008986 | 0.0010 | 0.9995 | 0.5495 | 234155.85 | 41317.15 |
-| information_flow_watch | Israel closes its airspace by June 30? | 3 | 19.372402 | 19.372402 | 0.0300 | 0.6150 | 0.4900 | 567376.60 | 50631.98 |
-| information_flow_watch | Will Denmark win on 2026-06-07? | 3 | 18.600647 | 18.600647 | 0.0010 | 0.9995 | 0.4345 | 653183.07 | 192263.26 |
-| information_flow_watch | Will Microstrategy announce a Bitcoin purchase June 2-8? | 3 | 17.174570 | 17.174570 | 0.0050 | 0.9625 | 0.3675 | 671343.67 | 120568.76 |
-| information_flow_watch | Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | 3 | 16.861389 | 16.861389 | 0.0080 | 0.6560 | 0.3305 | 1448839.29 | 88172.27 |
-| information_flow_watch | Will Keiko Fujimori win the 2026 Peruvian presidential election? | 3 | 16.584628 | 16.584628 | 0.0100 | 0.3550 | -0.3200 | 1441177.07 | 68904.10 |
-| information_flow_watch | San Francisco Giants vs. Chicago Cubs: O/U 8.5 | 3 | 16.208159 | 16.208159 | 0.0300 | 0.1050 | -0.3500 | 516978.12 | 15582.53 |
-| information_flow_watch | LoL: Fluxo W7M vs paiN Gaming (BO3) - Esports World Cup South America & LATAM Qualifier Playoffs | 3 | 16.093120 | 16.093120 | 0.0010 | 0.9995 | 0.3345 | 213386.29 | 292118.07 |
-| information_flow_watch | Will Colombia win on 2026-06-07? | 3 | 12.761412 | 12.761412 | 0.0010 | 0.9995 | 0.1645 | 236269.48 | 323471.06 |
-| information_flow_watch | Strait of Hormuz traffic returns to normal by end of June? | 3 | 11.342704 | 11.342704 | 0.0100 | 0.0950 | -0.0500 | 767238.85 | 492373.75 |
-| information_flow_watch | Boston Red Sox vs. New York Yankees | 3 | 11.268270 | 11.268270 | 0.0400 | 0.4200 | -0.1100 | 185492.57 | 53283.76 |
-| information_flow_watch | US x Iran permanent peace deal by June 30, 2026? | 3 | 11.053708 | 11.053708 | 0.0100 | 0.1250 | -0.0300 | 1079666.42 | 391610.38 |
-| information_flow_watch | US-Iran nuclear deal by June 30? | 3 | 10.789842 | 10.789842 | 0.0100 | 0.1950 | -0.0600 | 308758.14 | 125692.42 |
-| information_flow_watch | LoL: Anyone's Legend vs Bilibili Gaming (BO5) - LPL Playoffs | 3 | 10.622133 | 10.622133 | 0.0100 | 0.1950 | -0.0600 | 211757.65 | 339961.92 |
-| information_flow_watch | San Francisco Giants vs. Chicago Cubs | 3 | 10.613215 | 10.613215 | 0.0100 | 0.4450 | -0.0300 | 1089406.33 | 89771.56 |
-| information_flow_watch | Iran leadership change by June 30? | 3 | 10.349694 | 10.349694 | 0.0030 | 0.0905 | 0.0505 | 331840.43 | 42499.37 |
+| information_flow_watch | Iran closes its airspace by June 8? | 3 | 31.316990 | 31.316990 | 0.0010 | 0.9985 | 0.9775 | 6839894.61 | 2760352.06 |
+| information_flow_watch | Iran closes its airspace by June 15? | 3 | 29.139887 | 29.139887 | 0.0010 | 0.9995 | 0.9185 | 1474394.78 | 1106237.35 |
+| information_flow_watch | Iran closes its airspace by June 30? | 3 | 26.827858 | 26.827858 | 0.0010 | 0.9995 | 0.8120 | 924964.44 | 1118845.97 |
+| information_flow_watch | Israel closes its airspace by June 15? | 3 | 20.874119 | 20.874119 | 0.0200 | 0.5900 | 0.5250 | 2201155.21 | 77378.92 |
+| information_flow_watch | Israel closes its airspace by June 30? | 3 | 20.790518 | 20.790518 | 0.0400 | 0.6700 | 0.5550 | 655956.86 | 65296.30 |
+| information_flow_watch | Will Microstrategy announce a Bitcoin purchase June 2-8? | 3 | 12.823449 | 12.823449 | 0.0010 | 0.9545 | 0.1495 | 717752.48 | 103723.06 |
+| information_flow_watch | US x Iran permanent peace deal by June 15, 2026? | 3 | 11.581390 | 11.581390 | 0.0100 | 0.0450 | -0.0200 | 2515012.85 | 1158869.91 |
+| information_flow_watch | Strait of Hormuz traffic returns to normal by end of June? | 3 | 11.367056 | 11.367056 | 0.0100 | 0.0950 | -0.0500 | 787546.11 | 521917.80 |
+| information_flow_watch | Will Keiko Fujimori win the 2026 Peruvian presidential election? | 3 | 11.361500 | 11.361500 | 0.0100 | 0.7150 | 0.0400 | 2472280.86 | 113894.17 |
+| information_flow_watch | LoL: Anyone's Legend vs Bilibili Gaming (BO5) - LPL Playoffs | 3 | 10.963221 | 10.963221 | 0.0100 | 0.1950 | -0.0600 | 337537.89 | 512916.74 |
+| information_flow_watch | US x Iran permanent peace deal by June 30, 2026? | 3 | 10.897401 | 10.897401 | 0.0100 | 0.1450 | -0.0200 | 1103861.20 | 452899.34 |
+| information_flow_watch | Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | 3 | 10.893624 | 10.893624 | 0.0110 | 0.2965 | -0.0255 | 2137106.39 | 68440.14 |
+| information_flow_watch | Will the price of Bitcoin be above $58,000 on June 8? | 3 | 10.887909 | 10.887909 | 0.0030 | 0.9915 | 0.0965 | 195268.37 | 43872.38 |
+| information_flow_watch | US-Iran nuclear deal by June 30? | 3 | 10.861953 | 10.861953 | 0.0100 | 0.1950 | -0.0600 | 344352.92 | 140909.44 |
+| market_making_watch | Israel closes its airspace by June 8? | 3 | 10.505370 | 10.505370 | 0.0300 | 0.3650 | 0.0000 | 344522.89 | 40132.12 |
+| information_flow_watch | Boston Red Sox vs. New York Yankees | 3 | 10.499548 | 10.499548 | 0.0100 | 0.3950 | -0.0600 | 178289.31 | 144306.10 |
+| market_making_watch | Will Bahrain win on 2026-06-09? | 3 | 10.427330 | 10.427330 | 0.0840 | 0.0670 | -0.3130 | 181657.43 | 21993.45 |
+| information_flow_watch | US announces new Iran agreement/ceasefire extension by June 12? | 3 | 10.392639 | 10.392639 | 0.0200 | 0.1700 | 0.0750 | 179851.53 | 32990.16 |
+| information_flow_watch | Will the U.S. invade Iran before 2027? | 3 | 10.271249 | 10.271249 | 0.0100 | 0.1750 | 0.0200 | 363453.49 | 401156.28 |
+| information_flow_watch | US x Iran permanent peace deal by July 31, 2026? | 3 | 10.143463 | 10.143463 | 0.0100 | 0.2950 | 0.0200 | 291837.04 | 282940.77 |
 
 ## Interpretation
 

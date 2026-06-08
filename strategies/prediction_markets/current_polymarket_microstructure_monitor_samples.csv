@@ -1,76 +1,76 @@
 sample_index,market_id,question,action,spread,midpoint,one_day_price_change,volume_24h,liquidity,score
-0,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.001000,0.997500,0.968000,6283327.442160,2385815.649050,31.04941161
-0,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.001000,0.999500,0.910000,1292341.914602,1308245.073930,28.93891472
-0,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.001000,0.999500,0.813000,907333.101412,1364124.341830,26.88095509
-0,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.030000,0.565000,0.500000,1804559.989790,52289.996300,20.17561936
-0,2233729,Denmark vs. Ukraine: O/U 2.5,information_flow_watch,0.001000,0.999500,0.549500,234155.853307,41317.154920,20.00898624
-0,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.030000,0.615000,0.490000,567376.599402,50631.976500,19.37240158
-0,2230253,Will Denmark win on 2026-06-07?,information_flow_watch,0.001000,0.999500,0.434500,653183.066537,192263.256780,18.60064705
-0,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.005000,0.962500,0.367500,671343.666898,120568.755530,17.17456978
-0,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.008000,0.656000,0.330500,1448839.294789,88172.273770,16.86138905
-0,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.355000,-0.320000,1441177.067141,68904.099600,16.58462809
-0,2457021,San Francisco Giants vs. Chicago Cubs: O/U 8.5,information_flow_watch,0.030000,0.105000,-0.350000,516978.119266,15582.527900,16.20815916
-0,2418733,LoL: Fluxo W7M vs paiN Gaming (BO3) - Esports World Cup South America & LATAM Qualifier Playoffs,information_flow_watch,0.001000,0.999500,0.334500,213386.286988,292118.074080,16.09311950
-0,2230417,Will Colombia win on 2026-06-07?,information_flow_watch,0.001000,0.999500,0.164500,236269.481543,323471.060420,12.76141246
-0,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.095000,-0.050000,767238.845339,492373.747900,11.34270414
-0,2402159,Boston Red Sox vs. New York Yankees,information_flow_watch,0.040000,0.420000,-0.110000,185492.569345,53283.762500,11.26827037
-0,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.125000,-0.030000,1079666.421502,391610.384800,11.05370753
-0,957019,US-Iran nuclear deal by June 30?,information_flow_watch,0.010000,0.195000,-0.060000,308758.138187,125692.422400,10.78984166
-0,2454052,LoL: Anyone's Legend vs Bilibili Gaming (BO5) - LPL Playoffs,information_flow_watch,0.010000,0.195000,-0.060000,211757.645036,339961.924500,10.62213308
-0,2410076,San Francisco Giants vs. Chicago Cubs,information_flow_watch,0.010000,0.445000,-0.030000,1089406.327762,89771.557400,10.61321460
-0,1708133,Iran leadership change by June 30?,information_flow_watch,0.003000,0.090500,0.050500,331840.425423,42499.367600,10.34969359
-0,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.305000,0.030000,295499.466283,271949.288100,10.34060488
-0,2176262,Strait of Hormuz traffic returns to normal by July 31?,information_flow_watch,0.010000,0.275000,-0.040000,207411.056449,162850.836000,10.19608396
-0,665374,Will the U.S. invade Iran before 2027?,information_flow_watch,0.010000,0.175000,0.020000,238209.723863,384959.711300,10.06746527
-0,2444215,"Will the price of Bitcoin be above $56,000 on June 8?",information_flow_watch,0.001000,0.997500,0.032000,164572.120609,41238.301000,9.48816907
-0,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.008000,0.034000,0.028500,636554.800884,1241.754630,9.39412020
-1,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.001000,0.997500,0.968000,6283327.442160,2385815.649050,31.04941161
-1,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.001000,0.999500,0.910000,1292341.914602,1308245.073930,28.93891472
-1,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.001000,0.999500,0.813000,907333.101412,1364124.341830,26.88095509
-1,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.030000,0.565000,0.500000,1804559.989790,52289.996300,20.17561936
-1,2233729,Denmark vs. Ukraine: O/U 2.5,information_flow_watch,0.001000,0.999500,0.549500,234155.853307,41317.154920,20.00898624
-1,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.030000,0.615000,0.490000,567376.599402,50631.976500,19.37240158
-1,2230253,Will Denmark win on 2026-06-07?,information_flow_watch,0.001000,0.999500,0.434500,653183.066537,192263.256780,18.60064705
-1,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.005000,0.962500,0.367500,671343.666898,120568.755530,17.17456978
-1,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.008000,0.656000,0.330500,1448839.294789,88172.273770,16.86138905
-1,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.355000,-0.320000,1441177.067141,68904.099600,16.58462809
-1,2457021,San Francisco Giants vs. Chicago Cubs: O/U 8.5,information_flow_watch,0.030000,0.105000,-0.350000,516978.119266,15582.527900,16.20815916
-1,2418733,LoL: Fluxo W7M vs paiN Gaming (BO3) - Esports World Cup South America & LATAM Qualifier Playoffs,information_flow_watch,0.001000,0.999500,0.334500,213386.286988,292118.074080,16.09311950
-1,2230417,Will Colombia win on 2026-06-07?,information_flow_watch,0.001000,0.999500,0.164500,236269.481543,323471.060420,12.76141246
-1,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.095000,-0.050000,767238.845339,492373.747900,11.34270414
-1,2402159,Boston Red Sox vs. New York Yankees,information_flow_watch,0.040000,0.420000,-0.110000,185492.569345,53283.762500,11.26827037
-1,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.125000,-0.030000,1079666.421502,391610.384800,11.05370753
-1,957019,US-Iran nuclear deal by June 30?,information_flow_watch,0.010000,0.195000,-0.060000,308758.138187,125692.422400,10.78984166
-1,2454052,LoL: Anyone's Legend vs Bilibili Gaming (BO5) - LPL Playoffs,information_flow_watch,0.010000,0.195000,-0.060000,211757.645036,339961.924500,10.62213308
-1,2410076,San Francisco Giants vs. Chicago Cubs,information_flow_watch,0.010000,0.445000,-0.030000,1089406.327762,89771.557400,10.61321460
-1,1708133,Iran leadership change by June 30?,information_flow_watch,0.003000,0.090500,0.050500,331840.425423,42499.367600,10.34969359
-1,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.305000,0.030000,295499.466283,271949.288100,10.34060488
-1,2176262,Strait of Hormuz traffic returns to normal by July 31?,information_flow_watch,0.010000,0.275000,-0.040000,207411.056449,162850.836000,10.19608396
-1,665374,Will the U.S. invade Iran before 2027?,information_flow_watch,0.010000,0.175000,0.020000,238209.723863,384959.711300,10.06746527
-1,2444215,"Will the price of Bitcoin be above $56,000 on June 8?",information_flow_watch,0.001000,0.997500,0.032000,164572.120609,41238.301000,9.48816907
-1,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.008000,0.034000,0.028500,636554.800884,1241.754630,9.39412020
-2,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.001000,0.997500,0.968000,6283327.442160,2385815.649050,31.04941161
-2,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.001000,0.999500,0.910000,1292341.914602,1308245.073930,28.93891472
-2,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.001000,0.999500,0.813000,907333.101412,1364124.341830,26.88095509
-2,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.030000,0.565000,0.500000,1804559.989790,52289.996300,20.17561936
-2,2233729,Denmark vs. Ukraine: O/U 2.5,information_flow_watch,0.001000,0.999500,0.549500,234155.853307,41317.154920,20.00898624
-2,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.030000,0.615000,0.490000,567376.599402,50631.976500,19.37240158
-2,2230253,Will Denmark win on 2026-06-07?,information_flow_watch,0.001000,0.999500,0.434500,653183.066537,192263.256780,18.60064705
-2,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.005000,0.962500,0.367500,671343.666898,120568.755530,17.17456978
-2,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.008000,0.656000,0.330500,1448839.294789,88172.273770,16.86138905
-2,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.355000,-0.320000,1441177.067141,68904.099600,16.58462809
-2,2457021,San Francisco Giants vs. Chicago Cubs: O/U 8.5,information_flow_watch,0.030000,0.105000,-0.350000,516978.119266,15582.527900,16.20815916
-2,2418733,LoL: Fluxo W7M vs paiN Gaming (BO3) - Esports World Cup South America & LATAM Qualifier Playoffs,information_flow_watch,0.001000,0.999500,0.334500,213386.286988,292118.074080,16.09311950
-2,2230417,Will Colombia win on 2026-06-07?,information_flow_watch,0.001000,0.999500,0.164500,236269.481543,323471.060420,12.76141246
-2,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.095000,-0.050000,767238.845339,492373.747900,11.34270414
-2,2402159,Boston Red Sox vs. New York Yankees,information_flow_watch,0.040000,0.420000,-0.110000,185492.569345,53283.762500,11.26827037
-2,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.125000,-0.030000,1079666.421502,391610.384800,11.05370753
-2,957019,US-Iran nuclear deal by June 30?,information_flow_watch,0.010000,0.195000,-0.060000,308758.138187,125692.422400,10.78984166
-2,2454052,LoL: Anyone's Legend vs Bilibili Gaming (BO5) - LPL Playoffs,information_flow_watch,0.010000,0.195000,-0.060000,211757.645036,339961.924500,10.62213308
-2,2410076,San Francisco Giants vs. Chicago Cubs,information_flow_watch,0.010000,0.445000,-0.030000,1089406.327762,89771.557400,10.61321460
-2,1708133,Iran leadership change by June 30?,information_flow_watch,0.003000,0.090500,0.050500,331840.425423,42499.367600,10.34969359
-2,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.305000,0.030000,295499.466283,271949.288100,10.34060488
-2,2176262,Strait of Hormuz traffic returns to normal by July 31?,information_flow_watch,0.010000,0.275000,-0.040000,207411.056449,162850.836000,10.19608396
-2,665374,Will the U.S. invade Iran before 2027?,information_flow_watch,0.010000,0.175000,0.020000,238209.723863,384959.711300,10.06746527
-2,2444215,"Will the price of Bitcoin be above $56,000 on June 8?",information_flow_watch,0.001000,0.997500,0.032000,164572.120609,41238.301000,9.48816907
-2,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.008000,0.034000,0.028500,636554.800884,1241.754630,9.39412020
+0,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.001000,0.998500,0.977500,6839894.611387,2760352.055610,31.31698979
+0,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.001000,0.999500,0.918500,1474394.783659,1106237.347280,29.13988733
+0,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.001000,0.999500,0.812000,924964.439025,1118845.970050,26.82785844
+0,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.020000,0.590000,0.525000,2201155.205287,77378.924800,20.87411866
+0,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.040000,0.670000,0.555000,655956.858370,65296.295300,20.79051803
+0,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.001000,0.954500,0.149500,717752.481829,103723.059840,12.82344872
+0,2270330,"US x Iran permanent peace deal by June 15, 2026?",information_flow_watch,0.010000,0.045000,-0.020000,2515012.851295,1158869.907500,11.58138962
+0,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.095000,-0.050000,787546.108535,521917.800100,11.36705632
+0,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.715000,0.040000,2472280.864728,113894.170900,11.36149996
+0,2454052,LoL: Anyone's Legend vs Bilibili Gaming (BO5) - LPL Playoffs,information_flow_watch,0.010000,0.195000,-0.060000,337537.887646,512916.736300,10.96322141
+0,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.145000,-0.020000,1103861.200970,452899.341200,10.89740138
+0,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.011000,0.296500,-0.025500,2137106.388235,68440.138440,10.89362412
+0,2444216,"Will the price of Bitcoin be above $58,000 on June 8?",information_flow_watch,0.003000,0.991500,0.096500,195268.368413,43872.378060,10.88790873
+0,957019,US-Iran nuclear deal by June 30?,information_flow_watch,0.010000,0.195000,-0.060000,344352.919539,140909.437800,10.86195307
+0,2466411,Israel closes its airspace by June 8?,market_making_watch,0.030000,0.365000,0.000000,344522.889154,40132.124900,10.50536988
+0,2402159,Boston Red Sox vs. New York Yankees,information_flow_watch,0.010000,0.395000,-0.060000,178289.313704,144306.097300,10.49954827
+0,2250102,Will Bahrain win on 2026-06-09?,market_making_watch,0.084000,0.067000,-0.313000,181657.428013,21993.452850,10.42732990
+0,2420771,US announces new Iran agreement/ceasefire extension by June 12?,information_flow_watch,0.020000,0.170000,0.075000,179851.526375,32990.159000,10.39263894
+0,665374,Will the U.S. invade Iran before 2027?,information_flow_watch,0.010000,0.175000,0.020000,363453.489279,401156.280800,10.27124904
+0,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.295000,0.020000,291837.038561,282940.767300,10.14346314
+0,2176262,Strait of Hormuz traffic returns to normal by July 31?,information_flow_watch,0.010000,0.285000,-0.025000,194474.226490,176155.606300,9.88548559
+0,1708133,Iran leadership change by June 30?,information_flow_watch,0.001000,0.059500,0.020000,324444.673565,53990.909730,9.78536634
+0,2444215,"Will the price of Bitcoin be above $56,000 on June 8?",information_flow_watch,0.002000,0.998000,0.029500,209288.916347,35887.869150,9.53758240
+0,2420753,US announces new Iran agreement/ceasefire extension by June 9?,information_flow_watch,0.003000,0.054500,0.020000,159849.930307,54912.530430,9.40041174
+0,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.006000,0.034000,0.028500,432554.800884,2205.775530,9.35308830
+1,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.001000,0.998500,0.977500,6839894.611387,2760352.055610,31.31698979
+1,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.001000,0.999500,0.918500,1474394.783659,1106237.347280,29.13988733
+1,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.001000,0.999500,0.812000,924964.439025,1118845.970050,26.82785844
+1,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.020000,0.590000,0.525000,2201155.205287,77378.924800,20.87411866
+1,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.040000,0.670000,0.555000,655956.858370,65296.295300,20.79051803
+1,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.001000,0.954500,0.149500,717752.481829,103723.059840,12.82344872
+1,2270330,"US x Iran permanent peace deal by June 15, 2026?",information_flow_watch,0.010000,0.045000,-0.020000,2515012.851295,1158869.907500,11.58138962
+1,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.095000,-0.050000,787546.108535,521917.800100,11.36705632
+1,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.715000,0.040000,2472280.864728,113894.170900,11.36149996
+1,2454052,LoL: Anyone's Legend vs Bilibili Gaming (BO5) - LPL Playoffs,information_flow_watch,0.010000,0.195000,-0.060000,337537.887646,512916.736300,10.96322141
+1,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.145000,-0.020000,1103861.200970,452899.341200,10.89740138
+1,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.011000,0.296500,-0.025500,2137106.388235,68440.138440,10.89362412
+1,2444216,"Will the price of Bitcoin be above $58,000 on June 8?",information_flow_watch,0.003000,0.991500,0.096500,195268.368413,43872.378060,10.88790873
+1,957019,US-Iran nuclear deal by June 30?,information_flow_watch,0.010000,0.195000,-0.060000,344352.919539,140909.437800,10.86195307
+1,2466411,Israel closes its airspace by June 8?,market_making_watch,0.030000,0.365000,0.000000,344522.889154,40132.124900,10.50536988
+1,2402159,Boston Red Sox vs. New York Yankees,information_flow_watch,0.010000,0.395000,-0.060000,178289.313704,144306.097300,10.49954827
+1,2250102,Will Bahrain win on 2026-06-09?,market_making_watch,0.084000,0.067000,-0.313000,181657.428013,21993.452850,10.42732990
+1,2420771,US announces new Iran agreement/ceasefire extension by June 12?,information_flow_watch,0.020000,0.170000,0.075000,179851.526375,32990.159000,10.39263894
+1,665374,Will the U.S. invade Iran before 2027?,information_flow_watch,0.010000,0.175000,0.020000,363453.489279,401156.280800,10.27124904
+1,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.295000,0.020000,291837.038561,282940.767300,10.14346314
+1,2176262,Strait of Hormuz traffic returns to normal by July 31?,information_flow_watch,0.010000,0.285000,-0.025000,194474.226490,176155.606300,9.88548559
+1,1708133,Iran leadership change by June 30?,information_flow_watch,0.001000,0.059500,0.020000,324444.673565,53990.909730,9.78536634
+1,2444215,"Will the price of Bitcoin be above $56,000 on June 8?",information_flow_watch,0.002000,0.998000,0.029500,209288.916347,35887.869150,9.53758240
+1,2420753,US announces new Iran agreement/ceasefire extension by June 9?,information_flow_watch,0.003000,0.054500,0.020000,159849.930307,54912.530430,9.40041174
+1,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.006000,0.034000,0.028500,432554.800884,2205.775530,9.35308830
+2,2429034,Iran closes its airspace by June 8?,information_flow_watch,0.001000,0.998500,0.977500,6839894.611387,2760352.055610,31.31698979
+2,2296150,Iran closes its airspace by June 15?,information_flow_watch,0.001000,0.999500,0.918500,1474394.783659,1106237.347280,29.13988733
+2,2241742,Iran closes its airspace by June 30?,information_flow_watch,0.001000,0.999500,0.812000,924964.439025,1118845.970050,26.82785844
+2,2296152,Israel closes its airspace by June 15?,information_flow_watch,0.020000,0.590000,0.525000,2201155.205287,77378.924800,20.87411866
+2,2241674,Israel closes its airspace by June 30?,information_flow_watch,0.040000,0.670000,0.555000,655956.858370,65296.295300,20.79051803
+2,2407533,Will Microstrategy announce a Bitcoin purchase June 2-8?,information_flow_watch,0.001000,0.954500,0.149500,717752.481829,103723.059840,12.82344872
+2,2270330,"US x Iran permanent peace deal by June 15, 2026?",information_flow_watch,0.010000,0.045000,-0.020000,2515012.851295,1158869.907500,11.58138962
+2,1971905,Strait of Hormuz traffic returns to normal by end of June?,information_flow_watch,0.010000,0.095000,-0.050000,787546.108535,521917.800100,11.36705632
+2,947269,Will Keiko Fujimori win the 2026 Peruvian presidential election?,information_flow_watch,0.010000,0.715000,0.040000,2472280.864728,113894.170900,11.36149996
+2,2454052,LoL: Anyone's Legend vs Bilibili Gaming (BO5) - LPL Playoffs,information_flow_watch,0.010000,0.195000,-0.060000,337537.887646,512916.736300,10.96322141
+2,1962237,"US x Iran permanent peace deal by June 30, 2026?",information_flow_watch,0.010000,0.145000,-0.020000,1103861.200970,452899.341200,10.89740138
+2,947289,Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election?,information_flow_watch,0.011000,0.296500,-0.025500,2137106.388235,68440.138440,10.89362412
+2,2444216,"Will the price of Bitcoin be above $58,000 on June 8?",information_flow_watch,0.003000,0.991500,0.096500,195268.368413,43872.378060,10.88790873
+2,957019,US-Iran nuclear deal by June 30?,information_flow_watch,0.010000,0.195000,-0.060000,344352.919539,140909.437800,10.86195307
+2,2466411,Israel closes its airspace by June 8?,market_making_watch,0.030000,0.365000,0.000000,344522.889154,40132.124900,10.50536988
+2,2402159,Boston Red Sox vs. New York Yankees,information_flow_watch,0.010000,0.395000,-0.060000,178289.313704,144306.097300,10.49954827
+2,2250102,Will Bahrain win on 2026-06-09?,market_making_watch,0.084000,0.067000,-0.313000,181657.428013,21993.452850,10.42732990
+2,2420771,US announces new Iran agreement/ceasefire extension by June 12?,information_flow_watch,0.020000,0.170000,0.075000,179851.526375,32990.159000,10.39263894
+2,665374,Will the U.S. invade Iran before 2027?,information_flow_watch,0.010000,0.175000,0.020000,363453.489279,401156.280800,10.27124904
+2,2270338,"US x Iran permanent peace deal by July 31, 2026?",information_flow_watch,0.010000,0.295000,0.020000,291837.038561,282940.767300,10.14346314
+2,2176262,Strait of Hormuz traffic returns to normal by July 31?,information_flow_watch,0.010000,0.285000,-0.025000,194474.226490,176155.606300,9.88548559
+2,1708133,Iran leadership change by June 30?,information_flow_watch,0.001000,0.059500,0.020000,324444.673565,53990.909730,9.78536634
+2,2444215,"Will the price of Bitcoin be above $56,000 on June 8?",information_flow_watch,0.002000,0.998000,0.029500,209288.916347,35887.869150,9.53758240
+2,2420753,US announces new Iran agreement/ceasefire extension by June 9?,information_flow_watch,0.003000,0.054500,0.020000,159849.930307,54912.530430,9.40041174
+2,1361014,Will Maxx Crosby play for Carolina Panthers next?,information_flow_watch,0.006000,0.034000,0.028500,432554.800884,2205.775530,9.35308830

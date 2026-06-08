@@ -4,9 +4,9 @@ This converts rough prediction-market probability gaps into paper tickets with e
 
 | question | side | ask | estimated payout | edge after ask | max loss | ask depth 5c | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_yes | 0.3000 | 0.6600 | 0.3600 | 0.3000 | 23798.94 | 84.4000 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
-| Strait of Hormuz traffic returns to normal by July 31? | buy_no | 0.7300 | 0.8200 | 0.0900 | 0.7300 | 86925.59 | 63.1600 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
-| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | buy_no | 0.3000 | 0.5800 | 0.2800 | 0.3000 | 38626.81 | 59.6000 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.3600 | 0.2600 | 0.1000 | 241214.80 | 83.2000 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Strait of Hormuz traffic returns to normal by July 31? | buy_yes | 0.2900 | 0.4200 | 0.1300 | 0.2900 | 47619.18 | 68.6800 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | buy_yes | 0.3380 | 0.4200 | 0.0820 | 0.3380 | 16864.49 | 36.3605 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
 
 ## Caveat
 

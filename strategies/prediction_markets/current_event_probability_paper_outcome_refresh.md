@@ -4,8 +4,9 @@ This re-marks prior event-probability paper outcomes after refreshing Polymarket
 
 | question | side | entry | current bid | current ask | bid pnl | edge now | edge change | source quality | score | status |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |
-| Israel closes its airspace by June 15? | buy_no | 0.4500 | 0.4000 | 0.4300 | -0.0500 | 0.3200 | 0.0200 |  | 36.7156 | paper_outcome_quote_survived_refresh |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_yes | 0.5500 | 0.2900 | 0.3000 | -0.2600 | 0.3600 | 0.2500 | source_quality_pass | 29.0000 | paper_outcome_failed_refresh |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.0900 | 0.1000 | -0.0100 | 0.2600 | 0.0000 | source_quality_pass | 55.0000 | paper_outcome_survived_refresh |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_yes | 0.3000 | 0.6700 | 0.6800 | 0.3700 | -0.0200 | -0.3800 |  | 50.0000 | paper_outcome_refresh_source_watch |
+| Strait of Hormuz traffic returns to normal by July 31? | buy_yes | 0.2900 | 0.2800 | 0.2900 | -0.0100 | 0.1300 | 0.0000 | source_quality_pass | 42.0000 | paper_outcome_survived_refresh |
 
 ## Caveat
 
