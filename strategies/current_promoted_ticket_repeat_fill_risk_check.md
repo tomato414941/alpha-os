@@ -4,4 +4,4 @@ This checks promoted paper-ticket mark wins against rough spread, taker fee, fun
 
 | ticket | asset | decision | size USD | dir bps | spread | depth 10bps | usage | funding 1h | cost | net | risk action | reason |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| repeat-paper-05-mega-microstructure-flow | MEGA | paper_long | 100.00 | 84.8369 | 4.26662529 | 2468.83644000 | 0.04050491 | 0.61253200 | 12.26662529 | 73.18278143 | cost_adjusted_paper_probe | paper mark win survives rough spread, taker-fee, funding, and visible-depth checks |
+| repeat-paper-05-mega-microstructure-flow | MEGA | paper_long | 100.00 | 38.1180 | 9.14476948 | 576.19495050 | 0.17355237 | 0.36800000 | 17.14476948 | 21.34118114 | depth_too_thin_for_probe | candidate size consumes too much visible 10bps depth |
