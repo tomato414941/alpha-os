@@ -27,6 +27,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _factor_template_validation_queue_row(root),
         _ofi_execution_survival_row(root),
         _lob_policy_candidate_survival_row(root),
+        _lob_maker_fill_survival_row(root),
         _crowded_positioning_survival_row(root),
         _alpha_method_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
@@ -308,6 +309,34 @@ def _lob_policy_candidate_survival_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="LOB world replay and rolling sequence probes have not been compared as policy candidates",
         next_step="run current LOB policy candidate survival after world replay and sequence state probes",
+    )
+
+
+def _lob_maker_fill_survival_row(root: Path) -> ExplorationRow:
+    path = root / "event_flow" / "current_lob_maker_fill_survival.csv"
+    best = _best_numeric_row(path, key="survival_score")
+    if best:
+        return ExplorationRow(
+            lane="lob_maker_fill_survival",
+            status=best.get("survival_status", "lob_maker_fill_survival"),
+            strongest_current_signal=(
+                f"{best.get('state_family', '')}/{best.get('source_probe', '')}: "
+                f"{best.get('signal_action', '')}, "
+                f"score={best.get('survival_score', '')}, "
+                f"fill_rate={best.get('fill_rate', '')}, "
+                f"filled_bps={best.get('filled_mark_reward_bps', '')}, "
+                f"all_bps={best.get('all_state_reward_bps', '')}, "
+                f"adverse={best.get('adverse_fill_rate', '')}"
+            ),
+            main_gap=best.get("reason", "maker policy still needs fill and adverse-selection checks"),
+            next_step=best.get("next_step", "rerun maker fill survival after fresh book snapshots"),
+        )
+    return ExplorationRow(
+        lane="lob_maker_fill_survival",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="LOB maker policy candidates have not been checked against a passive-fill proxy",
+        next_step="run current LOB maker fill survival after LOB policy candidate survival",
     )
 
 
