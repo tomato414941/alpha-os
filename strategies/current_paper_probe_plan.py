@@ -243,6 +243,14 @@ def _probe_type(row: dict[str, str]) -> str:
         "paper_basis_funding_dislocation_watch",
     }:
         return "derivatives_positioning_probe"
+    if status in {"paper_short_basis_watch", "paper_long_basis_watch", "basis_term_structure_watch"}:
+        return "basis_term_structure_probe"
+    if status in {
+        "paper_dex_pool_momentum_watch",
+        "paper_dex_reversal_risk_watch",
+        "dex_liquidity_stress_watch",
+    }:
+        return "dex_pool_flow_probe"
     if row.get("sources") == "crypto_equity_proxy":
         if row.get("status") == "eth_treasury_proxy_watch":
             return "eth_treasury_proxy_probe"
@@ -313,6 +321,11 @@ def _asset(*, evidence: str, opportunity: str) -> str:
     if ":" in evidence:
         subject = evidence.split(":", 1)[0].strip()
         if "/" in subject:
+            parts = [part.strip() for part in subject.split("/")]
+            if len(parts) >= 3 and parts[0].islower():
+                pool_base = re.sub(r"[^A-Za-z0-9]", "", parts[1].split()[-1])
+                if pool_base:
+                    return pool_base.upper()
             left, right = subject.split("/", 1)
             right_symbol = re.sub(r"[^A-Za-z0-9]", "", right.split()[0])
             if right_symbol.isupper() and 2 <= len(right_symbol) <= 12 and right_symbol not in {"AI"}:
@@ -320,6 +333,9 @@ def _asset(*, evidence: str, opportunity: str) -> str:
             left_symbol = re.sub(r"[^A-Za-z0-9]", "", left.split()[-1])
             if left_symbol:
                 return left_symbol.upper()
+        basis_match = re.match(r"^(BTC|ETH|SOL)-[A-Z0-9]+$", subject)
+        if basis_match:
+            return basis_match.group(1)
         derivative_symbol = _derivative_base_symbol(subject)
         if derivative_symbol:
             return derivative_symbol
