@@ -52,6 +52,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _cost_adjusted_alpha_clusters_row(root),
         _cost_adjusted_cluster_repeat_plan_row(root),
         _split_first_cluster_lane_plan_row(root),
+        _split_first_lane_repeat_queue_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -1201,6 +1202,30 @@ def _split_first_cluster_lane_plan_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="mixed cost-adjusted clusters have not been decomposed into lane-level actions",
         next_step="run current split first cluster lane plan after cluster repeat planning",
+    )
+
+
+def _split_first_lane_repeat_queue_row(root: Path) -> ExplorationRow:
+    path = root / "current_split_first_lane_repeat_queue.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="split_first_lane_repeat_queue",
+            status=best.get("action", "split_first_lane_queue"),
+            strongest_current_signal=(
+                f"{best.get('cluster_id', '')}/{best.get('lane_opportunity', '')}: "
+                f"{best.get('lane_side', '')}, "
+                f"priority={best.get('priority', '')}"
+            ),
+            main_gap=best.get("required_record", "lane queue still needs paper evidence"),
+            next_step=best.get("next_step", "run the strongest split-first lane queue item"),
+        )
+    return ExplorationRow(
+        lane="split_first_lane_repeat_queue",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="split-first lane plan has not been converted into queueable lane paper work",
+        next_step="run current split first lane repeat queue after lane planning",
     )
 
 
