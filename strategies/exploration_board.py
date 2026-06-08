@@ -39,6 +39,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _crypto_equity_proxy_row(root),
         _speculative_beta_row(root),
         _event_flow_row(root),
+        _liquidation_intensity_row(root),
         _liquidation_flow_row(root),
         _defi_yield_row(root),
         _defi_lending_row(root),
@@ -1028,6 +1029,32 @@ def _liquidation_flow_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="15m continuation labels exist, but 1h/regime/execution labels are still missing",
         next_step="repeat liquidation snapshots and separate continuation candidates from reversal candidates",
+    )
+
+
+def _liquidation_intensity_row(root: Path) -> ExplorationRow:
+    path = root / "liquidation_flow" / "current_okx_liquidation_intensity.csv"
+    best = _best_numeric_row(path, key="intensity_score")
+    if best:
+        return ExplorationRow(
+            lane="liquidation_intensity",
+            status=best.get("status", "liquidation_oi_context"),
+            strongest_current_signal=(
+                f"{best.get('asset', '')}: {best.get('action', '')}, "
+                f"liq/OI={best.get('liquidation_to_open_interest', '')}, "
+                f"liq={best.get('total_liquidation_notional', '')}, "
+                f"OI={best.get('open_interest_usd', '')}, "
+                f"imbalance={best.get('forced_buy_sell_imbalance', '')}"
+            ),
+            main_gap="liquidation intensity is not yet a direction; continuation versus reversal, depth, fees, funding, and adverse excursion are untested",
+            next_step=best.get("next_step", "label top liquidation/OI event over 5m/15m/1h"),
+        )
+    return ExplorationRow(
+        lane="liquidation_intensity",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="liquidation events are not normalized by open interest",
+        next_step="run current OKX liquidation intensity after liquidation flow",
     )
 
 

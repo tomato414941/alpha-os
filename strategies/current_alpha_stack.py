@@ -63,6 +63,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_stablecoin_peg_stress_stacks(root),
         *_token_unlock_actionability_stacks(root),
         *_token_unlock_stacks(root),
+        *_liquidation_intensity_stacks(root),
         *_liquidation_flow_stacks(root),
         *_candidate_validation_repeat_stacks(root),
         *_microstructure_flow_stacks(root),
@@ -2995,6 +2996,51 @@ def _liquidation_flow_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _liquidation_intensity_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "liquidation_flow" / "current_okx_liquidation_intensity.csv")
+            if row.get("status") != "low_liquidation_intensity_context"
+        ),
+        key=lambda row: _float(row.get("intensity_score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:6]:
+        asset = row.get("asset", "")
+        status = row.get("status", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_okx_liquidation_oi_intensity",
+                status=status,
+                side=row.get("action", ""),
+                priority_score=_priority_score(
+                    status,
+                    source_count=2,
+                    raw_score=_float(row.get("intensity_score")),
+                ),
+                sources="liquidation_flow + okx_open_interest",
+                evidence=(
+                    f"{asset}: liq={row.get('total_liquidation_notional', '')}, "
+                    f"oi={row.get('open_interest_usd', '')}, "
+                    f"liq_oi={row.get('liquidation_to_open_interest', '')}, "
+                    f"imbalance={row.get('forced_buy_sell_imbalance', '')}, "
+                    f"score={row.get('intensity_score', '')}"
+                ),
+                conflict=(
+                    "liquidation/OI intensity is still event context; direction, reversal/continuation choice, "
+                    "depth, fees, funding, and adverse excursion need forward labels"
+                ),
+                next_step=row.get(
+                    "next_step",
+                    f"label {asset} liquidation/OI event over 5m/15m/1h with OKX execution context",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _l2_imbalance_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = sorted(
         (
@@ -3360,6 +3406,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_delayed_carry_reversion_probe": 60.0,
         "paper_outcome_failed_carry_reversion_probe": 43.0,
         "paper_validated_carry_reversion_candidate": 66.0,
+        "forced_flow_oi_shock_watch": 64.0,
+        "liquidation_oi_pressure_watch": 58.0,
         "wide_spread_watch": 55.0,
         "too_large_for_visible_depth": 52.0,
         "no_edge_after_rough_cost": 45.0,

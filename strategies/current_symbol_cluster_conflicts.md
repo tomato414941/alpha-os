@@ -24,26 +24,26 @@ This separates symbol clusters that confirm one direction from clusters that mix
 | MON | multi_source_watch | 115.1020 | 3 | 4 | L=1, S=0, RV=0, Y=0, R=0, N=3 | neutral | mon_microstructure_flow_probe, mon_okxswap_hlperp_funding, okx_mon_chain_flow_context, mon_chain_flow_context | collect more MON snapshots before treating this as a cluster |
 | PUMP | multi_source_watch | 114.8021 | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | pump_volume_price_dislocation | collect more PUMP snapshots before treating this as a cluster |
 | PENGU | mixed_direction_conflict | 109.2173 | 3 | 4 | L=1, S=1, RV=1, Y=0, R=0, N=1 | mixed | pengu_attention_price_context, pengu_oi_unwind_watch, pengu_attention_funding_overlap, pengu_crowded_momentum_reversal_actionability | split PENGU labels by lane before trading; do not collapse conflicting ideas into one action |
+| MU | confirmed_long_cluster | 107.5813 | 2 | 2 | L=2, S=0, RV=0, Y=0, R=0, N=0 | long | mu_okx_liquidation_oi_intensity, mu_okx_liquidation_followup | paper-label MU long setup against forward return, costs, depth, and failure regime |
 | JTO | single_candidate_watch | 107.5000 | 1 | 1 | L=0, S=0, RV=0, Y=0, R=0, N=1 | neutral | jto_liquidation_repeat_15m | collect more JTO snapshots before treating this as a cluster |
 | CFX | multi_source_watch | 107.2065 | 2 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | cfx_validated_perp_crowding_reversion | collect more CFX snapshots before treating this as a cluster |
+| BSB | mixed_structure_conflict | 107.0943 | 3 | 2 | L=0, S=1, RV=1, Y=0, R=0, N=0 | mixed | bsb_okx_liquidation_oi_intensity, bsb-usdt-perpetual_orangex_futures_positioning | split BSB labels by lane before trading; do not collapse conflicting ideas into one action |
 | APT | multi_source_watch | 106.3827 | 2 | 2 | L=1, S=0, RV=0, Y=0, R=0, N=1 | mixed | apt_on_chain_flow_repeat_15m, apt_microstructure_flow_probe | collect more APT snapshots before treating this as a cluster |
 | HEMI | multi_source_watch | 104.2059 | 2 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | hemi_validated_perp_crowding_reversion | collect more HEMI snapshots before treating this as a cluster |
+| BEAT | confirmed_long_cluster | 101.8691 | 2 | 2 | L=2, S=0, RV=0, Y=0, R=0, N=0 | long | beat_okx_liquidation_oi_intensity, beat_okx_liquidation_followup | paper-label BEAT long setup against forward return, costs, depth, and failure regime |
 | MEGA | single_candidate_watch | 100.4174 | 1 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | mega_microstructure_flow_probe | collect more MEGA snapshots before treating this as a cluster |
 | PEPE | confirmed_long_cluster | 100.2916 | 3 | 2 | L=2, S=0, RV=0, Y=0, R=0, N=0 | long | pepe_attention_price_context, pepe_okx_liquidation_followup | paper-label PEPE long setup against forward return, costs, depth, and failure regime |
 | BCH | multi_source_watch | 98.5000 | 3 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | bch_mean_sum_top_long_short_ratio_binance_derivatives_symbol_feature | collect more BCH snapshots before treating this as a cluster |
 | MSTR | multi_source_watch | 95.3986 | 2 | 1 | L=0, S=0, RV=1, Y=0, R=0, N=0 | relative_value | mstr_btc_relative_value | collect more MSTR snapshots before treating this as a cluster |
 | CHIP | single_candidate_watch | 94.5203 | 1 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | chip_microstructure_flow_probe | collect more CHIP snapshots before treating this as a cluster |
 | DASH | mixed_direction_conflict | 94.4676 | 1 | 2 | L=1, S=1, RV=0, Y=0, R=0, N=0 | mixed | dash_oi_funding_crowding_watch, dash_crowded_momentum_reversal_actionability | split DASH labels by lane before trading; do not collapse conflicting ideas into one action |
+| ALLO | multi_source_watch | 94.1713 | 2 | 2 | L=0, S=0, RV=0, Y=0, R=0, N=2 | neutral | allo_okx_liquidation_oi_intensity, allo_okx_liquidation_followup | collect more ALLO snapshots before treating this as a cluster |
 | REDEMPTION | yield_cluster | 94.1131 | 2 | 4 | L=0, S=0, RV=0, Y=4, R=0, N=0 | yield | ethereum_mainstreet_msusd_yield_peg, arbitrum_usd-ai_susdai_yield_peg, bsc_unitas_susdu_yield_peg, ethereum_ethena-usde_susde_yield_peg | validate REDEMPTION yield mechanics, venue access, liquidity, fees, and unwind path |
 | BERA | single_candidate_watch | 92.8902 | 1 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | bera_microstructure_flow_probe | collect more BERA snapshots before treating this as a cluster |
+| WLD | multi_source_watch | 91.5431 | 2 | 2 | L=0, S=0, RV=0, Y=0, R=0, N=2 | neutral | wld_okx_liquidation_oi_intensity, wld_okx_liquidation_followup | collect more WLD snapshots before treating this as a cluster |
 | TRX | multi_source_watch | 89.6653 | 2 | 2 | L=0, S=1, RV=0, Y=0, R=0, N=1 | mixed | trx/usdt_coinw_(futures)_positioning, tron_stablecoin_migration | collect more TRX snapshots before treating this as a cluster |
 | AI | multi_source_watch | 88.8398 | 2 | 2 | L=0, S=0, RV=0, Y=1, R=0, N=1 | mixed | arbitrum_usd-ai_susdai_yield_peg, usdai_stablecoin_peg_stress | collect more AI snapshots before treating this as a cluster |
 | UNITAS | multi_source_watch | 88.7204 | 2 | 2 | L=0, S=0, RV=0, Y=1, R=0, N=1 | mixed | bsc_unitas_susdu_yield_peg, usdu_stablecoin_peg_stress | collect more UNITAS snapshots before treating this as a cluster |
-| OPS | yield_cluster | 87.9132 | 2 | 2 | L=0, S=0, RV=0, Y=2, R=0, N=0 | yield | ethereum_ember-protocol_usdc_yield_peg, ethereum_maple_usdt_yield_peg | validate OPS yield mechanics, venue access, liquidity, fees, and unwind path |
-| PENDLE | multi_source_watch | 87.2609 | 4 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | pendle_protocol_fee_actionability | collect more PENDLE snapshots before treating this as a cluster |
-| PURR | single_candidate_watch | 86.7481 | 1 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | purr_oi_funding_crowding_watch | collect more PURR snapshots before treating this as a cluster |
-| MAINSTREET | multi_source_watch | 86.6131 | 2 | 1 | L=0, S=0, RV=0, Y=1, R=0, N=0 | yield | ethereum_mainstreet_msusd_yield_peg | collect more MAINSTREET snapshots before treating this as a cluster |
-| MSUSD | multi_source_watch | 86.6131 | 2 | 1 | L=0, S=0, RV=0, Y=1, R=0, N=0 | yield | ethereum_mainstreet_msusd_yield_peg | collect more MSUSD snapshots before treating this as a cluster |
 
 ## Interpretation
 
