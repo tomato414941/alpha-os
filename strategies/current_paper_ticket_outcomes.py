@@ -253,6 +253,14 @@ def _mark_outcome(
     if entry <= 0.0 or current <= 0.0:
         return "", "", "missing_current_mark", "entry or current mark is invalid"
     raw_bps = (current / entry - 1.0) * 10_000.0
+    if decision == "paper_observe":
+        outcome = "observe_mark_moved" if raw_bps != 0.0 else "observe_mark_flat"
+        return (
+            f"{raw_bps:.8f}",
+            "",
+            outcome,
+            "observation-only ticket; directional promotion is not allowed",
+        )
     if decision == "paper_short":
         directional_bps = -raw_bps
     else:
@@ -291,6 +299,8 @@ def _checkpoint_minutes(value: str) -> int:
 def _next_step(*, checkpoint_status: str, outcome: str) -> str:
     if checkpoint_status == "pending":
         return "wait for the first checkpoint and refresh marks"
+    if outcome.startswith("observe_"):
+        return "record the context move only; do not promote without a directional ticket"
     if outcome == "paper_mark_win":
         return "record fill, funding, stop, and adverse-excursion assumptions before promotion"
     if outcome == "paper_mark_loss":
@@ -305,12 +315,14 @@ def _summary_text(rows: tuple[PaperTicketOutcome, ...]) -> str:
     wins = tuple(row for row in ready_rows if row.outcome == "paper_mark_win")
     losses = tuple(row for row in ready_rows if row.outcome == "paper_mark_loss")
     flats = tuple(row for row in ready_rows if row.outcome == "paper_mark_flat")
+    observations = tuple(row for row in ready_rows if row.outcome.startswith("observe_"))
     pending = tuple(row for row in rows if row.checkpoint_status == "pending")
     lines = [
         f"- ready: {len(ready_rows)}",
         f"- wins: {len(wins)}",
         f"- losses: {len(losses)}",
         f"- flat: {len(flats)}",
+        f"- observations: {len(observations)}",
         f"- pending: {len(pending)}",
     ]
     best = _best_directional_row(ready_rows)

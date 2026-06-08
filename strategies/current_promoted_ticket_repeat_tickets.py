@@ -41,6 +41,8 @@ def build_promoted_repeat_tickets(
     for row in _read_rows(fill_risk_path):
         if row.get("risk_action") != "cost_adjusted_paper_probe":
             continue
+        if row.get("decision") == "paper_observe":
+            continue
         previous_id = row.get("ticket_id", "")
         repeat_id = f"repeat-{previous_id}"
         if repeat_id in existing_tickets:
@@ -68,7 +70,7 @@ def build_promoted_repeat_tickets(
     rows.extend(
         row
         for row in existing_tickets.values()
-        if row.ticket_id not in known_ticket_ids
+        if row.ticket_id not in known_ticket_ids and row.decision != "paper_observe"
     )
     return tuple(rows)
 

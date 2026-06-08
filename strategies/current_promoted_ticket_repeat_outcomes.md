@@ -20,6 +20,7 @@ This checks opened paper tickets against the latest available public marks. It i
 - wins: 5
 - losses: 1
 - flat: 0
+- observations: 0
 - pending: 2
 - best ready mark: repeat-paper-09-sol-volume-dislocation SOL 56.30340097bps paper_mark_win
 - worst ready mark: repeat-paper-05-mega-microstructure-flow MEGA -181.59782630bps paper_mark_loss

@@ -127,6 +127,11 @@ def _action_from_outcome(row: dict[str, str]) -> PaperTicketAction:
         priority = 40.0
         reason = "paper mark has not moved"
         next_step = "keep observing until quote moves or external evidence changes"
+    elif outcome.startswith("observe_"):
+        action = "record_observation_only"
+        priority = 35.0
+        reason = "observation-only ticket is not a directional promotion candidate"
+        next_step = "keep the context record; open a directional ticket only if the thesis becomes explicit"
     else:
         action = "fill_missing_observation"
         priority = 30.0

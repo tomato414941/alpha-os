@@ -17,6 +17,7 @@ This checks opened paper tickets against the latest available public marks. It i
 - wins: 0
 - losses: 1
 - flat: 0
+- observations: 0
 - pending: 5
 - best ready mark: repeat-repeat-paper-05-mega-microstructure-flow MEGA -264.19336706bps paper_mark_loss
 - worst ready mark: repeat-repeat-paper-05-mega-microstructure-flow MEGA -264.19336706bps paper_mark_loss
