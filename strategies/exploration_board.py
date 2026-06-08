@@ -30,6 +30,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _lob_maker_fill_survival_row(root),
         _crowded_positioning_survival_row(root),
         _alpha_method_frontier_row(root),
+        _portable_microstructure_feature_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
         _exchange_stablecoin_inflow_readiness_row(root),
         _options_volatility_survival_row(root),
@@ -397,6 +398,31 @@ def _alpha_method_frontier_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="modern alpha methods have not been mapped to current sources and candidates",
         next_step="run current alpha method frontier after source gaps and alpha frontier",
+    )
+
+
+def _portable_microstructure_feature_frontier_row(root: Path) -> ExplorationRow:
+    path = root / "current_portable_microstructure_feature_frontier.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="portable_microstructure_feature_frontier",
+            status=best.get("status", "portable_microstructure_feature_frontier"),
+            strongest_current_signal=(
+                f"{best.get('asset', '')}: "
+                f"priority={best.get('priority', '')}, "
+                f"15m={best.get('directional_return_15m', '')}, "
+                f"1h={best.get('directional_return_1h', '')}"
+            ),
+            main_gap=best.get("missing_link", "shared microstructure feature table still needs validation"),
+            next_step=best.get("next_step", "build the shared microstructure feature table"),
+        )
+    return ExplorationRow(
+        lane="portable_microstructure_feature_frontier",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="BTC/ETH/SOL/HYPE microstructure snapshots and labels have not been joined",
+        next_step="run current portable microstructure feature frontier after method frontier",
     )
 
 
