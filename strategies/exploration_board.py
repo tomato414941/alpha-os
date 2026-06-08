@@ -3067,6 +3067,29 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
 
 
 def _prediction_market_crypto_hedge_row(root: Path) -> ExplorationRow:
+    attribution_path = root / "prediction_markets" / "current_event_crypto_hedge_beta_attribution.csv"
+    attribution = _best_event_crypto_hedge_beta_attribution(attribution_path)
+    if attribution:
+        return ExplorationRow(
+            lane="prediction_market_crypto_hedge",
+            status=attribution.get("attribution_status", "event_crypto_hedge_beta_attribution"),
+            strongest_current_signal=(
+                f"{attribution.get('asset', '')} {attribution.get('hedge_action', '')}: "
+                f"{attribution.get('event_bias', '')}, "
+                f"asset_bps={attribution.get('asset_directional_return_bps', '')}, "
+                f"basket_bps={attribution.get('basket_directional_return_bps', '')}, "
+                f"residual_bps={attribution.get('residual_vs_basket_bps', '')}, "
+                f"market={attribution.get('market_id', '')}"
+            ),
+            main_gap=(
+                "event-crypto hedge reaction is currently explained as common crypto beta; it still needs "
+                "funding, spread/depth, event timestamp, and repeated market controls before promotion"
+            ),
+            next_step=attribution.get(
+                "next_step",
+                "repeat event crypto hedge labels with explicit beta and cost controls",
+            ),
+        )
     reaction_path = root / "prediction_markets" / "current_event_crypto_hedge_reaction_labels.csv"
     reaction = _best_event_crypto_hedge_reaction_label(reaction_path)
     if reaction:
@@ -3121,6 +3144,29 @@ def _prediction_market_crypto_hedge_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="prediction-market event states have not been mapped into crypto hedge candidates",
         next_step="run current_event_crypto_hedge_candidates after probability refresh/actionability",
+    )
+
+
+def _best_event_crypto_hedge_beta_attribution(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    status_rank = {
+        "event_crypto_residual_outperformance": 4.0,
+        "event_crypto_beta_move_supported": 3.0,
+        "event_crypto_beta_attribution_pending": 2.0,
+        "event_crypto_residual_contradiction": 1.0,
+        "event_crypto_beta_attribution_negative": 0.0,
+    }
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            status_rank.get(row.get("attribution_status", ""), 0.0),
+            _safe_float(row.get("asset_directional_return_bps")),
+        ),
     )
 
 

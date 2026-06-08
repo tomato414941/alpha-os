@@ -18,6 +18,9 @@ uv run python -m strategies.prediction_markets.current_event_source_quality
 uv run python -m strategies.prediction_markets.current_event_probability_paper_outcome
 uv run python -m strategies.prediction_markets.current_event_probability_refresh
 uv run python -m strategies.prediction_markets.current_event_probability_actionability
+uv run python -m strategies.prediction_markets.current_event_crypto_hedge_candidates
+uv run python -m strategies.prediction_markets.current_event_crypto_hedge_reaction_labels
+uv run python -m strategies.prediction_markets.current_event_crypto_hedge_beta_attribution
 ```
 
 ## Current Status

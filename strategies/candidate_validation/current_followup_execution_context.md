@@ -4,28 +4,28 @@ This joins the follow-up queue to current Hyperliquid market context. It is a ro
 
 | asset | source | priority | funding ann | volume 24h | spread bps | depth 10bps USD | 1k usage | action | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| NEAR | exchange_catalyst;on_chain_flow | 8.3498 | 0.109500 | 72817295 | 1.8321 | 30119 | 0.033202 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| SOL | exchange_catalyst;on_chain_flow | 5.2019 | -0.186182 | 299588778 | 0.1510 | 391484 | 0.002554 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| BNB | l2_imbalance;on_chain_flow | 4.8127 | 0.109500 | 9306752 | 1.1688 | 87369 | 0.011446 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| ETH | on_chain_flow | 3.9347 | 0.050644 | 960067515 | 0.5993 | 12978614 | 0.000077 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| MON | on_chain_flow | 3.8131 | 0.109500 | 3578478 | 0.4592 | 5594 | 0.178774 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| ARB | on_chain_flow | 3.7070 | -0.061552 | 2036791 | 1.2116 | 6273 | 0.159426 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| SUI | on_chain_flow | 3.6307 | 0.109500 | 50246088 | 1.3293 | 80606 | 0.012406 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| ADA | on_chain_flow | 3.4842 | -0.024010 | 9061186 | 2.4207 | 68911 | 0.014511 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| APT | on_chain_flow | 3.3984 | -0.126162 | 2006626 | 2.9815 | 11540 | 0.086658 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| BTC | on_chain_flow | 3.0455 | 0.109500 | 2979459099 | 0.1577 | 537001 | 0.001862 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| HYPE | on_chain_flow | 2.6935 | 0.109500 | 760191811 | 0.8139 | 45067 | 0.022189 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| XMR | l2_imbalance | 2.3874 | 0.109500 | 8361103 | 3.4922 | 7671 | 0.130359 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| WLD | l2_imbalance | 2.3679 | -0.016141 | 75689653 | 2.3348 | 31532 | 0.031713 | tradable_context_ok | public venue context does not obviously block a small repeat |
-| CHIP | exchange_catalyst | 3.9957 | 0.047220 | 540452 | 4.1311 | 4889 | 0.204547 | thin_volume_watch | 24h notional volume is low for repeat observation |
-| SEI | on_chain_flow | 3.8994 | -0.175893 | 780993 | 2.0010 | 7722 | 0.129508 | thin_volume_watch | 24h notional volume is low for repeat observation |
-| STX | on_chain_flow | 3.4022 | 0.109500 | 191836 | 2.6714 | 3823 | 0.261602 | thin_volume_watch | 24h notional volume is low for repeat observation |
-| STRK | on_chain_flow | 3.3542 | 0.023544 | 625891 | 8.6969 | 2968 | 0.336977 | thin_volume_watch | 24h notional volume is low for repeat observation |
-| BERA | on_chain_flow | 3.2612 | 0.109500 | 396402 | 4.4117 | 1939 | 0.515729 | thin_volume_watch | 24h notional volume is low for repeat observation |
-| OP | on_chain_flow | 2.9303 | -0.401900 | 831490 | 3.0733 | 982 | 1.018454 | thin_volume_watch | 24h notional volume is low for repeat observation |
-| POL | sector_perp_context;on_chain_flow | 2.7572 | 0.109500 | 519450 | 6.0184 | 6458 | 0.154850 | thin_volume_watch | 24h notional volume is low for repeat observation |
-| MNT | on_chain_flow | 1.7848 | 0.109500 | 230273 | 2.5503 | 11343 | 0.088161 | thin_volume_watch | 24h notional volume is low for repeat observation |
-| MEGA | exchange_catalyst;on_chain_flow | 4.4940 | 0.109500 | 2120730 | 14.1515 | 890 | 1.123542 | wide_spread_watch | current spread is wide for a small directional repeat |
+| NEAR | exchange_catalyst;on_chain_flow | 8.3498 | 0.109500 | 77685561 | 0.9336 | 30949 | 0.032311 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| SOL | exchange_catalyst;on_chain_flow | 5.2019 | -0.104828 | 274961790 | 0.1499 | 286247 | 0.003493 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| BNB | l2_imbalance;on_chain_flow | 4.8127 | 0.109500 | 8642537 | 1.3308 | 123323 | 0.008109 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| ETH | on_chain_flow | 3.9347 | 0.078013 | 1045797876 | 1.1867 | 10555414 | 0.000095 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| MON | on_chain_flow | 3.8131 | 0.109500 | 3776292 | 2.2336 | 4985 | 0.200615 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| ARB | on_chain_flow | 3.7070 | -0.063900 | 2490022 | 3.5948 | 6636 | 0.150686 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| SUI | on_chain_flow | 3.6307 | 0.109500 | 38250240 | 1.0505 | 51947 | 0.019251 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| ADA | on_chain_flow | 3.4842 | -0.277284 | 9431439 | 1.8074 | 99175 | 0.010083 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| APT | on_chain_flow | 3.3984 | -0.299687 | 2365232 | 2.9647 | 9368 | 0.106750 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| BTC | on_chain_flow | 3.0455 | 0.109500 | 3352209749 | 0.1568 | 1993875 | 0.000502 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| HYPE | on_chain_flow | 2.6935 | 0.109500 | 881357291 | 0.1546 | 95873 | 0.010430 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| XMR | l2_imbalance | 2.3874 | 0.139179 | 8558124 | 2.5324 | 7920 | 0.126269 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| WLD | l2_imbalance | 2.3679 | 0.109500 | 78963086 | 0.2091 | 5976 | 0.167348 | tradable_context_ok | public venue context does not obviously block a small repeat |
+| CHIP | exchange_catalyst | 3.9957 | -0.006166 | 514168 | 6.4489 | 4900 | 0.204064 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| SEI | on_chain_flow | 3.8994 | -0.152621 | 765221 | 2.9989 | 17208 | 0.058113 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| STX | on_chain_flow | 3.4022 | 0.109500 | 190460 | 3.1813 | 4089 | 0.244585 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| STRK | on_chain_flow | 3.3542 | 0.097761 | 646370 | 5.7110 | 8976 | 0.111409 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| BERA | on_chain_flow | 3.2612 | -0.022418 | 549454 | 1.9206 | 3981 | 0.251167 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| OP | on_chain_flow | 2.9303 | -0.561795 | 854447 | 4.0833 | 4112 | 0.243176 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| POL | sector_perp_context;on_chain_flow | 2.7572 | -0.242313 | 581776 | 4.0969 | 5295 | 0.188846 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| MNT | on_chain_flow | 1.7848 | 0.109500 | 228951 | 5.6351 | 13603 | 0.073512 | thin_volume_watch | 24h notional volume is low for repeat observation |
+| MEGA | exchange_catalyst;on_chain_flow | 4.4940 | 0.109500 | 2498798 | 4.7815 | 2526 | 0.395904 | thin_near_depth_watch | 1k notional uses too much visible 10 bps depth |
 | PEPE | liquidation | 2.1830 | 0.000000 | 0 |  |  |  | not_hyperliquid | asset is not in current Hyperliquid perp universe |
 
 ## Interpretation
