@@ -32,9 +32,7 @@ class CrossVenueCrowdingConfirmation:
 def build_cross_venue_confirmations(
     *,
     validated_path: Path = ROOT / "current_crowding_reversion_validated_candidates.csv",
-    derivatives_path: Path = STRATEGIES_ROOT
-    / "derivatives_positioning"
-    / "current_coingecko_derivatives_positioning.csv",
+    derivatives_path: Path = ROOT / "current_crowding_derivatives_coverage.csv",
 ) -> tuple[CrossVenueCrowdingConfirmation, ...]:
     derivatives_by_asset = _derivatives_by_asset(_read_rows(derivatives_path))
     rows = tuple(
@@ -252,7 +250,7 @@ def main() -> None:
     parser.add_argument(
         "--derivatives-path",
         type=Path,
-        default=STRATEGIES_ROOT / "derivatives_positioning" / "current_coingecko_derivatives_positioning.csv",
+        default=ROOT / "current_crowding_derivatives_coverage.csv",
     )
     parser.add_argument(
         "--output-path",
