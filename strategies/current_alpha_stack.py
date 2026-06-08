@@ -240,18 +240,38 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
     )
     if not ticket:
         return None
+    news = _row_by_market_id(
+        root / "prediction_markets" / "current_event_news_pressure.csv",
+        ticket.get("market_id", ""),
+    )
+    evidence_parts = [
+        (
+            f"{ticket.get('category', '')}: spread={ticket.get('spread', '')}, "
+            f"depth={ticket.get('visible_depth_score', '')}, vol24={ticket.get('volume_24h', '')}"
+        )
+    ]
+    source_count = 1
+    raw_score = _float(ticket.get("score"))
+    if news:
+        source_count += 1
+        raw_score += _float(news.get("score"))
+        evidence_parts.append(
+            f"news={news.get('status', '')}, articles24={news.get('article_count_24h', '')}, "
+            f"sources={news.get('source_count_72h', '')}, newest_h={news.get('newest_age_hours', '')}"
+        )
     return AlphaStackRow(
         opportunity="prediction_market_event_model",
         status=ticket.get("status", "paper_event_model_candidate"),
         side=f"{ticket.get('question', '')} {ticket.get('outcome', '')}",
-        priority_score=_priority_score(ticket.get("status", ""), source_count=1, raw_score=_float(ticket.get("score"))),
-        sources="prediction_markets",
-        evidence=(
-            f"{ticket.get('category', '')}: spread={ticket.get('spread', '')}, "
-            f"depth={ticket.get('visible_depth_score', '')}, vol24={ticket.get('volume_24h', '')}"
-        ),
+        priority_score=_priority_score(ticket.get("status", ""), source_count=source_count, raw_score=raw_score),
+        sources="prediction_markets" if not news else "prediction_markets + external_news",
+        evidence="; ".join(evidence_parts),
         conflict="market depth is not edge; needs independent true-probability model and latency/adverse-selection checks",
-        next_step="build an external event-probability model before any paper event-market action",
+        next_step=(
+            "compare external news-flow evidence against market-implied odds before any paper event-market action"
+            if news
+            else "build an external event-probability model before any paper event-market action"
+        ),
     )
 
 
@@ -1769,6 +1789,12 @@ def _best_by_score(
 
 def _row_by_name(path: Path, name: str) -> dict[str, str] | None:
     return _first_matching(path, lambda row: row.get("name") == name)
+
+
+def _row_by_market_id(path: Path, market_id: str) -> dict[str, str] | None:
+    if not market_id:
+        return None
+    return _first_matching(path, lambda row: row.get("market_id") == market_id)
 
 
 def _first_matching(path: Path, predicate: object) -> dict[str, str] | None:

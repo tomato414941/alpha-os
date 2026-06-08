@@ -1354,6 +1354,17 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
     ticket_path = root / "prediction_markets" / "current_prediction_market_paper_tickets.csv"
     best_ticket = _best_prediction_market_paper_ticket(ticket_path)
     if best_ticket:
+        news = _best_prediction_market_news_pressure(
+            root / "prediction_markets" / "current_event_news_pressure.csv",
+            best_ticket.get("market_id", ""),
+        )
+        news_suffix = ""
+        if news:
+            news_suffix = (
+                f", news={news.get('status', '')}, "
+                f"articles24={news.get('article_count_24h', '')}, "
+                f"sources={news.get('source_count_72h', '')}"
+            )
         return ExplorationRow(
             lane="prediction_markets",
             status=best_ticket.get("status", "paper_event_model_candidate"),
@@ -1363,9 +1374,10 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
                 f"spread={best_ticket.get('spread', '')}, "
                 f"depth={best_ticket.get('visible_depth_score', '')}, "
                 f"vol24={best_ticket.get('volume_24h', '')}"
+                f"{news_suffix}"
             ),
             main_gap="prediction-market paper ticket still lacks true-probability model, news feed, latency, and adverse-selection checks",
-            next_step="build an external event-probability model for the current depth-positive market before any live action",
+            next_step="compare external news-flow evidence against market-implied odds before any live action",
         )
     depth_path = root / "prediction_markets" / "current_polymarket_clob_depth.csv"
     best_depth = _best_numeric_row(depth_path, key="visible_depth_score")
@@ -1443,6 +1455,17 @@ def _best_prediction_market_paper_ticket(path: Path) -> dict[str, str] | None:
             float(row.get("score") or "0"),
         ),
     )
+
+
+def _best_prediction_market_news_pressure(path: Path, market_id: str) -> dict[str, str] | None:
+    if not path.exists() or not market_id:
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    matches = tuple(row for row in rows if row.get("market_id") == market_id)
+    if not matches:
+        return None
+    return max(matches, key=lambda row: float(row.get("score") or "0"))
 
 
 def _best_macro_regime_ticket(path: Path) -> dict[str, str] | None:
