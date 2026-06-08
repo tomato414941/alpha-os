@@ -1480,6 +1480,24 @@ def _news_social_row(root: Path) -> ExplorationRow:
 
 def _market_breadth_row(root: Path) -> ExplorationRow:
     path = root / "market_breadth" / "current_volume_price_dislocation.csv"
+    execution = _best_market_breadth_execution_row(
+        root / "market_breadth" / "current_volume_price_dislocation_execution_gate.csv"
+    )
+    if execution:
+        return ExplorationRow(
+            lane="market_breadth",
+            status=execution.get("action", "volume_dislocation_execution_gate"),
+            strongest_current_signal=(
+                f"{execution.get('symbol', '')}/{execution.get('name', '')}: "
+                f"{execution.get('side', '')}, "
+                f"dir4h={execution.get('directional_return_4h', '')}, "
+                f"net4h_bps={execution.get('conservative_net_4h_bps', '')}, "
+                f"spread={execution.get('spread_bps', '')}, "
+                f"depth_usage_250={execution.get('visible_depth_usage_250', '')}"
+            ),
+            main_gap="execution gate is public-book only; it still needs repeated paper fills, stop behavior, realized fees, and fresh labels",
+            next_step=execution.get("next_step", "paper-probe market-breadth execution-gated candidates"),
+        )
     label = _best_market_breadth_label_row(root / "market_breadth" / "current_volume_price_dislocation_labels.csv")
     if label:
         return ExplorationRow(
@@ -3562,6 +3580,36 @@ def _best_market_breadth_label_row(path: Path) -> dict[str, str] | None:
             float(row.get("score") or "0"),
         ),
     )
+
+
+def _best_market_breadth_execution_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(csv.DictReader(handle))
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            _market_breadth_execution_rank(row.get("action", "")),
+            float(row.get("conservative_net_4h_bps") or "-inf"),
+            float(row.get("score") or "0"),
+        ),
+    )
+
+
+def _market_breadth_execution_rank(action: str) -> int:
+    return {
+        "paper_execution_probe": 6,
+        "thin_volume_watch": 4,
+        "wide_spread_watch": 3,
+        "too_large_for_visible_depth": 3,
+        "no_edge_after_rough_cost": 2,
+        "label_contradicted": 1,
+        "not_hyperliquid": 0,
+        "missing_l2_context": 0,
+    }.get(action, 0)
 
 
 def _market_breadth_label_rank(row: dict[str, str]) -> int:

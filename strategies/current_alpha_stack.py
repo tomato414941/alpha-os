@@ -2348,9 +2348,11 @@ def _attention_price_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "market_breadth" / "current_volume_price_dislocation.csv")
     labels = _read_rows(root / "market_breadth" / "current_volume_price_dislocation_labels.csv")
+    execution_rows = _read_rows(root / "market_breadth" / "current_volume_price_dislocation_execution_gate.csv")
     candidates_by_symbol = {row.get("symbol", ""): row for row in rows}
+    execution_by_symbol = {row.get("symbol", ""): row for row in execution_rows}
     tickets = (
-        _ranked_market_breadth_labels(labels)
+        _ranked_market_breadth_labels(labels, execution_by_symbol=execution_by_symbol)
         if labels
         else sorted(
             (
@@ -2372,7 +2374,8 @@ def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     for ticket in tickets[:8]:
         symbol = ticket.get("symbol", "")
         candidate = candidates_by_symbol.get(symbol, ticket)
-        status = _market_breadth_status(ticket)
+        execution = execution_by_symbol.get(symbol, {})
+        status = _market_breadth_status(ticket, execution=execution)
         output.append(
             AlphaStackRow(
                 opportunity=f"{symbol.lower()}_volume_price_dislocation",
@@ -2380,8 +2383,8 @@ def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 side=ticket.get("side", ""),
                 priority_score=_priority_score(
                     status,
-                    source_count=2 if ticket.get("label_status") else 1,
-                    raw_score=_float(ticket.get("score")),
+                    source_count=3 if execution else 2 if ticket.get("label_status") else 1,
+                    raw_score=_market_breadth_raw_score(ticket=ticket, execution=execution),
                 ),
                 sources="market_breadth + market_price_context",
                 evidence=(
@@ -2393,18 +2396,25 @@ def _market_breadth_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                     f"price7d={candidate.get('price_change_7d', '')}, "
                     f"price30d={candidate.get('price_change_30d', '')}"
                     f"{_market_breadth_label_evidence(ticket)}"
+                    f"{_market_breadth_execution_evidence(execution)}"
                 ),
-                conflict=_market_breadth_conflict(ticket),
-                next_step=_market_breadth_next_step(ticket),
+                conflict=_market_breadth_conflict(ticket, execution=execution),
+                next_step=_market_breadth_next_step(ticket, execution=execution),
             )
         )
     return tuple(output)
 
 
-def _ranked_market_breadth_labels(rows: tuple[dict[str, str], ...]) -> list[dict[str, str]]:
+def _ranked_market_breadth_labels(
+    rows: tuple[dict[str, str], ...],
+    *,
+    execution_by_symbol: dict[str, dict[str, str]],
+) -> list[dict[str, str]]:
     return sorted(
         rows,
         key=lambda row: (
+            _market_breadth_execution_rank(execution_by_symbol.get(row.get("symbol", ""), {})),
+            _float(execution_by_symbol.get(row.get("symbol", ""), {}).get("conservative_net_4h_bps")),
             _market_breadth_label_rank(row),
             _float(row.get("directional_return_4h")),
             _float(row.get("directional_return_1h")),
@@ -2412,6 +2422,24 @@ def _ranked_market_breadth_labels(rows: tuple[dict[str, str], ...]) -> list[dict
         ),
         reverse=True,
     )
+
+
+def _market_breadth_execution_rank(execution: dict[str, str]) -> int:
+    return {
+        "paper_execution_probe": 6,
+        "thin_volume_watch": 4,
+        "wide_spread_watch": 3,
+        "too_large_for_visible_depth": 3,
+        "no_edge_after_rough_cost": 2,
+        "label_contradicted": 1,
+        "not_hyperliquid": 0,
+        "missing_l2_context": 0,
+    }.get(execution.get("action", ""), 0)
+
+
+def _market_breadth_raw_score(*, ticket: dict[str, str], execution: dict[str, str]) -> float:
+    net_4h_bps = _float(execution.get("conservative_net_4h_bps"))
+    return _float(ticket.get("score")) + min(max(net_4h_bps, 0.0) / 10.0, 50.0)
 
 
 def _market_breadth_label_rank(row: dict[str, str]) -> int:
@@ -2428,7 +2456,24 @@ def _market_breadth_label_rank(row: dict[str, str]) -> int:
     return 0
 
 
-def _market_breadth_status(ticket: dict[str, str]) -> str:
+def _market_breadth_status(ticket: dict[str, str], *, execution: dict[str, str]) -> str:
+    action = execution.get("action", "")
+    if action == "paper_execution_probe":
+        return "volume_dislocation_execution_probe"
+    if action == "thin_volume_watch":
+        return "volume_dislocation_thin_volume_watch"
+    if action == "wide_spread_watch":
+        return "volume_dislocation_wide_spread_watch"
+    if action == "too_large_for_visible_depth":
+        return "volume_dislocation_too_large_for_visible_depth"
+    if action == "no_edge_after_rough_cost":
+        return "volume_dislocation_no_edge_after_rough_cost"
+    if action == "label_contradicted":
+        return "volume_dislocation_4h_contradicted_after_cost_check"
+    if action == "not_hyperliquid":
+        return "volume_dislocation_no_hyperliquid_venue"
+    if action == "missing_l2_context":
+        return "volume_dislocation_missing_l2_context"
     if not ticket.get("label_status"):
         return ticket.get("status", "")
     dir_4h = _float(ticket.get("directional_return_4h"))
@@ -2455,12 +2500,32 @@ def _market_breadth_label_evidence(label: dict[str, str]) -> str:
     )
 
 
-def _market_breadth_conflict(label: dict[str, str]) -> str:
+def _market_breadth_execution_evidence(execution: dict[str, str]) -> str:
+    if not execution:
+        return ""
+    return (
+        f"; exec={execution.get('action', '')}, "
+        f"net4h_bps={execution.get('conservative_net_4h_bps', '')}, "
+        f"spread_bps={execution.get('spread_bps', '')}, "
+        f"depth_usage_250={execution.get('visible_depth_usage_250', '')}"
+    )
+
+
+def _market_breadth_conflict(label: dict[str, str], *, execution: dict[str, str]) -> str:
     base = (
         "volume/price dislocation can be a liquidation bounce, news reaction, or crowded trap; "
         "venue depth, fees, funding, stop behavior, and repeat labels are still required"
     )
-    status = _market_breadth_status(label)
+    action = execution.get("action", "")
+    if action == "paper_execution_probe":
+        return f"{base}; rough public-book gate passes but realized fills, stops, and repeat labels are unproven"
+    if action == "no_edge_after_rough_cost":
+        return f"{base}; current rough cost model erases the 4h label"
+    if action == "label_contradicted":
+        return f"{base}; current 4h label contradicts the direction"
+    if action in {"thin_volume_watch", "wide_spread_watch", "too_large_for_visible_depth"}:
+        return f"{base}; current venue context is too weak for a small paper probe"
+    status = _market_breadth_status(label, execution=execution)
     if status == "volume_dislocation_4h_supported_pending_12h":
         return f"{base}; current 1h and 4h labels support the direction, but 12h confirmation is pending"
     if status == "volume_dislocation_delayed_4h_support":
@@ -2472,9 +2537,11 @@ def _market_breadth_conflict(label: dict[str, str]) -> str:
     return base
 
 
-def _market_breadth_next_step(label: dict[str, str]) -> str:
+def _market_breadth_next_step(label: dict[str, str], *, execution: dict[str, str]) -> str:
+    if execution.get("next_step"):
+        return execution["next_step"]
     symbol = label.get("symbol", "")
-    status = _market_breadth_status(label)
+    status = _market_breadth_status(label, execution=execution)
     if status == "volume_dislocation_4h_supported_pending_12h":
         return f"repeat {symbol} volume-dislocation label and add execution cost, funding, depth, and stop checks"
     if status == "volume_dislocation_delayed_4h_support":
@@ -3101,10 +3168,18 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "attention_breakout_continuation_watch": 58.0,
         "attention_capitulation_reversal_watch": 56.0,
         "attention_chase_risk": 50.0,
+        "volume_dislocation_execution_probe": 72.0,
         "volume_dislocation_4h_supported_pending_12h": 66.0,
         "volume_dislocation_delayed_4h_support": 52.0,
+        "volume_dislocation_thin_volume_watch": 42.0,
+        "volume_dislocation_wide_spread_watch": 40.0,
+        "volume_dislocation_too_large_for_visible_depth": 38.0,
         "volume_dislocation_1h_only_watch": 44.0,
+        "volume_dislocation_no_edge_after_rough_cost": 28.0,
+        "volume_dislocation_4h_contradicted_after_cost_check": 24.0,
         "volume_dislocation_4h_contradicted_pending_12h": 26.0,
+        "volume_dislocation_no_hyperliquid_venue": 20.0,
+        "volume_dislocation_missing_l2_context": 18.0,
         "volume_reversal_candidate": 60.0,
         "capitulation_reversal_watch": 55.0,
         "breakout_continuation_watch": 58.0,

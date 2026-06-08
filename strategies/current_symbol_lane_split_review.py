@@ -217,11 +217,17 @@ def _support_state(row: dict[str, str]) -> str:
         return "feature_source_blocked"
     if "out15=paper_15m_win" in text or "paper_15m_win" in text:
         return "paper_15m_supported"
+    if "volume_dislocation_execution_probe" in text:
+        return "paper_execution_gated"
     if "paper_execution_probe" in text or "small_paper_probe" in text:
         return "paper_execution_gated"
     if "protocol_fee_label_failed" in text or "chain_stablecoin_4h_contradicted_pending_12h" in text:
         return "failed_label"
     if "volume_dislocation_4h_contradicted_pending_12h" in text:
+        return "failed_label"
+    if "volume_dislocation_4h_contradicted_after_cost_check" in text:
+        return "failed_label"
+    if "volume_dislocation_no_edge_after_rough_cost" in text:
         return "failed_label"
     if "pending" in text:
         return "pending_label"

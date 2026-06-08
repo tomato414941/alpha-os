@@ -13,4 +13,5 @@ perp candles when CoinGecko cannot label a tradable symbol.
 uv run python -m strategies.market_breadth.current_volume_price_dislocation
 uv run python -m strategies.market_breadth.current_volume_price_dislocation_history
 uv run python -m strategies.market_breadth.current_volume_price_dislocation_labels
+uv run python -m strategies.market_breadth.current_volume_price_dislocation_execution_gate
 ```
