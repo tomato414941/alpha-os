@@ -35,6 +35,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_derivatives_positioning_stacks(root),
         *_binance_derivatives_feature_prior_stacks(root),
         *_binance_derivatives_regime_feature_stacks(root),
+        *_binance_derivatives_intraday_live_gate_stacks(root),
         *_binance_derivatives_intraday_paper_stacks(root),
         *_binance_derivatives_intraday_repeat_stacks(root),
         *_binance_derivatives_intraday_feature_stacks(root),
@@ -962,6 +963,62 @@ def _binance_derivatives_intraday_paper_stacks(root: Path) -> tuple[AlphaStackRo
             )
         )
     return tuple(output)
+
+
+def _binance_derivatives_intraday_live_gate_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        _read_rows(root / "p0_parallel" / "binance_derivatives_intraday_live_execution_gate.csv"),
+        key=lambda row: _float(row.get("estimated_low_fee_net_1h_bps")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:4]:
+        status = _binance_intraday_live_gate_status(row.get("gate_action", ""))
+        symbol = row.get("symbol", "")
+        feature = row.get("feature", "")
+        action = row.get("action", "")
+        size = row.get("candidate_size_usd", "")
+        size_slug = size.replace(".", "_")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{_symbol_slug(symbol)}_{_slug(feature)}_{_slug(action)}_{size_slug}usd_intraday_live_gate",
+                status=status,
+                side=action,
+                priority_score=_priority_score(
+                    status,
+                    source_count=2,
+                    raw_score=_float(row.get("estimated_low_fee_net_1h_bps")),
+                ),
+                sources="p0_parallel + binance_intraday_live_execution_gate + okx_book",
+                evidence=(
+                    f"{symbol}: feature={feature}, action={action}, size={row.get('candidate_size_usd', '')}, "
+                    f"source={row.get('source_status', '')}, condition={row.get('live_condition', '')}, "
+                    f"spread_bps={row.get('spread_bps', '')}, depth5={row.get('side_depth_5bps_notional', '')}, "
+                    f"funding1h_bps={row.get('funding_return_1h_bps', '')}, "
+                    f"low_fee_net_bps={row.get('estimated_low_fee_net_1h_bps', '')}, "
+                    f"taker_net_bps={row.get('estimated_taker_net_1h_bps', '')}"
+                ),
+                conflict=(
+                    "live execution gate uses OKX book/funding because Binance live feature endpoints are unavailable; "
+                    "maker fill probability, queue position, and stop behavior remain unmodeled"
+                ),
+                next_step=row.get(
+                    "reason",
+                    "obtain live feature source and repeat live spread/funding/fill checks",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _binance_intraday_live_gate_status(gate_action: str) -> str:
+    if gate_action == "taker_paper_probe":
+        return "live_taker_intraday_probe"
+    if gate_action == "low_fee_paper_probe":
+        return "live_low_fee_intraday_probe"
+    if gate_action == "feature_source_blocked":
+        return "intraday_live_feature_source_blocked"
+    return "intraday_live_execution_blocked"
 
 
 def _binance_intraday_paper_status(status: str, *, cost_bps: str) -> str:
@@ -2933,6 +2990,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "persistent_derivatives_symbol_feature_prior": 48.0,
         "recent_derivatives_symbol_feature_prior": 44.0,
         "derivatives_symbol_feature_regime_shift": 38.0,
+        "live_taker_intraday_probe": 66.0,
+        "live_low_fee_intraday_probe": 62.0,
+        "intraday_live_feature_source_blocked": 32.0,
+        "intraday_live_execution_blocked": 28.0,
         "low_cost_intraday_paper_supported": 62.0,
         "intraday_paper_supported": 60.0,
         "low_cost_intraday_paper_recent_only": 48.0,

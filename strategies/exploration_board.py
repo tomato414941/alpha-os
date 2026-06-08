@@ -31,6 +31,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _perp_market_map_row(root),
         _derivatives_positioning_row(root),
         _binance_derivatives_history_row(root),
+        _binance_derivatives_intraday_live_gate_row(root),
         _binance_derivatives_intraday_paper_row(root),
         _binance_derivatives_intraday_repeat_row(root),
         _binance_derivatives_intraday_row(root),
@@ -763,6 +764,40 @@ def _binance_derivatives_intraday_paper_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="repeat intraday features have not been evaluated after rough costs",
         next_step="run Binance derivatives intraday paper labels with conservative and low-cost assumptions",
+    )
+
+
+def _binance_derivatives_intraday_live_gate_row(root: Path) -> ExplorationRow:
+    path = root / "p0_parallel" / "binance_derivatives_intraday_live_execution_gate.csv"
+    best = _best_numeric_row(path, key="estimated_low_fee_net_1h_bps")
+    if best:
+        return ExplorationRow(
+            lane="binance_derivatives_intraday_live_gate",
+            status=best.get("gate_action", "intraday_live_gate"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')} "
+                f"{best.get('feature', '')} "
+                f"{best.get('action', '')}: "
+                f"source={best.get('source_status', '')}, "
+                f"condition={best.get('live_condition', '')}, "
+                f"spread={best.get('spread_bps', '')}, "
+                f"depth5={best.get('side_depth_5bps_notional', '')}, "
+                f"funding1h={best.get('funding_return_1h_bps', '')}, "
+                f"low_fee_net={best.get('estimated_low_fee_net_1h_bps', '')}, "
+                f"taker_net={best.get('estimated_taker_net_1h_bps', '')}"
+            ),
+            main_gap="Binance live feature source is blocked here; OKX book/funding is execution context only",
+            next_step=best.get(
+                "reason",
+                "obtain live feature source and repeat live spread/funding/fill checks",
+            ),
+        )
+    return ExplorationRow(
+        lane="binance_derivatives_intraday_live_gate",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="low-cost intraday paper labels have not been checked against live book/funding context",
+        next_step="run Binance intraday live execution gate for ARB candidates",
     )
 
 

@@ -273,6 +273,30 @@ This makes ARB a low-cost execution candidate, not a generic signal. The next
 step is live spread/fill/funding timing and stop behavior; if realized cost is
 closer to 8 bps, this alpha should not be promoted.
 
+## Binance Intraday Live Execution Gate
+
+Run:
+
+```bash
+uv run python -m strategies.p0_parallel.binance_derivatives_intraday_live_execution_gate
+```
+
+The Binance live futures API is unavailable from this environment, so the live
+feature condition is blocked. The script still checks ARB-USDT-SWAP execution
+context on OKX public book/funding for the low-cost paper candidates.
+
+Current top rows:
+
+| symbol | feature | action | size | source | condition | spread bps | depth 5bps | funding 1h bps | low-fee net bps | taker net bps | gate |
+| --- | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| ARBUSDT | count_long_short_ratio | short_opposite | 100 | binance_region_blocked | unknown | 1.2275 | 9109.67 | -0.1170 | 3.9083 | -4.0917 | feature_source_blocked |
+| ARBUSDT | count_long_short_ratio | short_opposite | 250 | binance_region_blocked | unknown | 1.2275 | 9109.67 | -0.1170 | 3.9083 | -4.0917 | feature_source_blocked |
+| ARBUSDT | count_top_long_short_ratio | short_opposite | 100 | binance_region_blocked | unknown | 1.2275 | 7560.02 | -0.1170 | 2.4669 | -5.5331 | feature_source_blocked |
+
+This does not promote the trade. It says the OKX book/funding context does not
+obviously kill the low-fee ARB paper edge, but the live Binance-derived feature
+trigger is still missing. Taker execution is negative.
+
 ## Funding Carry Proxy
 
 Run:

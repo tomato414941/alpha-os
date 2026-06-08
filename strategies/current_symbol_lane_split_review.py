@@ -205,6 +205,8 @@ def _support_state(row: dict[str, str]) -> str:
         return "paper_cost_supported"
     if "low_cost_intraday_paper_recent_only" in text or "paper_intraday_recent_only" in text:
         return "paper_recent_only"
+    if "intraday_live_feature_source_blocked" in text or "feature_source_blocked" in text:
+        return "feature_source_blocked"
     if "out15=paper_15m_win" in text or "paper_15m_win" in text:
         return "paper_15m_supported"
     if "paper_execution_probe" in text or "small_paper_probe" in text:
@@ -238,6 +240,8 @@ def _lane_next_step(*, symbol: str, stack_row: dict[str, str], support_state: st
         return f"check {symbol} live spread, funding timing, fill delay, stop rules, and realized cost"
     if support_state == "paper_recent_only":
         return f"extend {symbol} lane to another non-overlapping window before promotion"
+    if support_state == "feature_source_blocked":
+        return f"obtain a live feature source for {symbol} before treating this lane as active"
     if support_state == "mechanics_unvalidated":
         return f"validate {symbol} mechanics, venue access, unwind path, and stale-price risk"
     return stack_row.get("next_step", f"collect more {symbol} lane observations")

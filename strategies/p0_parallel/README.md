@@ -16,6 +16,7 @@ uv run python -m strategies.p0_parallel.binance_derivatives_feature_regime_compa
 uv run python -m strategies.p0_parallel.binance_derivatives_intraday_feature_labels
 uv run python -m strategies.p0_parallel.binance_derivatives_intraday_repeat_compare
 uv run python -m strategies.p0_parallel.binance_derivatives_intraday_paper_labels
+uv run python -m strategies.p0_parallel.binance_derivatives_intraday_live_execution_gate
 uv run python -m strategies.p0_parallel.funding_carry_proxy
 uv run python -m strategies.p0_parallel.l2_burst_probe
 uv run python -m strategies.p0_parallel.paper_trade_ticket
@@ -31,6 +32,7 @@ uv run python -m strategies.p0_parallel.paper_trade_ticket
 - Binance USD-M 5m derivatives features against next-1h labels
 - non-overlapping Binance USD-M intraday feature repeat comparison
 - cost-aware Binance USD-M intraday feature paper labels
+- live execution context for Binance-derived intraday labels through OKX public book/funding
 - Binance funding carry proxy with premium-change and rough cost
 - L2 fill/adverse-selection first burst
 - paper/manual trade-ticket feasibility
