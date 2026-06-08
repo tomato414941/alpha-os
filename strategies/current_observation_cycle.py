@@ -16,13 +16,24 @@ DEFAULT_MODULES = (
     "strategies.exploration_board",
 )
 
+PUBLIC_MARK_MODULES = (
+    "strategies.perp_market_map.current_hyperliquid_snapshot",
+    "strategies.candidate_validation.current_followup_execution_context",
+    "strategies.candidate_validation.current_followup_okx_execution_context",
+    "strategies.p0_parallel.binance_derivatives_intraday_live_execution_gate",
+    "strategies.prediction_markets.current_event_probability_refresh",
+)
+
 OPEN_TICKET_MODULE = "strategies.current_paper_tickets"
 
 
-def run_observation_cycle(*, open_new_tickets: bool = False) -> None:
-    modules = list(DEFAULT_MODULES)
+def run_observation_cycle(*, open_new_tickets: bool = False, refresh_public_marks: bool = False) -> None:
+    modules: list[str] = []
+    if refresh_public_marks:
+        modules.extend(PUBLIC_MARK_MODULES)
     if open_new_tickets:
-        modules.insert(2, OPEN_TICKET_MODULE)
+        modules.append(OPEN_TICKET_MODULE)
+    modules.extend(DEFAULT_MODULES)
     for module in modules:
         print(f"== {module}")
         subprocess.run((sys.executable, "-m", module), check=True)
@@ -35,8 +46,16 @@ def main() -> None:
         action="store_true",
         help="Recreate current paper tickets. Omit this when preserving opened-at timestamps.",
     )
+    parser.add_argument(
+        "--refresh-public-marks",
+        action="store_true",
+        help="Refresh public mark sources before checking paper-ticket outcomes.",
+    )
     args = parser.parse_args()
-    run_observation_cycle(open_new_tickets=args.open_new_tickets)
+    run_observation_cycle(
+        open_new_tickets=args.open_new_tickets,
+        refresh_public_marks=args.refresh_public_marks,
+    )
 
 
 if __name__ == "__main__":
