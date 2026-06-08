@@ -201,6 +201,43 @@ These are intraday research labels, not trade instructions. The next check is
 fresh-window repetition plus fees, spread, fill probability, funding PnL, and
 position-sizing assumptions.
 
+## Binance Intraday Repeat Compare
+
+Run:
+
+```bash
+uv run python -m strategies.p0_parallel.binance_derivatives_intraday_feature_labels \
+  --start-date 2026-05-02 \
+  --days 18 \
+  --max-workers 12 \
+  --labels-output-path strategies/p0_parallel/binance_derivatives_intraday_prior_feature_labels.csv \
+  --candidates-output-path strategies/p0_parallel/binance_derivatives_intraday_prior_feature_candidates.csv \
+  --markdown-output-path strategies/p0_parallel/binance_derivatives_intraday_prior_feature_candidates.md
+
+uv run python -m strategies.p0_parallel.binance_derivatives_intraday_repeat_compare
+```
+
+This compares the prior 2026-05-02 through 2026-05-19 window against the recent
+2026-05-20 through 2026-06-06 window. The useful rows are not necessarily the
+highest single-window scores; they are the rows where the same symbol, feature,
+and preferred bucket repeat across non-overlapping windows.
+
+Top repeat/current rows:
+
+| symbol | feature | status | prior bucket | recent bucket | prior score | recent score | combined score |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: |
+| ARBUSDT | count_long_short_ratio | intraday_repeat_watch | low | low | 135.9200 | 363.7439 | 365.8527 |
+| ARBUSDT | count_top_long_short_ratio | intraday_repeat_watch | low | low | 115.7972 | 253.4757 | 319.6518 |
+| ARBUSDT | sum_top_long_short_ratio | intraday_repeat_watch | low | low | 120.7376 | 187.4846 | 312.3820 |
+| ADAUSDT | count_long_short_ratio | intraday_repeat_watch | low | low | 96.0980 | 201.6159 | 285.6408 |
+| UNIUSDT | abs_premium_close | intraday_repeat_watch | high | high | 107.5477 | 101.4635 | 273.2658 |
+| UNIUSDT | premium_close | intraday_repeat_watch | low | low | 107.1757 | 95.2261 | 265.7064 |
+| OPUSDT | count_top_long_short_ratio | intraday_bucket_shift | high | low | 239.1800 | 287.4978 | 264.5156 |
+
+ARB, ADA, UNI, and DOGE produce the cleanest repeated buckets in this two-window
+check. OP and NEAR remain interesting but show bucket shifts, so they need a
+regime explanation before any promotion.
+
 ## Funding Carry Proxy
 
 Run:

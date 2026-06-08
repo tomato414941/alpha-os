@@ -400,6 +400,8 @@ def _symbols_for_stack_row(row: dict[str, str]) -> tuple[str, ...]:
         "persistent_derivatives_symbol_feature_prior",
         "recent_derivatives_symbol_feature_prior",
         "derivatives_symbol_feature_regime_shift",
+        "repeat_intraday_derivatives_feature_priority",
+        "repeat_intraday_derivatives_feature_watch",
         "intraday_derivatives_feature_priority",
         "intraday_derivatives_feature_watch",
     }:

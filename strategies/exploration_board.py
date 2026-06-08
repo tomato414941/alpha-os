@@ -31,6 +31,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _perp_market_map_row(root),
         _derivatives_positioning_row(root),
         _binance_derivatives_history_row(root),
+        _binance_derivatives_intraday_repeat_row(root),
         _binance_derivatives_intraday_row(root),
         _macro_regime_row(root),
         _crypto_equity_proxy_row(root),
@@ -684,6 +685,35 @@ def _binance_derivatives_intraday_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="daily derivatives candidates have not been checked on 5m-to-1h labels",
         next_step="run Binance derivatives intraday feature label screen for top recent symbol-feature candidates",
+    )
+
+
+def _binance_derivatives_intraday_repeat_row(root: Path) -> ExplorationRow:
+    path = root / "p0_parallel" / "binance_derivatives_intraday_repeat_compare.csv"
+    best = _best_numeric_row(path, key="combined_score")
+    if best:
+        return ExplorationRow(
+            lane="binance_derivatives_intraday_repeat",
+            status=best.get("status", "intraday_repeat_compare"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')} "
+                f"{best.get('feature', '')}: "
+                f"prior={best.get('prior_bucket', '')}/{best.get('prior_score', '')}, "
+                f"recent={best.get('recent_bucket', '')}/{best.get('recent_score', '')}, "
+                f"combined={best.get('combined_score', '')}"
+            ),
+            main_gap="repeat compare still excludes fees, spread, fill probability, funding PnL, stop behavior, and sizing",
+            next_step=best.get(
+                "next_step",
+                "run the top repeated intraday derivatives feature with costs and fills",
+            ),
+        )
+    return ExplorationRow(
+        lane="binance_derivatives_intraday_repeat",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="recent 5m-to-1h labels have not been repeated on a non-overlapping window",
+        next_step="run Binance derivatives intraday repeat compare before promoting any intraday feature",
     )
 
 

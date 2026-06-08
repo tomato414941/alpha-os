@@ -35,6 +35,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_derivatives_positioning_stacks(root),
         *_binance_derivatives_feature_prior_stacks(root),
         *_binance_derivatives_regime_feature_stacks(root),
+        *_binance_derivatives_intraday_repeat_stacks(root),
         *_binance_derivatives_intraday_feature_stacks(root),
         *_cross_exchange_funding_stacks(root),
         *_perp_crowding_stacks(root),
@@ -843,6 +844,59 @@ def _binance_derivatives_intraday_feature_stacks(root: Path) -> tuple[AlphaStack
             )
         )
     return tuple(output)
+
+
+def _binance_derivatives_intraday_repeat_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "p0_parallel" / "binance_derivatives_intraday_repeat_compare.csv")
+            if row.get("status") in {"intraday_repeat_priority", "intraday_repeat_watch"}
+        ),
+        key=lambda row: _float(row.get("combined_score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:8]:
+        symbol = row.get("symbol", "")
+        feature = row.get("feature", "")
+        status = _binance_intraday_repeat_status(row.get("status", ""))
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{_symbol_slug(symbol)}_{_slug(feature)}_repeat_intraday_derivatives_feature",
+                status=status,
+                side=f"{row.get('recent_bucket', '')}_repeat_{feature}",
+                priority_score=_priority_score(
+                    status,
+                    source_count=3,
+                    raw_score=_float(row.get("combined_score")),
+                ),
+                sources="p0_parallel + binance_derivatives_intraday_repeat",
+                evidence=(
+                    f"{symbol}: feature={feature}, "
+                    f"prior_bucket={row.get('prior_bucket', '')}, "
+                    f"recent_bucket={row.get('recent_bucket', '')}, "
+                    f"prior_score={row.get('prior_score', '')}, "
+                    f"recent_score={row.get('recent_score', '')}, "
+                    f"combined={row.get('combined_score', '')}"
+                ),
+                conflict=(
+                    "non-overlapping intraday label repeat still excludes fees, spread, "
+                    "fill probability, funding PnL, stop behavior, and sizing assumptions"
+                ),
+                next_step=row.get(
+                    "next_step",
+                    f"run {symbol} {feature} intraday paper label with costs and fills",
+                ),
+            )
+        )
+    return tuple(output)
+
+
+def _binance_intraday_repeat_status(status: str) -> str:
+    if status == "intraday_repeat_priority":
+        return "repeat_intraday_derivatives_feature_priority"
+    return "repeat_intraday_derivatives_feature_watch"
 
 
 def _binance_intraday_feature_status(status: str) -> str:
@@ -2795,6 +2849,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "persistent_derivatives_symbol_feature_prior": 48.0,
         "recent_derivatives_symbol_feature_prior": 44.0,
         "derivatives_symbol_feature_regime_shift": 38.0,
+        "repeat_intraday_derivatives_feature_priority": 58.0,
+        "repeat_intraday_derivatives_feature_watch": 50.0,
         "intraday_derivatives_feature_priority": 54.0,
         "intraday_derivatives_feature_watch": 46.0,
         "paper_yield_depeg_conflict_watch": 42.0,
