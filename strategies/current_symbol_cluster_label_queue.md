@@ -43,7 +43,7 @@ This turns symbol-level clusters into concrete next labeling work. It is a workf
 | STABLE | collect_cluster_observations | 106.7380 | multi_source_watch | neutral | 2 | 3 | L=1, S=0, RV=0, Y=0, R=0 | stable_extreme_funding_carry_long_perp, stable_hlperp_cash_or_spot_proxy_funding, stable_bybitperp_binperp_funding | collect more STABLE observations and then rerun cluster conflict review |
 | PURR | confirmed_direction_forward_label | 104.7481 | confirmed_long_cluster | long | 1 | 2 | L=2, S=0, RV=0, Y=0, R=0 | purr_oi_funding_crowding_watch, purr_crowded_momentum_continuation_long_perp | label PURR long setup over short and medium horizons with costs |
 | MSTR | collect_cluster_observations | 101.8986 | multi_source_watch | relative_value | 2 | 1 | L=0, S=0, RV=1, Y=0, R=0 | mstr_btc_relative_value | collect more MSTR observations and then rerun cluster conflict review |
-| COINDESK | split_lane_forward_label | 101.4159 | mixed_direction_conflict | mixed | 1 | 2 | L=1, S=1, RV=0, Y=0, R=0 | zec_narrative_event_news_event, btc_regulatory_risk_news_event | label COINDESK per lane and compare direction, costs, depth, and failure regime separately |
+| MON | collect_cluster_observations | 98.6238 | multi_source_watch | neutral | 2 | 3 | L=0, S=0, RV=0, Y=0, R=0 | mon_okxswap_hlperp_funding, okx_mon_chain_flow_context, mon_chain_flow_context | collect more MON observations and then rerun cluster conflict review |
 
 ## Interpretation
 

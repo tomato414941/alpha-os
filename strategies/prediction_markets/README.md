@@ -17,6 +17,7 @@ uv run python -m strategies.prediction_markets.current_event_probability_paper_t
 uv run python -m strategies.prediction_markets.current_event_source_quality
 uv run python -m strategies.prediction_markets.current_event_probability_paper_outcome
 uv run python -m strategies.prediction_markets.current_event_probability_refresh
+uv run python -m strategies.prediction_markets.current_event_probability_actionability
 ```
 
 ## Current Status

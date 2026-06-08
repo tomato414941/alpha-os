@@ -1397,6 +1397,30 @@ def _best_token_unlock_paper_ticket(path: Path) -> dict[str, str] | None:
 
 
 def _prediction_markets_row(root: Path) -> ExplorationRow:
+    actionability_path = root / "prediction_markets" / "current_event_probability_actionability.csv"
+    actionability = _best_prediction_market_probability_actionability(actionability_path)
+    if actionability:
+        return ExplorationRow(
+            lane="prediction_markets",
+            status=actionability.get("status", "event_probability_actionability"),
+            strongest_current_signal=(
+                f"{actionability.get('suggested_side', '')}: {actionability.get('question', '')}, "
+                f"bid={actionability.get('current_bid', '')}, "
+                f"ask={actionability.get('current_ask', '')}, "
+                f"spread={actionability.get('spread', '')}, "
+                f"edge_after_ask={actionability.get('current_edge_after_ask', '')}, "
+                f"source_quality={actionability.get('source_quality_status', '')}, "
+                f"refresh={actionability.get('refresh_status', '')}"
+            ),
+            main_gap=actionability.get(
+                "reason",
+                "event-probability candidate still lacks fill, fee, queue, resolution-risk, and adverse-selection proof",
+            ),
+            next_step=actionability.get(
+                "next_step",
+                "paper-check event probability candidate under explicit execution and resolution assumptions",
+            ),
+        )
     refresh_path = root / "prediction_markets" / "current_event_probability_paper_outcome_refresh.csv"
     best_refresh = _best_prediction_market_probability_refresh(refresh_path)
     if best_refresh:
@@ -1687,6 +1711,25 @@ def _best_prediction_market_probability_refresh(path: Path) -> dict[str, str] | 
             row
             for row in csv.DictReader(handle)
             if row.get("status") in {"paper_outcome_survived_refresh", "paper_outcome_weak_refresh"}
+        )
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("score") or "0"))
+
+
+def _best_prediction_market_probability_actionability(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("status")
+            in {
+                "event_probability_candidate_after_refresh_check",
+                "event_probability_candidate_after_current_quote_check",
+                "event_probability_edge_watch",
+            }
         )
     if not rows:
         return None

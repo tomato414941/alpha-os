@@ -27,6 +27,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         _mstr_btc_relative_value_stack(root),
         *_volatility_actionability_stacks(root),
         *_options_volatility_stacks(root),
+        *_event_probability_actionability_stacks(root),
         _prediction_market_event_model_stack(root),
         _cross_market_stress_anomaly_stack(root),
         *_peg_anomaly_tradeability_stacks(root),
@@ -293,6 +294,8 @@ def _options_volatility_next_step(ticket: dict[str, str]) -> str:
 
 
 def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
+    if (root / "prediction_markets" / "current_event_probability_actionability.csv").exists():
+        return None
     paper_refresh = _best_by_score(
         root / "prediction_markets" / "current_event_probability_paper_outcome_refresh.csv",
         score_key="score",
@@ -1610,6 +1613,54 @@ def _defi_lending_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     return tuple(output)
 
 
+def _event_probability_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "prediction_markets" / "current_event_probability_actionability.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "event_probability_candidate_after_refresh_check",
+                "event_probability_candidate_after_current_quote_check",
+                "event_probability_edge_watch",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:4]:
+        output.append(
+            AlphaStackRow(
+                opportunity="event_probability_actionability",
+                status=ticket.get("status", ""),
+                side=f"{ticket.get('suggested_side', '')}: {ticket.get('question', '')}",
+                priority_score=_priority_score(
+                    ticket.get("status", ""),
+                    source_count=6,
+                    raw_score=_float(ticket.get("score")),
+                ),
+                sources="prediction_markets + external_news + probability_gap + clob_depth + source_quality + refresh",
+                evidence=(
+                    f"bid={ticket.get('current_bid', '')}, ask={ticket.get('current_ask', '')}, "
+                    f"spread={ticket.get('spread', '')}, edge_after_ask={ticket.get('current_edge_after_ask', '')}, "
+                    f"bid_pnl={ticket.get('mark_to_bid_pnl', '')}, depth_5c={ticket.get('ask_depth_to_5c', '')}, "
+                    f"source_quality={ticket.get('source_quality_status', '')}, refresh={ticket.get('refresh_status', '')}"
+                ),
+                conflict=ticket.get(
+                    "reason",
+                    "event-probability candidate still needs fill, fee, queue, resolution-risk, and adverse-selection checks",
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    "paper-check event probability candidate under explicit execution and resolution assumptions",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _lending_stress_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
     rows = _read_rows(root / "defi_lending" / "current_lending_stress_actionability.csv")
     tickets = sorted(
@@ -2184,6 +2235,13 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_outcome_weak_refresh": 70.0,
         "paper_outcome_active_watch": 84.0,
         "paper_outcome_edge_watch": 68.0,
+        "event_probability_candidate_after_refresh_check": 66.0,
+        "event_probability_candidate_after_current_quote_check": 63.0,
+        "event_probability_edge_watch": 52.0,
+        "event_probability_quote_mechanics_watch": 44.0,
+        "event_probability_source_quality_blocked": 38.0,
+        "event_probability_quote_blocked": 30.0,
+        "event_probability_deprioritize": 28.0,
         "cross_market_peg_stress_anomaly": 86.0,
         "cross_market_lending_stress_anomaly": 82.0,
         "cross_market_yield_peg_anomaly": 74.0,
