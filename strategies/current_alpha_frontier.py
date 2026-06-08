@@ -205,6 +205,24 @@ def write_alpha_frontier_md(rows: tuple[FrontierLane, ...], *, output_path: Path
 
 
 def _build_lane(rule: LaneRule, *, alpha_rows: tuple[dict[str, str], ...]) -> FrontierLane:
+    if rule.lane == "wallet / entity on-chain flow":
+        access_rows = _read_rows(ROOT / "wallet_entity_flow" / "current_wallet_entity_flow_access.csv")
+        if access_rows:
+            access_ok = tuple(row for row in access_rows if row.get("status") in {"access_ok", "implemented_proxy"})
+            best = access_ok[0] if access_ok else access_rows[0]
+            active_candidates = len(access_rows)
+            status = "access_probe_ready" if access_ok else "needs_data_access"
+            return FrontierLane(
+                lane=rule.lane,
+                current_status=status,
+                frontier_score=rule.base_priority + 8.0 + min(len(access_ok) * 2.0, 8.0),
+                active_candidates=active_candidates,
+                best_score=float(len(access_ok)),
+                best_opportunity=best.get("source", ""),
+                evidence_sources="wallet_entity_flow/current_wallet_entity_flow_access",
+                missing_work=rule.missing_work,
+                next_probe=rule.next_probe,
+            )
     if rule.lane == "directional ML / RL policy learning":
         policy_rows = _read_rows(ROOT / "policy_learning" / "current_policy_learning_samples.csv")
         if policy_rows:

@@ -48,6 +48,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_cluster_label_queue_row(root),
         _symbol_lane_split_review_row(root),
         _policy_learning_row(root),
+        _wallet_entity_flow_row(root),
         _crypto_market_structure_row(root),
         _basis_term_structure_row(root),
         _cross_exchange_funding_row(root),
@@ -165,6 +166,32 @@ def _policy_learning_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="paper outcomes are not converted into observation/action/reward samples",
         next_step="run policy-learning sample builder after paper outcomes and fill-risk checks",
+    )
+
+
+def _wallet_entity_flow_row(root: Path) -> ExplorationRow:
+    path = root / "wallet_entity_flow" / "current_wallet_entity_flow_access.csv"
+    rows = _csv_rows(path)
+    access_ok = tuple(row for row in rows if row.get("status") in {"access_ok", "implemented_proxy"})
+    best = access_ok[0] if access_ok else (rows[0] if rows else None)
+    if best:
+        return ExplorationRow(
+            lane="wallet_entity_flow_access",
+            status=best.get("status", "access_probe"),
+            strongest_current_signal=(
+                f"{best.get('source', '')}: "
+                f"secret={best.get('requires_secret', '')}, "
+                f"probe={best.get('probe_result', '')}"
+            ),
+            main_gap=best.get("limitation", "wallet/entity-flow data access still needs a concrete source"),
+            next_step=best.get("next_step", "turn reachable wallet/entity data into forward labels"),
+        )
+    return ExplorationRow(
+        lane="wallet_entity_flow_access",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="wallet/entity-flow source access has not been probed",
+        next_step="run wallet/entity-flow access probe",
     )
 
 
