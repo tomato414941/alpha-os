@@ -90,6 +90,7 @@ DEFAULT_COMMANDS = (
     ("strategies.macro_regime.current_macro_crypto_context",),
     ("strategies.speculative_beta.current_speculative_beta_context",),
     ("strategies.crypto_equity_proxy.current_crypto_equity_proxy_context",),
+    ("strategies.crypto_equity_proxy.current_crypto_equity_factor_split",),
     ("strategies.news_social.current_event_pressure_cluster",),
     ("strategies.news_social.current_news_event_source_independence",),
     ("strategies.news_social.current_ticker_attention_source_split",),

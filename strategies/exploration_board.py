@@ -81,6 +81,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _binance_derivatives_intraday_row(root),
         _macro_regime_row(root),
         _crypto_equity_proxy_row(root),
+        _crypto_equity_factor_split_row(root),
         _speculative_beta_row(root),
         _event_flow_row(root),
         _liquidation_intensity_row(root),
@@ -2131,6 +2132,38 @@ def _crypto_equity_proxy_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="crypto-linked equity proxies have not been converted into repeated labels",
         next_step="build paper tickets for proxy lead/lag, MSTR/BTC dislocation, and miner stress",
+    )
+
+
+def _crypto_equity_factor_split_row(root: Path) -> ExplorationRow:
+    path = root / "crypto_equity_proxy" / "current_crypto_equity_factor_split.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="crypto_equity_factor_split",
+            status=best.get("status", "crypto_equity_factor_split"),
+            strongest_current_signal=(
+                f"{best.get('factor_id', '')}: "
+                f"role={best.get('factor_role', '')}, "
+                f"target={best.get('target_asset', '')}, "
+                f"side={best.get('side_hint', '')}, "
+                f"score={best.get('score', '')}"
+            ),
+            main_gap=best.get(
+                "missing_data",
+                "crypto-equity factor still needs hedge ratio, timestamp boundary, and residual labels",
+            ),
+            next_step=best.get(
+                "next_probe",
+                "split crypto-equity beta, residual, and market-hours factors before paper action",
+            ),
+        )
+    return ExplorationRow(
+        lane="crypto_equity_factor_split",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="crypto-equity proxy tickets are not split into beta, residual, and timing roles",
+        next_step="run current crypto-equity factor split after proxy context",
     )
 
 
