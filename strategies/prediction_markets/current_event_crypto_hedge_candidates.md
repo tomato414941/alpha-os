@@ -4,15 +4,12 @@ This maps event-probability gaps into crypto hedge candidates. It is not a direc
 
 | candidate | asset | action | status | score | gap | market | news | edge | depth | reason |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| btc_1971905_event_crypto_hedge | BTC | paper_long | event_crypto_hedge_after_refresh_candidate | 100.4009 | 0.3350 | 73.50 | 145.00 | 0.3300 | 214008 | risk-relief event probability gap survived quote/source/refresh checks |
-| eth_1971905_event_crypto_hedge | ETH | paper_long | event_crypto_hedge_after_refresh_candidate | 90.3608 | 0.3350 | 73.50 | 145.00 | 0.3300 | 214008 | risk-relief event probability gap survived quote/source/refresh checks |
-| sol_1971905_event_crypto_hedge | SOL | paper_long | event_crypto_hedge_after_refresh_candidate | 75.3007 | 0.3350 | 73.50 | 145.00 | 0.3300 | 214008 | risk-relief event probability gap survived quote/source/refresh checks |
-| btc_1962237_event_crypto_hedge | BTC | paper_long | event_crypto_hedge_watch | 57.4942 | 0.0850 | 48.50 | 145.00 | 0.0800 | 81670 | risk-relief event context needs more evidence before hedge promotion |
-| btc_2296152_event_crypto_hedge | BTC | paper_short | event_crypto_hedge_watch | 56.9511 | 0.1000 | 48.00 | 137.84 | 0.0900 | 9837 | risk-escalation event context needs more evidence before hedge promotion |
-| eth_1962237_event_crypto_hedge | ETH | paper_long | event_crypto_hedge_watch | 51.7448 | 0.0850 | 48.50 | 145.00 | 0.0800 | 81670 | risk-relief event context needs more evidence before hedge promotion |
-| eth_2296152_event_crypto_hedge | ETH | paper_short | event_crypto_hedge_watch | 51.2560 | 0.1000 | 48.00 | 137.84 | 0.0900 | 9837 | risk-escalation event context needs more evidence before hedge promotion |
-| sol_1962237_event_crypto_hedge | SOL | paper_long | event_crypto_hedge_watch | 43.1207 | 0.0850 | 48.50 | 145.00 | 0.0800 | 81670 | risk-relief event context needs more evidence before hedge promotion |
-| sol_2296152_event_crypto_hedge | SOL | paper_short | event_crypto_hedge_watch | 42.7134 | 0.1000 | 48.00 | 137.84 | 0.0900 | 9837 | risk-escalation event context needs more evidence before hedge promotion |
+| btc_1962237_event_crypto_hedge | BTC | paper_long | event_crypto_hedge_current_quote_candidate | 82.4430 | 0.1750 | 55.50 | 145.00 | 0.1700 | 117881 | risk-relief event probability gap has current quote support but needs repeat refresh |
+| eth_1962237_event_crypto_hedge | ETH | paper_long | event_crypto_hedge_current_quote_candidate | 74.1987 | 0.1750 | 55.50 | 145.00 | 0.1700 | 117881 | risk-relief event probability gap has current quote support but needs repeat refresh |
+| sol_1962237_event_crypto_hedge | SOL | paper_long | event_crypto_hedge_current_quote_candidate | 61.8322 | 0.1750 | 55.50 | 145.00 | 0.1700 | 117881 | risk-relief event probability gap has current quote support but needs repeat refresh |
+| btc_2296152_event_crypto_hedge | BTC | paper_short | event_crypto_hedge_watch | 57.0875 | 0.0950 | 47.50 | 142.28 | 0.0900 | 24058 | risk-escalation event context needs more evidence before hedge promotion |
+| eth_2296152_event_crypto_hedge | ETH | paper_short | event_crypto_hedge_watch | 51.3788 | 0.0950 | 47.50 | 142.28 | 0.0900 | 24058 | risk-escalation event context needs more evidence before hedge promotion |
+| sol_2296152_event_crypto_hedge | SOL | paper_short | event_crypto_hedge_watch | 42.8156 | 0.0950 | 47.50 | 142.28 | 0.0900 | 24058 | risk-escalation event context needs more evidence before hedge promotion |
 
 ## Interpretation
 

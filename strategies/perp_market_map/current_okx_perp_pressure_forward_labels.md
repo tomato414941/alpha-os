@@ -4,31 +4,31 @@ This labels current OKX perp-pressure candidates with directional price returns.
 
 | asset | action | score | dir | raw 15m | directional 15m | raw 1h | directional 1h |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| HOME | long_carry_discount_watch | 730.707719 | 1 |  |  |  |  |
-| BEAT | short_carry_premium_watch | 191.677442 | -1 |  |  |  |  |
-| ZEC | long_carry_discount_watch | 122.648239 | 1 |  |  |  |  |
-| MOVE | long_carry_discount_watch | 89.299117 | 1 |  |  |  |  |
-| BSB | short_carry_premium_watch | 65.025602 | -1 |  |  |  |  |
-| BIO | long_carry_watch | 62.144539 | 1 |  |  |  |  |
-| CL | long_carry_discount_watch | 51.747941 | 1 |  |  |  |  |
-| BZ | long_carry_discount_watch | 51.597021 | 1 |  |  |  |  |
-| RAVE | short_carry_premium_watch | 36.468401 | -1 |  |  |  |  |
-| QQQ | short_carry_premium_watch | 34.258659 | -1 |  |  |  |  |
-| MRVL | short_carry_premium_watch | 33.414228 | -1 |  |  |  |  |
-| WLD | long_carry_discount_watch | 29.030551 | 1 |  |  |  |  |
-| DRAM | short_carry_premium_watch | 27.298034 | -1 |  |  |  |  |
-| MU | short_carry_watch | 26.549572 | -1 |  |  |  |  |
-| NVDA | short_carry_premium_watch | 25.993005 | -1 |  |  |  |  |
-| EWY | short_carry_premium_watch | 25.732102 | -1 |  |  |  |  |
-| SAHARA | short_carry_premium_watch | 23.871101 | -1 |  |  |  |  |
-| MEGA | long_carry_discount_watch | 19.215376 | 1 |  |  |  |  |
-| TRX | long_carry_discount_watch | 17.695735 | 1 |  |  |  |  |
-| AAVE | long_carry_discount_watch | 17.568101 | 1 |  |  |  |  |
-| ARM | short_carry_premium_watch | 15.589505 | -1 |  |  |  |  |
-| ICP | long_carry_discount_watch | 13.449961 | 1 |  |  |  |  |
-| CRCL | short_carry_premium_watch | 11.670828 | -1 |  |  |  |  |
-| H | long_carry_discount_watch | 11.102180 | 1 |  |  |  |  |
-| BILL | short_carry_premium_watch | 10.953616 | -1 |  |  |  |  |
+| LAYER | long_carry_discount_watch | 1203.764269 | 1 |  |  |  |  |
+| HOME | long_carry_discount_watch | 804.241061 | 1 |  |  |  |  |
+| BEAT | short_carry_premium_watch | 166.020450 | -1 |  |  |  |  |
+| H | long_carry_discount_watch | 133.363725 | 1 |  |  |  |  |
+| BZ | long_carry_discount_watch | 124.324848 | 1 |  |  |  |  |
+| CL | long_carry_discount_watch | 105.208083 | 1 |  |  |  |  |
+| ZEC | long_carry_discount_watch | 72.145948 | 1 |  |  |  |  |
+| LAB | short_carry_premium_watch | 39.513276 | -1 |  |  |  |  |
+| RAVE | short_carry_premium_watch | 24.604044 | -1 |  |  |  |  |
+| NVDA | short_carry_premium_watch | 23.893682 | -1 |  |  |  |  |
+| PIPPIN | short_carry_premium_watch | 22.405681 | -1 |  |  |  |  |
+| TRX | long_carry_discount_watch | 20.784062 | 1 |  |  |  |  |
+| ICP | long_carry_discount_watch | 20.067773 | 1 |  |  |  |  |
+| AAVE | long_carry_discount_watch | 19.996107 | 1 |  |  |  |  |
+| ETH | long_carry_discount_watch | 18.440690 | 1 |  |  |  |  |
+| TAO | long_carry_discount_watch | 18.235191 | 1 |  |  |  |  |
+| EWY | short_carry_premium_watch | 18.185531 | -1 |  |  |  |  |
+| BSB | short_carry_watch | 17.736378 | -1 |  |  |  |  |
+| DOT | long_carry_discount_watch | 13.894582 | 1 |  |  |  |  |
+| ORCL | short_carry_premium_watch | 10.374035 | -1 |  |  |  |  |
+| SAHARA | short_carry_premium_watch | 9.536986 | -1 |  |  |  |  |
+| HYPE | short_carry_watch | 9.000506 | -1 |  |  |  |  |
+| CRCL | short_carry_premium_watch | 8.972400 | -1 |  |  |  |  |
+| RENDER | long_carry_discount_watch | 8.872604 | 1 |  |  |  |  |
+| LINK | long_carry_discount_watch | 8.819376 | 1 |  |  |  |  |
 
 ## Interpretation
 

@@ -6,24 +6,24 @@ This compares crypto with AI, semiconductor, and high-beta growth proxies. It is
 
 | name | status | side | score | reason |
 | --- | --- | --- | ---: | --- |
-| vix_high_beta_air_pocket | watch | none | 0.2149 | risk-off shock is visible, but crypto may already have repriced |
-| ai_beta_crypto_warning | paper_short_candidate | short_crypto_beta | -0.1187 | AI equities strongly underperform BTC while BTC has not repriced much |
-| speculative_beta_air_pocket_short | paper_short_candidate | short_btc_eth | -0.0327 | AI/high-beta equities are risk-off while BTC has not repriced much |
-| semis_crypto_divergence | watch | none | 0.0023 | semiconductor/BTC divergence is not clean enough |
+| vix_high_beta_air_pocket | watch | none | 0.2795 | risk-off shock is visible, but crypto may already have repriced |
+| ai_beta_crypto_warning | paper_short_candidate | short_crypto_beta | -0.1106 | AI equities strongly underperform BTC while BTC has not repriced much |
+| speculative_beta_air_pocket_short | paper_short_candidate | short_btc_eth | -0.0265 | AI/high-beta equities are risk-off while BTC has not repriced much |
+| semis_crypto_divergence | watch | none | -0.0003 | semiconductor/BTC divergence is not clean enough |
 
 ## Current Context
 
 | symbol | group | close | 1d | 5d | 20d | vs BTC 5d | risk score 5d |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| BTC-USD | crypto | 64125.9414 | 0.0140 | 0.0017 | -0.1645 | 0.0000 | 0.0017 |
-| ETH-USD | crypto | 1702.0000 | 0.0093 | -0.0606 | -0.1934 | -0.0623 | -0.0606 |
-| ARKK | high_beta_growth | 76.2200 | 0.0232 | -0.0620 | -0.0367 | -0.0638 | -0.0620 |
-| SOXX | semiconductor | 579.3800 | 0.0734 | 0.0130 | 0.1135 | 0.0113 | 0.0130 |
-| SMH | semiconductor | 604.8000 | 0.0616 | -0.0050 | 0.0675 | -0.0067 | -0.0050 |
-| NVDA | ai_equity | 208.7600 | 0.0178 | -0.0695 | -0.0299 | -0.0713 | -0.0695 |
-| AVGO | ai_equity | 398.7200 | 0.0337 | -0.1332 | -0.0727 | -0.1349 | -0.1332 |
-| TSLA | high_beta_growth | 403.4500 | 0.0318 | -0.0299 | -0.0581 | -0.0316 | -0.0299 |
-| PLTR | ai_equity | 136.8550 | 0.0098 | -0.1481 | -0.0069 | -0.1499 | -0.1481 |
-| QQQ | growth_index | 722.7700 | 0.0251 | -0.0269 | 0.0162 | -0.0286 | -0.0269 |
-| IWM | small_cap | 286.6202 | 0.0176 | -0.0082 | 0.0086 | -0.0099 | -0.0082 |
-| ^VIX | volatility | 18.0300 | -0.1618 | 0.1234 | -0.0190 | 0.1216 | 0.1234 |
+| BTC-USD | crypto | 63386.9414 | 0.0023 | -0.0098 | -0.1741 | 0.0000 | -0.0098 |
+| ETH-USD | crypto | 1685.0100 | -0.0008 | -0.0699 | -0.2014 | -0.0601 | -0.0699 |
+| ARKK | high_beta_growth | 75.8150 | 0.0178 | -0.0670 | -0.0418 | -0.0572 | -0.0670 |
+| SOXX | semiconductor | 570.4600 | 0.0569 | -0.0026 | 0.0964 | 0.0072 | -0.0026 |
+| SMH | semiconductor | 597.0700 | 0.0481 | -0.0177 | 0.0539 | -0.0079 | -0.0177 |
+| NVDA | ai_equity | 208.1500 | 0.0149 | -0.0722 | -0.0328 | -0.0624 | -0.0722 |
+| AVGO | ai_equity | 395.3300 | 0.0249 | -0.1405 | -0.0806 | -0.1307 | -0.1405 |
+| TSLA | high_beta_growth | 409.1900 | 0.0465 | -0.0161 | -0.0447 | -0.0063 | -0.0161 |
+| PLTR | ai_equity | 136.7850 | 0.0093 | -0.1486 | -0.0074 | -0.1388 | -0.1486 |
+| QQQ | growth_index | 716.0400 | 0.0156 | -0.0359 | 0.0068 | -0.0261 | -0.0359 |
+| IWM | small_cap | 284.2850 | 0.0094 | -0.0162 | 0.0004 | -0.0064 | -0.0162 |
+| ^VIX | volatility | 18.8300 | -0.1246 | 0.1732 | 0.0245 | 0.1830 | 0.1732 |

@@ -4,9 +4,9 @@ This separates belief, attention, and event-probability movement from return-pre
 
 | symbol | status | belief proxy | return support | gap | strongest source | reason | next probe |
 | --- | --- | ---: | ---: | ---: | --- | --- | --- |
-| BTC | belief_price_decoupling_control_required | 243.1922 | 5.2756 | 237.9165 | event_pressure:multi_source_event_pressure | crypto moved while the event-probability ticket was flat; do not treat the belief market as causal yet | for BTC, require event-probability movement or stronger timestamp evidence before event hedge promotion |
-| HYPE | conflicting_social_source_control | 153.6390 | 0.0000 | 153.6390 | attention:ticker_specific_attention_alpha_candidate | cross-modal source split already marks this source as a conflict or negative control | keep HYPE as a negative control in the social/event alpha lane |
-| ETH | belief_price_decoupling_control_required | 154.2859 | 1.6250 | 152.6609 | cross_modal_control:wallet_flow | crypto moved while the event-probability ticket was flat; do not treat the belief market as causal yet | for ETH, require event-probability movement or stronger timestamp evidence before event hedge promotion |
+| ETH | conflicting_social_source_control | 209.5012 | 7.4998 | 202.0014 | attention:dedupe_news_before_attention_label | cross-modal source split already marks this source as a conflict or negative control | keep ETH as a negative control in the social/event alpha lane |
+| BTC | conflicting_social_source_control | 204.7545 | 21.8964 | 182.8581 | event_pressure:multi_source_event_pressure | cross-modal source split already marks this source as a conflict or negative control | keep BTC as a negative control in the social/event alpha lane |
+| HYPE | conflicting_social_source_control | 159.4076 | 0.0000 | 159.4076 | event_pressure:two_source_event_pressure | cross-modal source split already marks this source as a conflict or negative control | keep HYPE as a negative control in the social/event alpha lane |
 
 ## Interpretation
 

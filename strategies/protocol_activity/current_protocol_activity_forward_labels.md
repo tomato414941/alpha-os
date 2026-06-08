@@ -4,8 +4,8 @@ This labels protocol activity/perp-overlap candidates with subsequent Hyperliqui
 
 | timestamp | symbol | action | score | raw 15m | dir 15m | raw 1h | dir 1h | status |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| 2026-06-08T15:04:44.224453+00:00 | ZEC | protocol_activity_funding_overlap | 50.610041 |  |  |  |  | pending_15m |
-| 2026-06-08T15:11:24.272912+00:00 | BTC | protocol_activity_watch | 34.156379 |  |  |  |  | pending_15m |
+| 2026-06-08T15:14:54.453785+00:00 | ZEC | protocol_activity_funding_overlap | 50.579739 | 0.006985 | 0.006985 | -0.001040 | -0.001040 | labeled |
+| 2026-06-08T15:14:54.453785+00:00 | NEAR | protocol_activity_watch | 30.248383 | -0.013000 | -0.013000 | 0.016877 | 0.016877 | labeled |
 
 ## Interpretation
 

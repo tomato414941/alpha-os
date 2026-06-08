@@ -6,21 +6,21 @@ This screen checks whether crypto is aligned with or diverging from broad risk a
 
 | name | status | side | score | reason |
 | --- | --- | --- | ---: | --- |
-| crypto_risk_off_lagged_short | watch | none | 0.0743 | risk-off pressure is visible, but crypto already repriced; btc5d=0.0024, eth5d=-0.0593 |
-| eth_btc_macro_rotation | watch | none | 0.0617 | ETH/BTC relative move is not aligned with a strong macro regime |
-| crypto_risk_on_catchup | watch | none | -0.0036 | risk-on catch-up condition is not strong enough |
+| crypto_risk_off_lagged_short | watch | none | 0.1024 | risk-off pressure is visible, but crypto already repriced; btc5d=-0.0093, eth5d=-0.0692 |
+| eth_btc_macro_rotation | watch | none | 0.0599 | ETH/BTC relative move is not aligned with a strong macro regime |
+| crypto_risk_on_catchup | watch | none | -0.0035 | risk-on catch-up condition is not strong enough |
 
 ## Asset Context
 
 | symbol | group | close | 1d | 5d | 20d | risk score |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| BTC-USD | crypto | 64169.1211 | 0.0147 | 0.0024 | -0.1639 | 0.0024 |
-| ETH-USD | crypto | 1704.3000 | 0.0106 | -0.0593 | -0.1923 | -0.0593 |
-| QQQ | equity_growth | 722.6703 | 0.0250 | -0.0270 | 0.0161 | -0.0270 |
-| SPY | equity_broad | 745.0350 | 0.0101 | -0.0178 | 0.0101 | -0.0178 |
-| IWM | equity_small_cap | 286.6250 | 0.0177 | -0.0081 | 0.0086 | -0.0081 |
-| HYG | credit | 79.5800 | 0.0019 | -0.0033 | -0.0070 | -0.0033 |
-| TLT | duration | 85.0000 | -0.0007 | -0.0055 | -0.0125 | 0.0055 |
-| UUP | dollar | 28.0050 | -0.0005 | 0.0088 | 0.0243 | 0.0088 |
-| GLD | gold | 397.0800 | 0.0021 | -0.0345 | -0.0846 | -0.0000 |
-| ^VIX | volatility | 18.0300 | -0.1618 | 0.1234 | -0.0190 | 0.1234 |
+| BTC-USD | crypto | 63418.7305 | 0.0028 | -0.0093 | -0.1737 | -0.0093 |
+| ETH-USD | crypto | 1686.3800 | -0.0000 | -0.0692 | -0.2008 | -0.0692 |
+| QQQ | equity_growth | 716.4800 | 0.0162 | -0.0354 | 0.0074 | -0.0354 |
+| SPY | equity_broad | 739.5700 | 0.0027 | -0.0250 | 0.0026 | -0.0250 |
+| IWM | equity_small_cap | 284.3950 | 0.0097 | -0.0159 | 0.0008 | -0.0159 |
+| HYG | credit | 79.5400 | 0.0014 | -0.0038 | -0.0075 | -0.0038 |
+| TLT | duration | 84.7350 | -0.0038 | -0.0086 | -0.0156 | 0.0086 |
+| UUP | dollar | 28.0277 | 0.0003 | 0.0096 | 0.0252 | 0.0096 |
+| GLD | gold | 397.4400 | 0.0030 | -0.0336 | -0.0838 | -0.0000 |
+| ^VIX | volatility | 18.8000 | -0.1260 | 0.1713 | 0.0229 | 0.1713 |

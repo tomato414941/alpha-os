@@ -1,46 +1,42 @@
 timestamp,venue,chain,token_symbol,action,direction,week_change_pct,day_change_pct,raw_return_15m,raw_return_1h,directional_return_15m,directional_return_1h,label_status
-2026-06-08T15:11:56.390158+00:00,HL,Mantle,MNT,chain_flow_reversal_watch,1,-0.31310104,0.01233865,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Cardano,ADA,chain_flow_reversal_watch,1,-0.26641749,0.03591478,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Cardano,ADA,chain_flow_reversal_watch,1,-0.26641749,0.03591478,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Avalanche,AVAX,chain_flow_reversal_watch,1,-0.19874143,0.02158612,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Avalanche,AVAX,chain_flow_reversal_watch,1,-0.19874143,0.02158612,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,MegaETH,MEGA,chain_flow_reversal_watch,1,-0.17939211,0.03185804,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,MegaETH,MEGA,chain_flow_reversal_watch,1,-0.17939211,0.03185804,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Stellar,XLM,chain_outflow_stress_watch,-1,-0.15720067,-0.02616704,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Stellar,XLM,chain_outflow_stress_watch,-1,-0.15720067,-0.02616704,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Stacks,STX,chain_flow_reversal_watch,1,-0.15179096,0.03182902,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Stacks,STX,chain_flow_reversal_watch,1,-0.15179096,0.03182902,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Berachain,BERA,chain_flow_reversal_watch,1,-0.14859071,0.03202065,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Berachain,BERA,chain_flow_reversal_watch,1,-0.14859071,0.03202065,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Sui,SUI,chain_flow_reversal_watch,1,-0.14544146,0.01369718,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Sui,SUI,chain_flow_reversal_watch,1,-0.14544146,0.01369718,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Arbitrum,ARB,chain_flow_reversal_watch,1,-0.13971942,0.04237968,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Arbitrum,ARB,chain_flow_reversal_watch,1,-0.13971942,0.04237968,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Bitcoin,BTC,chain_flow_reversal_watch,1,-0.12930610,0.04662711,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Bitcoin,BTC,chain_flow_reversal_watch,1,-0.12930610,0.04662711,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Movement,MOVE,chain_flow_reversal_watch,1,-0.12693568,0.05668045,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Movement,MOVE,chain_flow_reversal_watch,1,-0.12693568,0.05668045,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Sei,SEI,chain_flow_reversal_watch,1,-0.11304016,0.02224592,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Sei,SEI,chain_flow_reversal_watch,1,-0.11304016,0.02224592,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Aptos,APT,chain_flow_reversal_watch,1,-0.10976155,0.02122650,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Aptos,APT,chain_flow_reversal_watch,1,-0.10976155,0.02122650,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Polygon,POL,chain_outflow_stress_watch,-1,-0.09608203,-0.00488282,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Polygon,POL,chain_outflow_stress_watch,-1,-0.09608203,-0.00488282,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Ethereum,ETH,chain_flow_reversal_watch,1,-0.09417727,0.04795946,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Ethereum,ETH,chain_flow_reversal_watch,1,-0.09417727,0.04795946,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,BSC,BNB,chain_flow_reversal_watch,1,-0.09361682,0.02849882,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,BSC,BNB,chain_flow_reversal_watch,1,-0.09361682,0.02849882,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Solana,SOL,chain_flow_reversal_watch,1,-0.08578934,0.04658667,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Solana,SOL,chain_flow_reversal_watch,1,-0.08578934,0.04658667,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,OP Mainnet,OP,chain_flow_reversal_watch,1,-0.08457737,0.05116715,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,OP Mainnet,OP,chain_flow_reversal_watch,1,-0.08457737,0.05116715,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Hyperliquid L1,HYPE,chain_flow_reversal_watch,1,-0.08295184,0.08686653,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Hyperliquid L1,HYPE,chain_flow_reversal_watch,1,-0.08295184,0.08686653,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Monad,MON,chain_flow_reversal_watch,1,-0.08164474,0.03174292,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Monad,MON,chain_flow_reversal_watch,1,-0.08164474,0.03174292,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,TON,TON,chain_flow_reversal_watch,1,-0.06134708,0.01454723,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,TON,TON,chain_flow_reversal_watch,1,-0.06134708,0.01454723,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Starknet,STRK,chain_flow_reversal_watch,1,-0.05702527,0.01024695,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Starknet,STRK,chain_flow_reversal_watch,1,-0.05702527,0.01024695,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,HL,Near,NEAR,chain_flow_reversal_watch,1,-0.05506020,0.14667037,,,,,pending_15m
-2026-06-08T15:11:56.390158+00:00,OKX,Near,NEAR,chain_flow_reversal_watch,1,-0.05506020,0.14667037,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Mantle,MNT,chain_flow_reversal_watch,1,-0.31580310,0.00835641,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Cardano,ADA,chain_flow_reversal_watch,1,-0.26006175,0.04488992,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Cardano,ADA,chain_flow_reversal_watch,1,-0.26006175,0.04488992,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Avalanche,AVAX,chain_flow_reversal_watch,1,-0.20277849,0.01643895,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Avalanche,AVAX,chain_flow_reversal_watch,1,-0.20277849,0.01643895,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,MegaETH,MEGA,chain_flow_reversal_watch,1,-0.17932690,0.03194003,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,MegaETH,MEGA,chain_flow_reversal_watch,1,-0.17932690,0.03194003,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Stellar,XLM,chain_outflow_stress_watch,-1,-0.16561113,-0.03588510,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Stellar,XLM,chain_outflow_stress_watch,-1,-0.16561113,-0.03588510,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Sui,SUI,chain_flow_reversal_watch,1,-0.15635614,0.00074993,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Sui,SUI,chain_flow_reversal_watch,1,-0.15635614,0.00074993,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Stacks,STX,chain_flow_reversal_watch,1,-0.15159385,0.03206880,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Stacks,STX,chain_flow_reversal_watch,1,-0.15159385,0.03206880,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Berachain,BERA,chain_flow_reversal_watch,1,-0.14641746,0.03465492,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Berachain,BERA,chain_flow_reversal_watch,1,-0.14641746,0.03465492,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Arbitrum,ARB,chain_flow_reversal_watch,1,-0.14328942,0.03805399,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Arbitrum,ARB,chain_flow_reversal_watch,1,-0.14328942,0.03805399,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Bitcoin,BTC,chain_flow_reversal_watch,1,-0.13146131,0.04403642,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Bitcoin,BTC,chain_flow_reversal_watch,1,-0.13146131,0.04403642,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Movement,MOVE,chain_flow_reversal_watch,1,-0.12562203,0.05827037,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Movement,MOVE,chain_flow_reversal_watch,1,-0.12562203,0.05827037,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Sei,SEI,chain_flow_reversal_watch,1,-0.11654991,0.01820083,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Sei,SEI,chain_flow_reversal_watch,1,-0.11654991,0.01820083,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Aptos,APT,chain_flow_reversal_watch,1,-0.10847168,0.02270616,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Aptos,APT,chain_flow_reversal_watch,1,-0.10847168,0.02270616,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Ethereum,ETH,chain_flow_reversal_watch,1,-0.09687794,0.04483502,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Ethereum,ETH,chain_flow_reversal_watch,1,-0.09687794,0.04483502,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Polygon,POL,chain_outflow_stress_watch,-1,-0.09426817,-0.00288596,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Polygon,POL,chain_outflow_stress_watch,-1,-0.09426817,-0.00288596,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,OP Mainnet,OP,chain_flow_reversal_watch,1,-0.09253260,0.04203226,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,OP Mainnet,OP,chain_flow_reversal_watch,1,-0.09253260,0.04203226,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,BSC,BNB,chain_flow_reversal_watch,1,-0.09034274,0.03221402,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,BSC,BNB,chain_flow_reversal_watch,1,-0.09034274,0.03221402,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Solana,SOL,chain_flow_reversal_watch,1,-0.08389908,0.04874810,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Solana,SOL,chain_flow_reversal_watch,1,-0.08389908,0.04874810,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Monad,MON,chain_flow_reversal_watch,1,-0.08192443,0.03142870,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Monad,MON,chain_flow_reversal_watch,1,-0.08192443,0.03142870,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Hyperliquid L1,HYPE,chain_flow_reversal_watch,1,-0.07603574,0.09506335,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Hyperliquid L1,HYPE,chain_flow_reversal_watch,1,-0.07603574,0.09506335,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,HL,Starknet,STRK,chain_flow_reversal_watch,1,-0.05643029,0.01088437,,,,,pending_15m
+2026-06-08T19:51:03.908258+00:00,OKX,Starknet,STRK,chain_flow_reversal_watch,1,-0.05643029,0.01088437,,,,,pending_15m

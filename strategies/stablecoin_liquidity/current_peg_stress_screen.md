@@ -4,23 +4,23 @@ This screen looks for depeg/repeg candidates from DeFiLlama stablecoin prices an
 
 | symbol | name | status | price | peg deviation | week change USD | month change USD | score | reason |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| pmUSD | pmUSD | paper_depeg_repeg_watch | 0.683688 | -0.316312 | 0 | 0 | 3163.1239 | material below-peg deviation |
-| USDY | Ondo US Dollar Yield | paper_premium_mean_reversion_watch | 1.132460 | 0.132460 | 3585521 | -3088220 | 1326.7022 | material above-peg deviation |
-| USYC | Circle USYC | paper_premium_mean_reversion_watch | 1.127497 | 0.127497 | -53142172 | -82154447 | 1299.9656 | material above-peg deviation |
-| reUSD | Re Protocol reUSD | paper_premium_mean_reversion_watch | 1.081505 | 0.081505 | -21912624 | -8792528 | 840.0475 | material above-peg deviation |
-| apxUSD | apxUSD | paper_depeg_repeg_watch | 0.943997 | -0.056003 | -110180705 | 71826974 | 585.0303 | material below-peg deviation |
-| USDai | USD.AI | paper_premium_mean_reversion_watch | 1.008595 | 0.008595 | -87714016 | -45080464 | 110.9538 | material above-peg deviation |
-| satUSD | River Stablecoin | paper_depeg_repeg_watch | 0.991458 | -0.008542 | -1517 | 20668 | 85.4679 | material below-peg deviation |
-| FRAX | Frax | paper_depeg_repeg_watch | 0.994360 | -0.005640 | -4221124 | 5788769 | 81.3975 | material below-peg deviation |
-| DOLA | Dola | paper_depeg_repeg_watch | 0.994468 | -0.005532 | 0 | 9447445 | 80.3206 | material below-peg deviation |
-| USDf | Falcon USD | peg_supply_stress_watch | 0.995849 | -0.004151 | -204892249 | -318791256 | 66.5122 | large supply change with near-peg price |
-| FDUSD | First Digital USD | peg_supply_stress_watch | 0.997685 | -0.002315 | -14965269 | -59903874 | 48.1542 | large supply change with near-peg price |
-| NUSD | Neutrl USD | peg_supply_stress_watch | 1.002197 | 0.002197 | -12959092 | -20859333 | 46.9748 | large supply change with near-peg price |
-| USDTB | Ethena USDtb | peg_supply_stress_watch | 1.002084 | 0.002084 | -48242332 | 372364992 | 45.8428 | large supply change with near-peg price |
-| IUSD | infiniFi USD | peg_supply_stress_watch | 1.002005 | 0.002005 | -16709458 | -4525822 | 45.0469 | large supply change with near-peg price |
-| DUSD | StandX DUSD | watch | 0.995938 | -0.004062 | 5884 | 261949 | 41.4662 | near peg without major supply stress |
-| JUPUSD | JupUSD | peg_supply_stress_watch | 0.998446 | -0.001554 | 1157876 | -11515236 | 40.5399 | large supply change with near-peg price |
-| GUSD | Gate USD | peg_supply_stress_watch | 0.998563 | -0.001437 | 0 | 149993647 | 39.3717 | large supply change with near-peg price |
-| USDU | Unitas | peg_supply_stress_watch | 0.998676 | -0.001324 | -1546427 | -26912448 | 38.2419 | large supply change with near-peg price |
-| USD1 | World Liberty Financial USD | watch | 0.998719 | -0.001281 | -101048001 | 209222403 | 37.8136 | near peg without major supply stress |
-| USDSUI | Sui Dollar | watch | 1.001070 | 0.001070 | 1664175 | 3756684 | 35.6985 | near peg without major supply stress |
+| pmUSD | pmUSD | paper_depeg_repeg_watch | 0.673154 | -0.326846 | 0 | 0 | 3268.4563 | material below-peg deviation |
+| USDY | Ondo US Dollar Yield | paper_premium_mean_reversion_watch | 1.135572 | 0.135572 | 3595375 | -3096707 | 1357.8256 | material above-peg deviation |
+| USYC | Circle USYC | paper_premium_mean_reversion_watch | 1.127497 | 0.127497 | -53060583 | -82072858 | 1299.9656 | material above-peg deviation |
+| reUSD | Re Protocol reUSD | paper_premium_mean_reversion_watch | 1.081645 | 0.081645 | -21915467 | -8793669 | 841.4507 | material above-peg deviation |
+| apxUSD | apxUSD | paper_depeg_repeg_watch | 0.963584 | -0.036416 | -112466844 | 73317311 | 389.1604 | material below-peg deviation |
+| DOLA | Dola | paper_depeg_repeg_watch | 0.994253 | -0.005747 | 0 | 9445404 | 82.4696 | material below-peg deviation |
+| USDf | Falcon USD | peg_supply_stress_watch | 0.995526 | -0.004474 | -204807260 | -318669391 | 69.7363 | large supply change with near-peg price |
+| MSUSD | Main Street USD | peg_supply_stress_watch | 0.996843 | -0.003157 | 332851 | 11898333 | 56.5658 | large supply change with near-peg price |
+| NUSD | Neutrl USD | peg_supply_stress_watch | 1.002990 | 0.002990 | -14132178 | -22038670 | 54.9044 | large supply change with near-peg price |
+| USDTB | Ethena USDtb | peg_supply_stress_watch | 1.002372 | 0.002372 | -48256191 | 372471947 | 48.7212 | large supply change with near-peg price |
+| IUSD | infiniFi USD | peg_supply_stress_watch | 1.002270 | 0.002270 | -16730203 | -4543336 | 47.7047 | large supply change with near-peg price |
+| FDUSD | First Digital USD | peg_supply_stress_watch | 0.997808 | -0.002192 | -14967119 | -59911279 | 46.9208 | large supply change with near-peg price |
+| satUSD | River Stablecoin | watch | 0.995428 | -0.004572 | -1524 | 20751 | 45.7644 | near peg without major supply stress |
+| USDai | USD.AI | peg_supply_stress_watch | 0.998505 | -0.001495 | -86844019 | -44636999 | 39.9523 | large supply change with near-peg price |
+| USDU | Unitas | peg_supply_stress_watch | 0.998806 | -0.001194 | -1664555 | -27033885 | 36.9391 | large supply change with near-peg price |
+| USDF | Astherus | watch | 0.996942 | -0.003058 | -31807 | -2240761 | 36.6336 | near peg without major supply stress |
+| JUPUSD | JupUSD | peg_supply_stress_watch | 1.001162 | 0.001162 | 1161026 | -11546559 | 36.6192 | large supply change with near-peg price |
+| USD1 | World Liberty Financial USD | watch | 0.998961 | -0.001039 | -101072448 | 209273328 | 35.3875 | near peg without major supply stress |
+| crvUSD | crvUSD | peg_supply_stress_watch | 0.999128 | -0.000872 | -49873271 | -83043578 | 33.7156 | large supply change with near-peg price |
+| USDSUI | Sui Dollar | watch | 0.999157 | -0.000843 | 1660994 | 3749505 | 33.4322 | near peg without major supply stress |

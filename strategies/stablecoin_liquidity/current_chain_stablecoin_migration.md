@@ -4,31 +4,31 @@ This aggregates DeFiLlama stablecoin chain-circulating data into chain-level liq
 
 | chain | token | status | supply USD | day change | week change | month change | week % | top asset | score | reason |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |
-| Solana | SOL | paper_chain_stablecoin_inflow_watch | 13099796301 | 454833106 | 930837276 | 898112549 | 0.0765 | USDC | 90.2986 | large stablecoin inflow suggests deployable capital is arriving |
-| Polygon | POL | paper_chain_stablecoin_outflow_watch | 3435388497 | -89229106 | -212411978 | -64720329 | -0.0582 | USDC | 63.7020 | large stablecoin outflow suggests capital is leaving |
-| Ethereum | ETH | chain_stablecoin_flow_reversal_watch | 147257248778 | -133182923 | -2549343868 | -5834768183 | -0.0170 | USDT | 63.4035 | large weekly stablecoin flow has mixed daily confirmation |
-| Base | - | paper_chain_stablecoin_inflow_watch | 4475481887 | 49566481 | 169236523 | -51398790 | 0.0393 | USDC | 60.7974 | large stablecoin inflow suggests deployable capital is arriving |
-| Tron | TRX | chain_stablecoin_flow_reversal_watch | 89349190154 | -104168341 | -455311943 | -20026100 | -0.0051 | USDT | 58.7796 | large weekly stablecoin flow has mixed daily confirmation |
-| Aptos | - | chain_stablecoin_context_watch | 1131103210 | 39962373 | 99369542 | 50180407 | 0.0963 | USDT | 40.3622 | large chain has a material stablecoin distribution change |
-| Arbitrum | ARB | chain_stablecoin_context_watch | 3671598623 | -42745493 | -97793289 | 145459005 | -0.0259 | PYUSD | 28.7501 | large chain has a material stablecoin distribution change |
-| Starknet | - | chain_stablecoin_context | 180477312 | 131487 | -81675886 | -135246602 | -0.3116 | USDC | 24.2643 | chain stablecoin distribution context |
-| Stellar | - | chain_stablecoin_context | 270505001 | 626604 | 65828329 | -5626340 | 0.3216 | USDC | 23.5619 | chain stablecoin distribution context |
-| Ink | - | chain_stablecoin_context | 180320546 | -5930410 | 26150368 | -10779980 | 0.1696 | USDC | 21.4878 | chain stablecoin distribution context |
-| XDC | - | chain_stablecoin_context | 86969837 | -411 | 25149357 | 11554237 | 0.4068 | USDC | 21.3444 | chain stablecoin distribution context |
-| ZKsync Era | - | chain_stablecoin_context | 35833346 | -3624 | -6793080 | -7143694 | -0.1594 | USDC | 20.3755 | chain stablecoin distribution context |
-| Cardano | - | chain_stablecoin_context | 20362510 | -168230 | -6004799 | 3282109 | -0.2277 | USDC | 20.3206 | chain stablecoin distribution context |
-| World Chain | - | chain_stablecoin_context | 25419355 | 227096 | 4630178 | 6468127 | 0.2227 | USDC | 20.2569 | chain stablecoin distribution context |
-| Flow | - | chain_stablecoin_context | 21427742 | -85544 | 2274597 | 9864990 | 0.1188 | PYUSD | 20.1352 | chain stablecoin distribution context |
-| Katana | - | chain_stablecoin_context | 23033662 | -822742 | -2410893 | -51598379 | -0.0948 | USDC | 19.0937 | chain stablecoin distribution context |
-| Sui | SUI | chain_stablecoin_context | 359640677 | -1717875 | 25095019 | -83264046 | 0.0750 | USDC | 16.6168 | chain stablecoin distribution context |
-| Algorand | - | chain_stablecoin_context | 56076902 | 2323737 | 4029241 | -26837727 | 0.0774 | USDC | 15.7404 | chain stablecoin distribution context |
-| Avalanche | AVAX | chain_stablecoin_context | 811726105 | -70542692 | -49109349 | -295202281 | -0.0570 | USDT | 14.6769 | chain stablecoin distribution context |
-| Berachain | BERA | chain_stablecoin_context | 70206422 | 180455 | -5189917 | -7417247 | -0.0688 | USDe | 14.0967 | chain stablecoin distribution context |
-| BSC | BNB | chain_stablecoin_context | 12545366522 | -612770 | -59677139 | -131362815 | -0.0047 | USD1 | 13.9307 | chain stablecoin distribution context |
-| MegaETH | - | chain_stablecoin_context | 438776014 | 3142818 | 16605276 | 33741170 | 0.0393 | USDe | 9.1357 | chain stablecoin distribution context |
-| Hyperliquid L1 | HYPE | chain_stablecoin_context | 6584892929 | 192655600 | 28010708 | 1298608353 | 0.0043 | USDC | 8.8398 | chain stablecoin distribution context |
-| Osmosis | - | chain_stablecoin_context | 22483968 | 141444 | -533192 | -1080777 | -0.0232 | USDC | 4.6821 | chain stablecoin distribution context |
-| Linea | - | chain_stablecoin_context | 34932499 | 16524 | -687223 | -6117820 | -0.0193 | USDC | 3.9280 | chain stablecoin distribution context |
+| Solana | SOL | paper_chain_stablecoin_inflow_watch | 13051020305 | 405138371 | 881166597 | 848460168 | 0.0724 | USDC | 89.4811 | large stablecoin inflow suggests deployable capital is arriving |
+| Aptos | - | paper_chain_stablecoin_inflow_watch | 1139833199 | 48596300 | 108010874 | 58827063 | 0.1047 | USDT | 66.5404 | large stablecoin inflow suggests deployable capital is arriving |
+| Hyperliquid L1 | HYPE | paper_chain_stablecoin_inflow_watch | 6792006091 | 399712874 | 235067902 | 1505674029 | 0.0359 | USDC | 65.7155 | large stablecoin inflow suggests deployable capital is arriving |
+| Polygon | POL | paper_chain_stablecoin_outflow_watch | 3429274563 | -95414316 | -218594199 | -70889613 | -0.0599 | USDC | 64.3437 | large stablecoin outflow suggests capital is leaving |
+| Ethereum | ETH | chain_stablecoin_flow_reversal_watch | 147318632826 | -83064781 | -2499493730 | -5785004689 | -0.0167 | USDT | 63.3367 | large weekly stablecoin flow has mixed daily confirmation |
+| Base | - | paper_chain_stablecoin_inflow_watch | 4468690746 | 42734664 | 162405398 | -58231066 | 0.0377 | USDC | 60.1317 | large stablecoin inflow suggests deployable capital is arriving |
+| Tron | TRX | chain_stablecoin_flow_reversal_watch | 89364903617 | -97201073 | -448381368 | -13052829 | -0.0050 | USDT | 58.4175 | large weekly stablecoin flow has mixed daily confirmation |
+| Arbitrum | ARB | paper_chain_stablecoin_outflow_watch | 3647768698 | -66823909 | -121911731 | 121365938 | -0.0323 | PYUSD | 54.2114 | large stablecoin outflow suggests capital is leaving |
+| Starknet | - | chain_stablecoin_context | 180594319 | 247177 | -81560659 | -135131650 | -0.3111 | USDC | 24.2586 | chain stablecoin distribution context |
+| Stellar | - | chain_stablecoin_context | 274938261 | 5058343 | 70260435 | -1194636 | 0.3433 | USDC | 23.7880 | chain stablecoin distribution context |
+| Flow | - | chain_stablecoin_context | 74357755 | 52835199 | 55196512 | 62790650 | 2.8806 | PYUSD | 22.8342 | chain stablecoin distribution context |
+| Ink | - | chain_stablecoin_context | 181083538 | -5178109 | 26902030 | -10030245 | 0.1745 | USDC | 21.5262 | chain stablecoin distribution context |
+| XDC | - | chain_stablecoin_context | 86962768 | -7975 | 25141936 | 11546739 | 0.4067 | USDC | 21.3441 | chain stablecoin distribution context |
+| ZKsync Era | - | chain_stablecoin_context | 35822187 | -15340 | -6804829 | -7155434 | -0.1596 | USDC | 20.3761 | chain stablecoin distribution context |
+| Cardano | - | chain_stablecoin_context | 20381986 | -148897 | -5985502 | 3301455 | -0.2270 | USDC | 20.3197 | chain stablecoin distribution context |
+| World Chain | - | chain_stablecoin_context | 25490719 | 298317 | 4701424 | 6539383 | 0.2261 | USDC | 20.2606 | chain stablecoin distribution context |
+| Algorand | - | chain_stablecoin_context | 56075063 | 2321518 | 4027032 | -26840110 | 0.0774 | USDC | 15.7317 | chain stablecoin distribution context |
+| Sui | SUI | chain_stablecoin_context | 357924606 | -3442316 | 23370580 | -84989018 | 0.0699 | USDC | 15.4976 | chain stablecoin distribution context |
+| Berachain | BERA | chain_stablecoin_context | 70221417 | 191163 | -5179279 | -7406863 | -0.0687 | USDe | 14.0672 | chain stablecoin distribution context |
+| BSC | BNB | chain_stablecoin_context | 12546312198 | -1003253 | -60081922 | -131779895 | -0.0048 | USD1 | 13.9573 | chain stablecoin distribution context |
+| Katana | - | chain_stablecoin_context | 23734266 | -123023 | -1711233 | -50901179 | -0.0673 | USDC | 13.5595 | chain stablecoin distribution context |
+| Sei | - | chain_stablecoin_context | 55445690 | -3009284 | -3543354 | -2097687 | -0.0601 | USDC | 12.2462 | chain stablecoin distribution context |
+| Hedera | - | chain_stablecoin_context | 40012707 | -1553633 | -2330808 | -6444109 | -0.0550 | USDC | 11.1656 | chain stablecoin distribution context |
+| OP Mainnet | - | chain_stablecoin_context | 501191339 | -22932835 | -24519926 | -68003798 | -0.0466 | USDT | 11.0555 | chain stablecoin distribution context |
+| MegaETH | - | chain_stablecoin_context | 440190917 | 4547489 | 18010149 | 35145895 | 0.0427 | USDe | 9.8727 | chain stablecoin distribution context |
 
 ## Interpretation
 

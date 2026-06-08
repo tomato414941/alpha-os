@@ -2,43 +2,43 @@
 
 This labels Hyperliquid dislocation candidates after rough taker fees, impact spread, and funding carry. It is still paper labeling, not a live fill or deployable strategy.
 
-- rows: `124`
+- rows: `197`
 - covered 15m: `0`
 - covered 1h: `0`
 - covered 4h: `0`
 
 | asset | status | side | score | cost bps | net15 | out15 | net1h | out1h | net4h | out4h |
 | --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | --- |
-| STABLE | paper_extreme_funding_carry_candidate | long_perp | 36.5990 | 34.15 |  | pending_15m |  | pending_1h |  | pending_4h |
-| LAYER | paper_extreme_funding_carry_candidate | long_perp | 30.0702 | 49.07 |  | pending_15m |  | pending_1h |  | pending_4h |
-| MOVE | paper_crowded_momentum_continuation_candidate | long_perp | 27.6144 | 42.06 |  | pending_15m |  | pending_1h |  | pending_4h |
-| MOVE | paper_crowded_momentum_reversal_candidate | short_perp | 23.4722 | 42.06 |  | pending_15m |  | pending_1h |  | pending_4h |
-| BIO | paper_crowded_momentum_continuation_candidate | long_perp | 22.5058 | 27.16 |  | pending_15m |  | pending_1h |  | pending_4h |
-| PURR | paper_crowded_momentum_continuation_candidate | long_perp | 22.4583 | 191.11 |  | pending_15m |  | pending_1h |  | pending_4h |
-| CC | paper_crowded_momentum_continuation_candidate | short_perp | 19.4722 | 45.88 |  | pending_15m |  | pending_1h |  | pending_4h |
-| LAYER | paper_crowded_momentum_continuation_candidate | long_perp | 19.1848 | 49.07 |  | pending_15m |  | pending_1h |  | pending_4h |
-| BIO | paper_crowded_momentum_reversal_candidate | short_perp | 19.1299 | 27.16 |  | pending_15m |  | pending_1h |  | pending_4h |
-| PURR | paper_crowded_momentum_reversal_candidate | short_perp | 19.0896 | 191.11 |  | pending_15m |  | pending_1h |  | pending_4h |
-| MORPHO | paper_crowded_momentum_continuation_candidate | long_perp | 18.6888 | 30.24 |  | pending_15m |  | pending_1h |  | pending_4h |
-| HYPE | paper_crowded_momentum_continuation_candidate | long_perp | 18.4980 | 11.14 |  | pending_15m |  | pending_1h |  | pending_4h |
-| NXPC | paper_crowded_momentum_continuation_candidate | long_perp | 18.1120 | 26.99 |  | pending_15m |  | pending_1h |  | pending_4h |
-| LIT | paper_crowded_momentum_continuation_candidate | long_perp | 17.4707 | 25.69 |  | pending_15m |  | pending_1h |  | pending_4h |
-| MEGA | paper_crowded_momentum_continuation_candidate | long_perp | 17.4415 | 35.85 |  | pending_15m |  | pending_1h |  | pending_4h |
-| CHIP | paper_crowded_momentum_continuation_candidate | long_perp | 16.9456 | 24.72 |  | pending_15m |  | pending_1h |  | pending_4h |
-| CC | paper_crowded_momentum_reversal_candidate | long_perp | 16.5514 | 45.88 |  | pending_15m |  | pending_1h |  | pending_4h |
-| ATOM | paper_crowded_momentum_continuation_candidate | long_perp | 16.4499 | 30.34 |  | pending_15m |  | pending_1h |  | pending_4h |
-| IMX | paper_crowded_momentum_continuation_candidate | long_perp | 16.3110 | 53.20 |  | pending_15m |  | pending_1h |  | pending_4h |
-| LAYER | paper_crowded_momentum_reversal_candidate | short_perp | 16.3071 | 49.07 |  | pending_15m |  | pending_1h |  | pending_4h |
-| BERA | paper_crowded_momentum_continuation_candidate | long_perp | 16.2220 | 31.03 |  | pending_15m |  | pending_1h |  | pending_4h |
-| MORPHO | paper_crowded_momentum_reversal_candidate | short_perp | 15.8855 | 30.24 |  | pending_15m |  | pending_1h |  | pending_4h |
-| HYPE | paper_crowded_momentum_reversal_candidate | short_perp | 15.7233 | 11.14 |  | pending_15m |  | pending_1h |  | pending_4h |
-| NEAR | paper_crowded_momentum_continuation_candidate | long_perp | 15.5409 | 16.59 |  | pending_15m |  | pending_1h |  | pending_4h |
-| NXPC | paper_crowded_momentum_reversal_candidate | short_perp | 15.3952 | 26.99 |  | pending_15m |  | pending_1h |  | pending_4h |
-| PUMP | paper_crowded_momentum_continuation_candidate | long_perp | 15.2792 | 22.34 |  | pending_15m |  | pending_1h |  | pending_4h |
-| LIT | paper_crowded_momentum_reversal_candidate | short_perp | 14.8501 | 25.69 |  | pending_15m |  | pending_1h |  | pending_4h |
-| MEGA | paper_crowded_momentum_reversal_candidate | short_perp | 14.8252 | 35.85 |  | pending_15m |  | pending_1h |  | pending_4h |
-| CHIP | paper_crowded_momentum_reversal_candidate | short_perp | 14.4037 | 24.72 |  | pending_15m |  | pending_1h |  | pending_4h |
-| KAS | paper_crowded_momentum_continuation_candidate | long_perp | 14.0191 | 45.04 |  | pending_15m |  | pending_1h |  | pending_4h |
+| LAYER | paper_extreme_funding_carry_candidate | long_perp | 112.8941 | 55.98 |  | pending_15m |  | pending_1h |  | pending_4h |
+| LAYER | paper_crowded_momentum_continuation_candidate | long_perp | 53.0087 | 55.98 |  | pending_15m |  | pending_1h |  | pending_4h |
+| LAYER | paper_crowded_momentum_reversal_candidate | short_perp | 45.0574 | 55.98 |  | pending_15m |  | pending_1h |  | pending_4h |
+| BIO | paper_crowded_momentum_continuation_candidate | long_perp | 31.3989 | 26.00 |  | pending_15m |  | pending_1h |  | pending_4h |
+| MOVE | paper_crowded_momentum_continuation_candidate | long_perp | 30.0944 | 27.27 |  | pending_15m |  | pending_1h |  | pending_4h |
+| WLD | paper_crowded_momentum_continuation_candidate | long_perp | 27.8915 | 17.27 |  | pending_15m |  | pending_1h |  | pending_4h |
+| BIO | paper_crowded_momentum_reversal_candidate | short_perp | 26.6891 | 26.00 |  | pending_15m |  | pending_1h |  | pending_4h |
+| MOVE | paper_crowded_momentum_reversal_candidate | short_perp | 25.5802 | 27.27 |  | pending_15m |  | pending_1h |  | pending_4h |
+| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 23.7078 | 17.27 |  | pending_15m |  | pending_1h |  | pending_4h |
+| CHIP | paper_crowded_momentum_continuation_candidate | long_perp | 22.2200 | 21.31 |  | pending_15m |  | pending_1h |  | pending_4h |
+| PUMP | paper_crowded_momentum_continuation_candidate | long_perp | 22.0425 | 22.14 |  | pending_15m |  | pending_1h |  | pending_4h |
+| BERA | paper_crowded_momentum_continuation_candidate | long_perp | 21.7687 | 25.65 |  | pending_15m |  | pending_1h |  | pending_4h |
+| ONDO | paper_crowded_momentum_continuation_candidate | long_perp | 21.3741 | 20.52 |  | pending_15m |  | pending_1h |  | pending_4h |
+| kLUNC | paper_crowded_momentum_continuation_candidate | long_perp | 21.1299 | 23.16 |  | pending_15m |  | pending_1h |  | pending_4h |
+| ATOM | paper_crowded_momentum_continuation_candidate | long_perp | 21.0029 | 29.52 |  | pending_15m |  | pending_1h |  | pending_4h |
+| PURR | paper_crowded_momentum_continuation_candidate | long_perp | 20.8615 | 139.50 |  | pending_15m |  | pending_1h |  | pending_4h |
+| HYPE | paper_crowded_momentum_continuation_candidate | long_perp | 19.4740 | 10.16 |  | pending_15m |  | pending_1h |  | pending_4h |
+| NXPC | paper_crowded_momentum_continuation_candidate | long_perp | 19.3889 | 44.11 |  | pending_15m |  | pending_1h |  | pending_4h |
+| LIT | paper_crowded_momentum_continuation_candidate | long_perp | 19.2707 | 23.34 |  | pending_15m |  | pending_1h |  | pending_4h |
+| ZEC | paper_crowded_momentum_continuation_candidate | long_perp | 19.0516 | 14.22 |  | pending_15m |  | pending_1h |  | pending_4h |
+| CHIP | paper_crowded_momentum_reversal_candidate | short_perp | 18.8870 | 21.31 |  | pending_15m |  | pending_1h |  | pending_4h |
+| VVV | paper_crowded_momentum_continuation_candidate | long_perp | 18.8664 | 23.99 |  | pending_15m |  | pending_1h |  | pending_4h |
+| PUMP | paper_crowded_momentum_reversal_candidate | short_perp | 18.7362 | 22.14 |  | pending_15m |  | pending_1h |  | pending_4h |
+| NEAR | paper_crowded_momentum_continuation_candidate | long_perp | 18.6490 | 17.29 |  | pending_15m |  | pending_1h |  | pending_4h |
+| BERA | paper_crowded_momentum_reversal_candidate | short_perp | 18.5034 | 25.65 |  | pending_15m |  | pending_1h |  | pending_4h |
+| MELANIA | paper_crowded_momentum_continuation_candidate | long_perp | 18.2906 | 25.09 |  | pending_15m |  | pending_1h |  | pending_4h |
+| ONDO | paper_crowded_momentum_reversal_candidate | short_perp | 18.1680 | 20.52 |  | pending_15m |  | pending_1h |  | pending_4h |
+| MEGA | paper_crowded_momentum_continuation_candidate | long_perp | 17.9622 | 22.82 |  | pending_15m |  | pending_1h |  | pending_4h |
+| kLUNC | paper_crowded_momentum_reversal_candidate | short_perp | 17.9604 | 23.16 |  | pending_15m |  | pending_1h |  | pending_4h |
+| ATOM | paper_crowded_momentum_reversal_candidate | short_perp | 17.8525 | 29.52 |  | pending_15m |  | pending_1h |  | pending_4h |
 
 ## Interpretation
 

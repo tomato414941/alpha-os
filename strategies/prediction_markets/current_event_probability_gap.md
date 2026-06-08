@@ -4,16 +4,15 @@ This compares a rough headline-derived Yes-probability proxy against prediction-
 
 | question | market yes | estimated yes | gap | side | confidence | score | status | evidence |
 | --- | ---: | ---: | ---: | --- | ---: | ---: | --- | --- |
-| Strait of Hormuz traffic returns to normal by end of June? | 0.1050 | 0.4400 | 0.3350 | buy_yes | 40.00 | 73.5000 | paper_probability_gap_candidate | +returns to normal, +reopen, +open |
-| US x Iran permanent peace deal by June 30, 2026? | 0.1750 | 0.2600 | 0.0850 | buy_yes | 40.00 | 48.5000 | probability_gap_watch | +deal, +ceasefire, -stalemate |
-| Israel closes its airspace by June 15? | 0.1500 | 0.2500 | 0.1000 | buy_yes | 38.00 | 48.0000 | probability_gap_watch | -remaining open, -flights continuing |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | 0.6650 | 0.7400 | 0.0750 | buy_yes | 22.00 | 29.5000 | no_clear_probability_gap | +keiko, +fujimori, +lead, +win, -sanchez |
-| US-Iran nuclear deal by June 30? | 0.1950 | 0.1950 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
-| Stuttgart Open: Tommy Paul vs Giovanni Mpetshi Perricard | 0.5050 | 0.5050 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
-| US announces new Iran agreement/ceasefire extension by June 9? | 0.0770 | 0.0770 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
-| US announces new Iran agreement/ceasefire extension by June 12? | 0.2250 | 0.2250 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
-| Libema Open: Mia Pohankova vs Clara Tauson | 0.5750 | 0.5750 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
-| Will the U.S. invade Iran before 2027? | 0.1750 | 0.1750 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
+| US x Iran permanent peace deal by June 30, 2026? | 0.1650 | 0.3400 | 0.1750 | buy_yes | 38.00 | 55.5000 | paper_probability_gap_candidate | +deal, +ceasefire |
+| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | 0.1585 | 0.5800 | 0.4215 | buy_yes | 9.20 | 51.3500 | no_clear_probability_gap | +roberto, +win, -fed rate |
+| Israel closes its airspace by June 15? | 0.1550 | 0.2500 | 0.0950 | buy_yes | 38.00 | 47.5000 | probability_gap_watch | -remaining open, -flights continuing |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | 0.8350 | 0.7400 | -0.0950 | buy_no | 26.00 | 35.5000 | probability_gap_watch | +keiko, +fujimori, +lead, +win, -sanchez |
+| US-Iran nuclear deal by June 30? | 0.2050 | 0.2050 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
+| Will Netherlands win on 2026-06-08? | 0.9050 | 0.9050 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
+| US announces new Iran agreement/ceasefire extension by June 12? | 0.1050 | 0.1050 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
+| HSBC Championships: Katie Boulter vs Leylah Fernandez | 0.2750 | 0.2750 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
+| Bab el-Mandeb Strait effectively closed by June 30? | 0.1080 | 0.1080 | 0.0000 | none | 0.00 | 0.0000 | unsupported_probability_model |  |
 
 ## Caveat
 

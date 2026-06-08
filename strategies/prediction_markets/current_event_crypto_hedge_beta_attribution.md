@@ -4,13 +4,14 @@ This checks whether event-crypto hedge paper returns are mostly a common BTC/ETH
 
 | candidate | asset | action | status | asset bps | basket bps | residual bps | gap | edge | next step |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| sol_1971905_event_crypto_hedge | SOL | paper_long_risk_relief | event_crypto_beta_move_supported | 188.23209757 | 151.79272002 | 36.43937755 | 0.335000 | 0.330000 | repeat on fresh event markets and add funding, spread/depth, and event timestamp controls |
-| eth_1971905_event_crypto_hedge | ETH | paper_long_risk_relief | event_crypto_beta_move_supported | 170.17196956 | 151.79272002 | 18.37924954 | 0.335000 | 0.330000 | repeat on fresh event markets and add funding, spread/depth, and event timestamp controls |
-| btc_1971905_event_crypto_hedge | BTC | paper_long_risk_relief | event_crypto_beta_move_supported | 96.97409294 | 151.79272002 | -54.81862708 | 0.335000 | 0.330000 | repeat on fresh event markets and add funding, spread/depth, and event timestamp controls |
-| btc_1962237_event_crypto_hedge | BTC | paper_long_risk_relief | event_crypto_beta_attribution_pending |  |  |  | 0.085000 | 0.080000 | wait for a ready reaction label before attributing beta |
+| btc_1962237_event_crypto_hedge | BTC | paper_long_risk_relief | event_crypto_beta_attribution_pending |  |  |  | 0.175000 | 0.170000 | wait for a ready reaction label before attributing beta |
+| eth_1962237_event_crypto_hedge | ETH | paper_long_risk_relief | event_crypto_beta_attribution_pending |  |  |  | 0.175000 | 0.170000 | wait for a ready reaction label before attributing beta |
+| sol_1962237_event_crypto_hedge | SOL | paper_long_risk_relief | event_crypto_beta_attribution_pending |  |  |  | 0.175000 | 0.170000 | wait for a ready reaction label before attributing beta |
+| btc_2296152_event_crypto_hedge | BTC | paper_short_risk_escalation | event_crypto_beta_attribution_pending |  |  |  | 0.095000 | 0.090000 | wait for a ready reaction label before attributing beta |
+| btc_1962237_event_crypto_hedge | BTC | paper_long_risk_relief | event_crypto_beta_attribution_negative | -84.95486773 | -84.95486773 | 0.00000000 | 0.175000 | 0.170000 | refresh marks and keep this as diagnostic evidence only |
 
 ## Summary
 
-- event_crypto_beta_attribution_pending: 1
-- event_crypto_beta_move_supported: 3
-- best asset return: sol_1971905_event_crypto_hedge asset=188.23209757bps basket=151.79272002bps residual=36.43937755bps
+- event_crypto_beta_attribution_negative: 1
+- event_crypto_beta_attribution_pending: 4
+- best asset return: btc_1962237_event_crypto_hedge asset=bps basket=bps residual=bps

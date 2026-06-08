@@ -4,40 +4,42 @@ This joins category-rotation labels with current perp funding and liquidity. It 
 
 | category | symbol | dir | dir15 | funding support | HL funding | OKX funding | score | action | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Privacy | ZEC | 1 | 0.00024864 | 1.02205333 | -0.24933150 | -1.02205333 | 1.296872 | sector_perp_repeat_candidate | sector direction and perp funding support align |
-| Quantum-Resistant | ZEC | 1 | 0.00024864 | 1.02205333 | -0.24933150 | -1.02205333 | 1.154982 | sector_perp_repeat_candidate | sector direction and perp funding support align |
-| Zero Knowledge (ZK) | ZEC | 1 | 0.00024864 | 1.02205333 | -0.24933150 | -1.02205333 | 1.080397 | sector_perp_repeat_candidate | sector direction and perp funding support align |
-| Privacy Coins | ZEC | 1 | 0.00024864 | 1.02205333 | -0.24933150 | -1.02205333 | 1.061271 | sector_perp_repeat_candidate | sector direction and perp funding support align |
-| Arcade Games | HMSTR | 1 |  | -0.09276577 | 0.09276577 |  | 0.739293 | wait_for_label | sector label is not mature yet |
-| Privacy | LINK | 1 |  | 0.02024203 | 0.10950000 | -0.02024203 | 0.542250 | wait_for_label | sector label is not mature yet |
-| Liquid Staking Governance Tokens | JTO | 1 |  | 0.22596420 | -0.22596420 | -0.04858155 | 0.510977 | wait_for_label | sector label is not mature yet |
-| Zero Knowledge (ZK) | H | 1 |  | 0.14978981 |  | -0.14978981 | 0.455323 | wait_for_label | sector label is not mature yet |
-| Perpetuals | JUP | 1 |  | 0.18770578 | -0.18770578 |  | 0.422166 | wait_for_label | sector label is not mature yet |
-| Data Availability | NEAR | 1 |  | 0.11906106 | 0.10950000 | -0.11906106 | 0.422125 | wait_for_label | sector label is not mature yet |
-| NFT | RENDER | 1 |  | 0.07331507 | -0.07331507 | 0.05475000 | 0.387899 | wait_for_label | sector label is not mature yet |
-| Telegram Apps | CATI | 1 |  | -0.00000000 | 0.00000000 |  | 0.213389 | wait_for_label | sector label is not mature yet |
-| Arcade Games | BEAT | 1 |  | -1.30599586 |  | 1.30599586 | 0.026063 | wait_for_label | sector label is not mature yet |
-| Quantum-Resistant | ALGO | 1 |  | 0.02192891 | -0.02192891 |  | -0.097953 | wait_for_label | sector label is not mature yet |
-| Privacy | XMR | 1 |  | -0.12373325 | 0.12373325 |  | -0.101725 | wait_for_label | sector label is not mature yet |
-| AI Meme | TURBO | 1 |  | 0.07517306 | -0.07517306 |  | -0.132935 | wait_for_label | sector label is not mature yet |
-| Zero Knowledge (ZK) | POL | 1 |  | 0.02927066 | -0.02927066 |  | -0.165196 | wait_for_label | sector label is not mature yet |
-| Data Availability | UB | 1 |  | -0.05475000 |  | 0.05475000 | -0.251686 | wait_for_label | sector label is not mature yet |
-| ERC 404 | PANDORA | 1 |  | -0.00000000 | 0.00000000 |  | -0.263281 | wait_for_label | sector label is not mature yet |
-| Perpetuals | ASTER | 1 |  | -0.00912657 | 0.10950000 | 0.00912657 | -0.274666 | wait_for_label | sector label is not mature yet |
-| Morpho Ecosystem | MORPHO | 1 |  | -0.10950000 | 0.10950000 |  | -0.278001 | wait_for_label | sector label is not mature yet |
-| Derivatives | HYPE | 1 |  | -0.05114811 | 0.28021050 | 0.05114811 | -0.289408 | wait_for_label | sector label is not mature yet |
-| Derivatives | LIT | 1 |  | -0.05475000 | 0.10950000 | 0.05475000 | -0.293010 | wait_for_label | sector label is not mature yet |
-| NFT | FET | 1 |  | -0.10950000 | 0.10950000 |  | -0.294916 | wait_for_label | sector label is not mature yet |
-| Venice Ecosystem | VVV | 1 |  | -0.10950000 | 0.10950000 |  | -0.304506 | wait_for_label | sector label is not mature yet |
-| Data Availability | TIA | 1 |  | -0.10950000 | 0.10950000 |  | -0.306436 | wait_for_label | sector label is not mature yet |
-| Perpetuals | HYPE | 1 |  | -0.05114811 | 0.28021050 | 0.05114811 | -0.316687 | wait_for_label | sector label is not mature yet |
-| AI Meme | FARTCOIN | 1 |  | -0.10950000 | 0.10950000 |  | -0.317608 | wait_for_label | sector label is not mature yet |
-| Privacy Coins | XMR | 1 |  | -0.12373325 | 0.12373325 |  | -0.337326 | wait_for_label | sector label is not mature yet |
-| Pump.fun Ecosystem | FARTCOIN | 1 |  | -0.10950000 | 0.10950000 |  | -0.338685 | wait_for_label | sector label is not mature yet |
-| Buidlpad Launchpad | SAHARA | 1 |  | -0.34004220 |  | 0.34004220 | -0.459611 | wait_for_label | sector label is not mature yet |
-| Telegram Apps | BEAT | 1 |  | -1.30599586 |  | 1.30599586 | -0.592607 | wait_for_label | sector label is not mature yet |
-| Quantum-Resistant | STRK | 1 |  | -0.00423371 | 0.00423371 |  | -0.624116 | wait_for_label | sector label is not mature yet |
-| Liquid Staking Governance Tokens | LDO | 1 |  | -0.10950000 | 0.10950000 |  | -0.824487 | wait_for_label | sector label is not mature yet |
-| Gaming (GameFi) | BEAT | 1 |  | -1.30599586 |  | 1.30599586 | -1.439748 | wait_for_label | sector label is not mature yet |
-| NFT | BEAT | 1 |  | -1.30599586 |  | 1.30599586 | -1.491412 | wait_for_label | sector label is not mature yet |
-| Account Abstraction | HOME | -1 |  | -4.84541868 |  | -4.84541868 | -5.084773 | wait_for_label | sector label is not mature yet |
+| Arcade Games | HMSTR | 1 |  | 1.75369331 | -1.75369331 |  | 2.520763 | wait_for_label | sector label is not mature yet |
+| Privacy | ZEC | 1 |  | 1.02096048 | -1.02096048 | -0.65202591 | 1.240977 | wait_for_label | sector label is not mature yet |
+| Quantum-Resistant | ZEC | 1 |  | 1.02096048 | -1.02096048 | -0.65202591 | 1.179496 | wait_for_label | sector label is not mature yet |
+| Privacy Coins | ZEC | 1 |  | 1.02096048 | -1.02096048 | -0.65202591 | 1.066169 | wait_for_label | sector label is not mature yet |
+| Privacy | LINK | 1 |  | 0.12076856 | 0.10950000 | -0.12076856 | 0.611746 | wait_for_label | sector label is not mature yet |
+| NFT | RENDER | 1 |  | 0.16532345 | 0.10950000 | -0.16532345 | 0.475618 | wait_for_label | sector label is not mature yet |
+| Arcade Games | BEAT | 1 |  | -0.81655544 |  | 0.81655544 | 0.454208 | wait_for_label | sector label is not mature yet |
+| Optimism Superchain Ecosystem | LINK | 1 |  | 0.12076856 | 0.10950000 | -0.12076856 | 0.388452 | wait_for_label | sector label is not mature yet |
+| Chain Abstraction | LINK | 1 |  | 0.12076856 | 0.10950000 | -0.12076856 | 0.352485 | wait_for_label | sector label is not mature yet |
+| Telegram Apps | CATI | 1 |  | -0.00000000 | 0.00000000 |  | 0.189469 | wait_for_label | sector label is not mature yet |
+| AI Meme | TURBO | 1 |  | 0.34035754 | -0.34035754 |  | 0.168717 | wait_for_label | sector label is not mature yet |
+| Quantum-Resistant | ALGO | 1 |  | 0.02864783 | -0.02864783 |  | -0.041857 | wait_for_label | sector label is not mature yet |
+| Privacy | XMR | 1 |  | -0.10950000 | 0.10950000 |  | -0.118523 | wait_for_label | sector label is not mature yet |
+| Telegram Apps | BEAT | 1 |  | -0.81655544 |  | 0.81655544 | -0.127086 | wait_for_label | sector label is not mature yet |
+| Decentralized Identifier (DID) | BILL | 1 |  | -0.10350209 |  | 0.10350209 | -0.161068 | wait_for_label | sector label is not mature yet |
+| Decentralized Identifier (DID) | WLD | 1 |  | -0.10950000 | 0.10950000 | 0.10950000 | -0.167066 | wait_for_label | sector label is not mature yet |
+| Inscriptions | ORDI | 1 |  | -0.05475000 | 0.10950000 | 0.05475000 | -0.216980 | wait_for_label | sector label is not mature yet |
+| Data Availability | UB | 1 |  | -0.05475000 |  | 0.05475000 | -0.232808 | wait_for_label | sector label is not mature yet |
+| ERC 404 | PANDORA | 1 |  | -0.00000000 | 0.00000000 |  | -0.267490 | wait_for_label | sector label is not mature yet |
+| AI Meme | FARTCOIN | 1 |  | -0.10950000 | 0.10950000 |  | -0.281141 | wait_for_label | sector label is not mature yet |
+| Data Availability | NEAR | 1 |  | -0.10950000 | 0.10950000 | 0.10950000 | -0.287558 | wait_for_label | sector label is not mature yet |
+| Data Availability | TIA | 1 |  | -0.10950000 | 0.10950000 |  | -0.287558 | wait_for_label | sector label is not mature yet |
+| Privacy Coins | XMR | 1 |  | -0.10950000 | 0.10950000 |  | -0.293331 | wait_for_label | sector label is not mature yet |
+| Liquid Staking Governance Tokens | JTO | 1 |  | -0.05475000 | 0.10950000 | 0.05475000 | -0.295635 | wait_for_label | sector label is not mature yet |
+| NFT | FET | 1 |  | -0.10950000 | 0.10950000 |  | -0.299205 | wait_for_label | sector label is not mature yet |
+| Derivatives | LIT | 1 |  | -0.05475000 | 0.10950000 | 0.05475000 | -0.318942 | wait_for_label | sector label is not mature yet |
+| Pump.fun Ecosystem | FARTCOIN | 1 |  | -0.10950000 | 0.10950000 |  | -0.327030 | wait_for_label | sector label is not mature yet |
+| Optimism Superchain Ecosystem | WLD | 1 |  | -0.10950000 | 0.10950000 | 0.10950000 | -0.341816 | wait_for_label | sector label is not mature yet |
+| Optimism Superchain Ecosystem | OP | 1 |  | -0.10950000 | 0.10950000 | 0.10950000 | -0.341816 | wait_for_label | sector label is not mature yet |
+| Buidlpad Launchpad | SAHARA | 1 |  | -0.15791019 |  | 0.15791019 | -0.343565 | wait_for_label | sector label is not mature yet |
+| Derivatives | HYPE | 1 |  | -0.10466712 | 0.10950000 | 0.10466712 | -0.368859 | wait_for_label | sector label is not mature yet |
+| Chain Abstraction | RIVER | 1 |  | -0.10932281 |  | 0.10932281 | -0.377606 | wait_for_label | sector label is not mature yet |
+| Chain Abstraction | NEAR | 1 |  | -0.10950000 | 0.10950000 | 0.10950000 | -0.377783 | wait_for_label | sector label is not mature yet |
+| Decentralized Identifier (DID) | ENS | 1 |  | -0.10950000 | 0.10950000 |  | -0.667066 | wait_for_label | sector label is not mature yet |
+| Quantum-Resistant | STRK | 1 |  | -0.10950000 | 0.10950000 |  | -0.680004 | wait_for_label | sector label is not mature yet |
+| Liquid Staking Governance Tokens | LDO | 1 |  | -0.10950000 | 0.10950000 |  | -0.850385 | wait_for_label | sector label is not mature yet |
+| Gaming (GameFi) | BEAT | 1 |  | -0.81655544 |  | 0.81655544 | -0.963398 | wait_for_label | sector label is not mature yet |
+| NFT | BEAT | 1 |  | -0.81655544 |  | 0.81655544 | -1.006261 | wait_for_label | sector label is not mature yet |
+| Account Abstraction | HOME | -1 |  | -5.47430825 |  | -5.47430825 | -5.684722 | wait_for_label | sector label is not mature yet |

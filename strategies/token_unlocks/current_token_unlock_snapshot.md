@@ -22,7 +22,7 @@ This extracts scheduled cliff unlocks from CryptoBeacon. It is supply-event cont
 | BABY | Babylon | CLIFF | 2270000.00 | 3.7000 | HIGH | 1 | unlock_context | 18.339090 |
 | LINEA | Linea | CLIFF | 2740000.00 | 3.6000 | HIGH | 2 | unlock_context | 16.286364 |
 | BB | BounceBit | MONTHLY | 610540.00 | 7.3000 | CRITICAL | 28 | unlock_supply_shock_watch | 16.171178 |
-| EIGEN | EigenCloud (prev. EigenLayer) | MONTHLY | 7750000.00 | 5.0000 | HIGH | 23 | unlock_supply_shock_watch | 16.046820 |
+| EIGEN | EigenCloud (prev. EigenLayer) | MONTHLY | 7750000.00 | 5.0000 | HIGH | 22 | unlock_supply_shock_watch | 16.074727 |
 | PEAQ | peaq | CLIFF | 1960000.00 | 3.8000 | HIGH | 3 | unlock_context | 15.332331 |
 | IO | io.net | CLIFF | 1830000.00 | 3.8000 | HIGH | 3 | unlock_context | 15.259706 |
 | SOPH | Sophon | PERIODIC | 1210000.00 | 5.2000 | CRITICAL | 20 | unlock_supply_shock_watch | 14.531403 |

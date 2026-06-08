@@ -4,31 +4,31 @@ This is a first cross-sectional feature table from existing fundamental, sentime
 
 | symbol | decision | side | total | fundamental | sentiment | sector | funding | sources | conflict | next probe |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| ZEC | cross_section_label_priority | long_bias | 121.6880 | 0.0000 | 39.6936 | 51.8749 | 6.1195 | 3 | none | label ZEC long_bias cross-section row at the next rebalance timestamp |
-| JUP | cross_section_watchlist | long_bias | 88.2518 | 44.7857 | 0.0000 | 16.8867 | 2.5795 | 3 | none | collect one more independent JUP feature before cross-section labeling |
-| PENGU | cross_section_watchlist | long_bias | 81.5908 | 0.0000 | 65.0083 | 0.0000 | 0.5825 | 2 | none | collect one more independent PENGU feature before cross-section labeling |
-| HYPE | split_conflicting_features_before_label | long_bias | 81.5633 | 0.0000 | 70.2102 | -11.5763 | 0.7768 | 3 | long_short_feature_conflict | split HYPE features by sign before any cross-section label |
-| BEAT | cross_section_watchlist | long_bias | 79.4437 | 0.0000 | 62.4012 | 1.0425 | 0.0000 | 2 | none | collect one more independent BEAT feature before cross-section labeling |
-| TAO | cross_section_watchlist | long_bias | 73.0153 | 0.0000 | 54.5150 | 0.0000 | 2.5003 | 2 | none | collect one more independent TAO feature before cross-section labeling |
-| CRV | cross_section_watchlist | long_bias | 71.0865 | 54.2616 | 0.0000 | 0.0000 | 0.8249 | 2 | none | collect one more independent CRV feature before cross-section labeling |
-| SOL | split_conflicting_features_before_label | mixed_or_flat | 66.1978 | -32.4999 | 33.0624 | 0.0000 | 1.6355 | 3 | long_short_feature_conflict | split SOL features by sign before any cross-section label |
-| ALLO | insufficient_cross_section_context | long_bias | 65.0000 | 0.0000 | 64.5750 | 0.0000 | 0.0000 | 1 | none | keep ALLO as context until another feature source appears |
-| HOME | insufficient_cross_section_context | long_bias | 65.0000 | 0.0000 | 0.0000 | 203.3909 | 0.0000 | 1 | none | keep HOME as context until another feature source appears |
-| LAYER | insufficient_cross_section_context | none | 63.5996 | 0.0000 | 0.0000 | 0.0000 | 55.5996 | 1 | none | keep LAYER as context until another feature source appears |
-| PENDLE | insufficient_cross_section_context | long_bias | 59.0216 | 42.5044 | 0.0000 | 0.0000 | 0.5172 | 2 | none | keep PENDLE as context until another feature source appears |
-| AAVE | insufficient_cross_section_context | long_bias | 58.5549 | 40.3859 | 0.0000 | 0.0000 | 2.1689 | 2 | none | keep AAVE as context until another feature source appears |
-| BTC | insufficient_cross_section_context | long_bias | 54.8021 | 0.0000 | 35.8520 | 0.0000 | 2.9501 | 2 | none | keep BTC as context until another feature source appears |
-| MORPHO | split_conflicting_features_before_label | long_bias | 52.1220 | 41.7899 | 0.0000 | -11.1201 | 0.2120 | 3 | long_short_feature_conflict | split MORPHO features by sign before any cross-section label |
-| HMSTR | insufficient_cross_section_context | long_bias | 51.6585 | 0.0000 | 0.0000 | 29.5717 | 6.0868 | 2 | none | keep HMSTR as context until another feature source appears |
-| LDO | insufficient_cross_section_context | short_bias | 50.0621 | 0.0000 | 0.0000 | -32.9795 | 1.0826 | 2 | none | keep LDO as context until another feature source appears |
-| UNI | insufficient_cross_section_context | short_bias | 49.1013 | -33.1013 | 0.0000 | 0.0000 | 0.0000 | 2 | none | keep UNI as context until another feature source appears |
-| VVV | insufficient_cross_section_context | short_bias | 42.7802 | 0.0000 | 6.6000 | -12.1802 | 0.0000 | 3 | none | keep VVV as context until another feature source appears |
-| LIT | insufficient_cross_section_context | short_bias | 42.0204 | 0.0000 | 6.3000 | -11.7204 | 0.0000 | 3 | none | keep LIT as context until another feature source appears |
-| STRK | insufficient_cross_section_context | short_bias | 41.7575 | 0.0000 | 0.0000 | -24.9646 | 0.7929 | 2 | none | keep STRK as context until another feature source appears |
-| LINK | insufficient_cross_section_context | long_bias | 38.9584 | 0.0000 | 0.0000 | 21.6900 | 1.2684 | 2 | none | keep LINK as context until another feature source appears |
-| JTO | insufficient_cross_section_context | long_bias | 38.3410 | 0.0000 | 0.0000 | 20.4391 | 1.9019 | 2 | none | keep JTO as context until another feature source appears |
-| BIO | insufficient_cross_section_context | none | 38.3126 | 0.0000 | 0.0000 | 0.0000 | 30.3126 | 1 | none | keep BIO as context until another feature source appears |
-| NEAR | insufficient_cross_section_context | long_bias | 35.1849 | 0.0000 | 0.0000 | 16.8850 | 2.2999 | 2 | none | keep NEAR as context until another feature source appears |
+| HMSTR | cross_section_watchlist | long_bias | 131.7361 | 0.0000 | 0.0000 | 100.8305 | 14.9055 | 2 | none | collect one more independent HMSTR feature before cross-section labeling |
+| ZEC | cross_section_watchlist | long_bias | 117.1355 | 0.0000 | 39.5644 | 49.6391 | 3.9320 | 3 | none | collect one more independent ZEC feature before cross-section labeling |
+| WLD | cross_section_watchlist | long_bias | 92.3327 | 0.0000 | 61.6500 | -6.6827 | 0.0000 | 3 | none | collect one more independent WLD feature before cross-section labeling |
+| PENGU | cross_section_watchlist | long_bias | 82.7488 | 0.0000 | 65.4266 | 0.0000 | 1.3222 | 2 | none | collect one more independent PENGU feature before cross-section labeling |
+| CRV | cross_section_watchlist | long_bias | 70.6816 | 54.3623 | 0.0000 | 0.0000 | 0.3193 | 2 | none | collect one more independent CRV feature before cross-section labeling |
+| TAO | insufficient_cross_section_context | long_bias | 68.6005 | 0.0000 | 51.1703 | 0.0000 | 1.4301 | 2 | none | keep TAO as context until another feature source appears |
+| DEUS | insufficient_cross_section_context | long_bias | 65.0000 | 0.0000 | 68.1243 | 0.0000 | 0.0000 | 1 | none | keep DEUS as context until another feature source appears |
+| H | insufficient_cross_section_context | long_bias | 65.0000 | 0.0000 | 67.5000 | 0.0000 | 0.0000 | 1 | none | keep H as context until another feature source appears |
+| HOME | insufficient_cross_section_context | long_bias | 65.0000 | 0.0000 | 0.0000 | 227.3889 | 0.0000 | 1 | none | keep HOME as context until another feature source appears |
+| PIPPIN | insufficient_cross_section_context | long_bias | 65.0000 | 0.0000 | 61.8056 | 0.0000 | 0.0000 | 1 | none | keep PIPPIN as context until another feature source appears |
+| JUP | insufficient_cross_section_context | long_bias | 62.8310 | 44.8386 | 0.0000 | 0.0000 | 1.9924 | 2 | none | keep JUP as context until another feature source appears |
+| AAVE | insufficient_cross_section_context | long_bias | 58.9968 | 40.3859 | 0.0000 | 0.0000 | 2.6108 | 2 | none | keep AAVE as context until another feature source appears |
+| PENDLE | insufficient_cross_section_context | long_bias | 58.3255 | 42.1298 | 0.0000 | 0.0000 | 0.1957 | 2 | none | keep PENDLE as context until another feature source appears |
+| MORPHO | insufficient_cross_section_context | long_bias | 57.8823 | 41.6586 | 0.0000 | 0.0000 | 0.2237 | 2 | none | keep MORPHO as context until another feature source appears |
+| UNI | insufficient_cross_section_context | short_bias | 50.5317 | -33.0933 | 0.0000 | 0.0000 | 1.4384 | 2 | none | keep UNI as context until another feature source appears |
+| LDO | insufficient_cross_section_context | short_bias | 50.0154 | 0.0000 | 0.0000 | -34.0154 | 0.0000 | 2 | none | keep LDO as context until another feature source appears |
+| SOL | insufficient_cross_section_context | short_bias | 49.3503 | -32.4997 | 0.0000 | 0.0000 | 0.8506 | 2 | none | keep SOL as context until another feature source appears |
+| ETH | insufficient_cross_section_context | long_bias | 49.1737 | 0.0000 | 33.0641 | 0.0000 | 0.1096 | 2 | none | keep ETH as context until another feature source appears |
+| HYPE | split_conflicting_features_before_label | long_bias | 45.3261 | 0.0000 | 31.5718 | -14.7544 | 0.0000 | 3 | long_short_feature_conflict | split HYPE features by sign before any cross-section label |
+| ENS | insufficient_cross_section_context | short_bias | 44.1245 | 0.0000 | 0.0000 | -26.6827 | 1.4419 | 2 | none | keep ENS as context until another feature source appears |
+| STRK | insufficient_cross_section_context | short_bias | 43.4043 | 0.0000 | 0.0000 | -27.2002 | 0.2041 | 2 | none | keep STRK as context until another feature source appears |
+| LINK | insufficient_cross_section_context | long_bias | 42.2676 | 0.0000 | 0.0000 | 24.4698 | 1.7978 | 2 | none | keep LINK as context until another feature source appears |
+| NEAR | split_conflicting_features_before_label | long_bias | 41.7692 | 0.0000 | 31.2255 | -11.5023 | 0.0414 | 3 | long_short_feature_conflict | split NEAR features by sign before any cross-section label |
+| BEAT | insufficient_cross_section_context | long_bias | 39.5683 | 0.0000 | 5.4000 | 18.1683 | 0.0000 | 2 | none | keep BEAT as context until another feature source appears |
+| RENDER | insufficient_cross_section_context | long_bias | 35.9557 | 0.0000 | 0.0000 | 19.0247 | 0.9310 | 2 | none | keep RENDER as context until another feature source appears |
 
 ## Interpretation
 

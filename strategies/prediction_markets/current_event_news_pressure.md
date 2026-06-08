@@ -4,16 +4,16 @@ This joins depth-positive prediction-market candidates to Google News RSS activi
 
 | question | category | midpoint | market score | articles 24h | articles 72h | sources | newest h | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| US x Iran permanent peace deal by June 30, 2026? | geopolitical_event | 0.8250 | 155.1460 | 23 | 30 | 27 | 0.21 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
-| Strait of Hormuz traffic returns to normal by end of June? | geopolitical_event | 0.1050 | 153.6409 | 26 | 30 | 27 | 0.24 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
-| US-Iran nuclear deal by June 30? | geopolitical_event | 0.1950 | 94.1818 | 22 | 30 | 24 | 0.37 | 143.8364 | external_news_active | recent multi-source news flow exists for this event market |
-| Israel closes its airspace by June 15? | geopolitical_event | 0.1500 | 64.1775 | 30 | 30 | 19 | 0.89 | 137.8355 | external_news_active | recent multi-source news flow exists for this event market |
-| Stuttgart Open: Tommy Paul vs Giovanni Mpetshi Perricard | event_market | 0.5050 | 126.2992 | 11 | 15 | 10 | 7.23 | 104.0000 | external_news_active | recent multi-source news flow exists for this event market |
-| US announces new Iran agreement/ceasefire extension by June 9? | geopolitical_event | 0.0770 | 57.8325 | 9 | 15 | 14 | 1.89 | 99.5665 | external_news_active | recent multi-source news flow exists for this event market |
-| US announces new Iran agreement/ceasefire extension by June 12? | geopolitical_event | 0.2250 | 57.1277 | 9 | 15 | 14 | 1.89 | 99.4255 | external_news_active | recent multi-source news flow exists for this event market |
-| Libema Open: Mia Pohankova vs Clara Tauson | event_market | 0.5750 | 65.5882 | 6 | 9 | 6 | 1.35 | 73.1176 | external_news_active | recent multi-source news flow exists for this event market |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | political_event | 0.6650 | 58.1525 | 2 | 7 | 7 | 6.32 | 57.6305 | external_news_watch | some external news flow exists, but it is not yet strong enough |
-| Will the U.S. invade Iran before 2027? | geopolitical_event | 0.8250 | 149.1525 | 2 | 2 | 2 | 0.68 | 49.0000 | external_news_watch | some external news flow exists, but it is not yet strong enough |
+| US x Iran permanent peace deal by June 30, 2026? | geopolitical_event | 0.1650 | 155.3096 | 23 | 30 | 27 | 0.50 | 145.0000 | external_news_active | recent multi-source news flow exists for this event market |
+| Israel closes its airspace by June 15? | geopolitical_event | 0.1550 | 86.4187 | 28 | 30 | 18 | 1.98 | 142.2837 | external_news_active | recent multi-source news flow exists for this event market |
+| Israel closes its airspace by June 30? | geopolitical_event | 0.7650 | 61.6452 | 28 | 30 | 18 | 1.98 | 137.3290 | external_news_active | recent multi-source news flow exists for this event market |
+| US-Iran nuclear deal by June 30? | geopolitical_event | 0.2050 | 91.3147 | 14 | 30 | 24 | 1.40 | 131.2629 | external_news_active | recent multi-source news flow exists for this event market |
+| Will Netherlands win on 2026-06-08? | event_market | 0.9050 | 30.4951 | 30 | 30 | 27 | 0.84 | 131.0990 | external_news_active | recent multi-source news flow exists for this event market |
+| US announces new Iran agreement/ceasefire extension by June 12? | geopolitical_event | 0.8950 | 52.4405 | 12 | 19 | 17 | 2.67 | 108.4881 | external_news_active | recent multi-source news flow exists for this event market |
+| HSBC Championships: Katie Boulter vs Leylah Fernandez | event_market | 0.2750 | 98.5881 | 4 | 12 | 9 | 0.63 | 90.7176 | external_news_active | recent multi-source news flow exists for this event market |
+| Bab el-Mandeb Strait effectively closed by June 30? | event_market | 0.1080 | 33.4559 | 9 | 15 | 9 | 1.80 | 90.6912 | external_news_active | recent multi-source news flow exists for this event market |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | political_event | 0.8350 | 82.6635 | 2 | 7 | 7 | 4.09 | 70.5327 | external_news_watch | some external news flow exists, but it is not yet strong enough |
+| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | political_event | 0.1585 | 67.4883 | 0 | 1 | 1 | 41.88 | 18.4977 | external_news_thin | little current external news flow was found for this event market |
 
 ## Caveat
 

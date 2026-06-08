@@ -4,26 +4,26 @@ This joins Hyperliquid public book imbalance with recent trade-print imbalance. 
 
 | asset | action | dir | pressure | book imb | trade imb | trades | buy USD | sell USD | spread bps | depth 10bps USD | window s | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| XMR | aligned_pressure_watch | 1 | 0.7535 | 0.5656 | 0.9413 | 10 | 2371 | 72 | 7.2469 | 5878 | 87 | book imbalance and taker flow point the same way |
-| SEI | aligned_pressure_watch | 1 | 0.6242 | 0.2602 | 0.9883 | 10 | 2730 | 16 | 2.7779 | 8074 | 77 | book imbalance and taker flow point the same way |
-| MON | aligned_pressure_watch | 1 | 0.5424 | 0.2154 | 0.8694 | 10 | 1070 | 75 | 1.3403 | 2729 | 115 | book imbalance and taker flow point the same way |
-| HYPE | aligned_pressure_watch | 1 | 0.5001 | 0.0002 | 1.0000 | 10 | 16690 | 0 | 0.3081 | 168362 | 1 | book imbalance and taker flow point the same way |
-| STRK | aligned_pressure_watch | 1 | 0.4468 | 0.5629 | 0.3307 | 10 | 906 | 456 | 5.6689 | 5158 | 85 | book imbalance and taker flow point the same way |
-| ADA | book_trade_divergence_watch | 1 | 0.4690 | -0.0450 | 0.9830 | 10 | 15330 | 131 | 4.6808 | 39896 | 3 | book imbalance and taker flow disagree |
-| BNB | book_trade_divergence_watch | 1 | 0.4433 | -0.0321 | 0.9188 | 10 | 1288 | 55 | 0.8256 | 80253 | 72 | book imbalance and taker flow disagree |
-| SUI | book_trade_divergence_watch | 1 | 0.3888 | -0.2223 | 1.0000 | 10 | 6766 | 0 | 0.2591 | 106075 | 6 | book imbalance and taker flow disagree |
-| POL | book_trade_divergence_watch | -1 | -0.2784 | 0.4433 | -1.0000 | 10 | 0 | 328 | 5.9245 | 2460 | 270 | book imbalance and taker flow disagree |
-| BTC | book_trade_divergence_watch | 1 | 0.2760 | -0.4408 | 0.9927 | 10 | 51551 | 189 | 0.3116 | 6102437 | 1 | book imbalance and taker flow disagree |
-| OP | book_trade_divergence_watch | 1 | 0.1963 | -0.6075 | 1.0000 | 10 | 2521 | 0 | 6.0686 | 1578 | 109 | book imbalance and taker flow disagree |
-| NEAR | book_trade_divergence_watch | 1 | 0.1731 | -0.4341 | 0.7802 | 10 | 3453 | 426 | 4.5689 | 14945 | 19 | book imbalance and taker flow disagree |
-| SOL | book_trade_divergence_watch | -1 | -0.1109 | -0.4114 | 0.1897 | 10 | 9945 | 6774 | 0.1476 | 345545 | 9 | book imbalance and taker flow disagree |
-| APT | book_trade_divergence_watch | 1 | 0.0778 | 0.1689 | -0.0133 | 10 | 871 | 895 | 2.9338 | 10668 | 81 | book imbalance and taker flow disagree |
-| ARB | book_trade_divergence_watch | -1 | -0.0063 | 0.5868 | -0.5994 | 10 | 159 | 633 | 2.3688 | 6663 | 124 | book imbalance and taker flow disagree |
-| STX | no_clear_pressure | -1 | -0.0610 | -0.1385 | 0.0165 | 10 | 287 | 278 | 2.6201 | 3820 | 360 | book and taker-flow imbalance are both small |
-| ETH | no_clear_pressure | 1 | 0.0193 | -0.0824 | 0.1210 | 10 | 19264 | 15106 | 0.5870 | 12735901 | 1 | book and taker-flow imbalance are both small |
-| BERA | wide_spread_watch | 1 | 0.5550 | 0.2987 | 0.8112 | 10 | 822 | 86 | 13.8450 | 747 | 176 | spread is too wide for a first microstructure probe |
-| CHIP | wide_spread_watch | 1 | 0.3122 | 0.0407 | 0.5837 | 10 | 687 | 180 | 10.3105 | 3913 | 77 | spread is too wide for a first microstructure probe |
-| MEGA | wide_spread_watch | -1 | -0.0523 | -0.3200 | 0.2154 | 10 | 547 | 353 | 8.9963 | 1183 | 63 | spread is too wide for a first microstructure probe |
+| OP | aligned_pressure_watch | -1 | -0.8124 | -0.6248 | -1.0000 | 10 | 0 | 1078 | 4.1110 | 440 | 0 | book imbalance and taker flow point the same way |
+| MON | aligned_pressure_watch | -1 | -0.5658 | -0.6503 | -0.4813 | 10 | 137 | 392 | 2.3130 | 1769 | 189 | book imbalance and taker flow point the same way |
+| HYPE | aligned_pressure_watch | 1 | 0.5514 | 0.3390 | 0.7637 | 10 | 2670 | 358 | 0.1577 | 86446 | 5 | book imbalance and taker flow point the same way |
+| POL | aligned_pressure_watch | 1 | 0.5147 | 0.1705 | 0.8589 | 10 | 1118 | 85 | 2.6686 | 6365 | 231 | book imbalance and taker flow point the same way |
+| CHIP | aligned_pressure_watch | 1 | 0.4422 | 0.0133 | 0.8712 | 10 | 2453 | 169 | 3.5827 | 7557 | 333 | book imbalance and taker flow point the same way |
+| BTC | aligned_pressure_watch | 1 | 0.4283 | 0.3480 | 0.5087 | 10 | 387 | 126 | 0.1578 | 3561930 | 4 | book imbalance and taker flow point the same way |
+| BERA | aligned_pressure_watch | 1 | 0.3171 | 0.1517 | 0.4825 | 10 | 467 | 163 | 6.3314 | 3938 | 300 | book imbalance and taker flow point the same way |
+| BNB | aligned_pressure_watch | 1 | 0.2534 | 0.0700 | 0.4368 | 10 | 858 | 336 | 1.4824 | 97028 | 48 | book imbalance and taker flow point the same way |
+| ARB | book_trade_divergence_watch | -1 | -0.4645 | 0.0709 | -1.0000 | 10 | 0 | 1269 | 2.4036 | 45748 | 76 | book imbalance and taker flow disagree |
+| ETH | book_trade_divergence_watch | -1 | -0.4235 | 0.1431 | -0.9900 | 10 | 100 | 19940 | 0.5936 | 10650019 | 7 | book imbalance and taker flow disagree |
+| SUI | book_trade_divergence_watch | 1 | 0.4164 | -0.0967 | 0.9294 | 10 | 682 | 25 | 0.5262 | 63461 | 70 | book imbalance and taker flow disagree |
+| MEGA | book_trade_divergence_watch | -1 | -0.2428 | 0.2373 | -0.7228 | 10 | 203 | 1264 | 4.3566 | 3644 | 156 | book imbalance and taker flow disagree |
+| SEI | book_trade_divergence_watch | 1 | 0.2013 | -0.2894 | 0.6920 | 10 | 1475 | 269 | 4.8231 | 7895 | 147 | book imbalance and taker flow disagree |
+| APT | book_trade_divergence_watch | 1 | 0.1326 | 0.6377 | -0.3725 | 10 | 393 | 859 | 4.4069 | 6799 | 147 | book imbalance and taker flow disagree |
+| SOL | book_trade_divergence_watch | -1 | -0.1067 | 0.6920 | -0.9055 | 10 | 1032 | 20816 | 0.1484 | 199392 | 12 | book imbalance and taker flow disagree |
+| ADA | book_trade_divergence_watch | 1 | 0.0661 | -0.0794 | 0.2116 | 10 | 457 | 297 | 2.9126 | 93547 | 39 | book imbalance and taker flow disagree |
+| NEAR | book_trade_divergence_watch | 1 | 0.0425 | 0.6736 | -0.5886 | 10 | 905 | 3494 | 0.4538 | 12782 | 20 | book imbalance and taker flow disagree |
+| XMR | book_trade_divergence_watch | 1 | 0.0388 | 0.5315 | -0.4539 | 10 | 1337 | 3558 | 0.3168 | 7495 | 39 | book imbalance and taker flow disagree |
+| STX | book_trade_divergence_watch | 1 | 0.0190 | 0.2463 | -0.2083 | 10 | 89 | 136 | 4.2592 | 2492 | 326 | book imbalance and taker flow disagree |
+| STRK | wide_spread_watch | -1 | -0.1209 | 0.2929 | -0.5347 | 10 | 230 | 760 | 8.6096 | 4144 | 175 | spread is too wide for a first microstructure probe |
 
 ## Interpretation
 

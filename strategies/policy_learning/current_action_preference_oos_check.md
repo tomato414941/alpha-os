@@ -4,46 +4,38 @@ This checks whether action preferences found in initial paper samples survive re
 
 | candidate | context | asset | action | train n | train mean | test n | test mean | test hit | score | decision |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| repeat_execution_paper_long | repeat_execution |  | paper_long | 3 | 270.21 | 5 | 212.46 | 1.000 | 299.99 | oos_supported_action_preference |
-| sui_repeat_execution_paper_long | repeat_execution | SUI | paper_long | 2 | 227.41 | 5 | 212.46 | 1.000 | 282.20 | oos_supported_action_preference |
-| zec_news_event_paper_long | news_event | ZEC | paper_long | 4 | 346.42 | 4 | 175.30 | 1.000 | 274.26 | oos_supported_action_preference |
-| sol_volume_price_dislocation_paper_long | volume_price_dislocation | SOL | paper_long | 3 | 183.69 | 4 | 191.16 | 1.000 | 265.71 | oos_supported_action_preference |
-| news_event_paper_long | news_event |  | paper_long | 6 | 360.93 | 6 | 149.34 | 1.000 | 250.48 | oos_supported_action_preference |
-| volume_price_dislocation_paper_long | volume_price_dislocation |  | paper_long | 22 | 204.45 | 14 | 107.84 | 1.000 | 185.51 | oos_supported_action_preference |
-| sol_event_crypto_hedge_paper_long | event_crypto_hedge | SOL | paper_long | 3 | 179.96 | 4 | 107.88 | 1.000 | 181.88 | oos_supported_action_preference |
-| microstructure_flow_paper_long | microstructure_flow |  | paper_long | 24 | 155.82 | 20 | 115.44 | 0.800 | 179.81 | oos_supported_action_preference |
-| wallet_entity_flow_paper_long | wallet_entity_flow |  | paper_long | 3 | 210.48 | 4 | 91.48 | 1.000 | 170.05 | oos_supported_action_preference |
-| eth_volume_price_dislocation_paper_long | volume_price_dislocation | ETH | paper_long | 5 | 124.69 | 3 | 96.92 | 1.000 | 159.62 | oos_supported_action_preference |
-| stablecoin_migration_paper_long | stablecoin_migration |  | paper_long | 2 | 221.59 | 2 | 143.92 | 1.000 | 159.11 | oos_supported_action_preference |
-| sol_stablecoin_migration_paper_long | stablecoin_migration | SOL | paper_long | 2 | 221.59 | 2 | 143.92 | 1.000 | 159.11 | oos_supported_action_preference |
-| near_microstructure_flow_paper_long | microstructure_flow | NEAR | paper_long | 9 | 171.19 | 3 | 79.69 | 0.667 | 139.37 | oos_supported_action_preference |
-| eth_microstructure_flow_paper_long | microstructure_flow | ETH | paper_long | 5 | 104.66 | 2 | 114.73 | 1.000 | 133.19 | oos_supported_action_preference |
-| eth_event_crypto_hedge_paper_long | event_crypto_hedge | ETH | paper_long | 4 | 161.46 | 5 | 61.29 | 1.000 | 132.51 | oos_supported_action_preference |
-| event_crypto_hedge_paper_long | event_crypto_hedge |  | paper_long | 11 | 140.04 | 14 | 63.14 | 1.000 | 131.14 | oos_supported_action_preference |
-| sol_execution_edge_paper_long | execution_edge | SOL | paper_long | 2 | 179.96 | 2 | 107.88 | 1.000 | 130.92 | oos_supported_action_preference |
-| hype_volume_price_dislocation_paper_long | volume_price_dislocation | HYPE | paper_long | 5 | 324.63 | 3 | 14.87 | 1.000 | 107.56 | oos_supported_action_preference |
-| btc_event_crypto_hedge_paper_long | event_crypto_hedge | BTC | paper_long | 4 | 88.69 | 5 | 29.18 | 1.000 | 89.49 | oos_supported_action_preference |
-| hype_microstructure_flow_paper_long | microstructure_flow | HYPE | paper_long | 10 | 167.58 | 4 | 14.87 | 1.000 | 87.00 | oos_supported_action_preference |
-| bera_microstructure_flow_paper_long | microstructure_flow | BERA | paper_long | 0 | 0.00 | 2 | 435.24 | 1.000 | 326.16 | needs_repeat_oos |
-| liquidation_intensity_paper_long | liquidation_intensity |  | paper_long | 0 | 0.00 | 2 | 239.79 | 1.000 | 195.86 | needs_repeat_oos |
-| sui_liquidation_intensity_paper_long | liquidation_intensity | SUI | paper_long | 0 | 0.00 | 2 | 239.79 | 1.000 | 195.86 | needs_repeat_oos |
-| sui_microstructure_flow_paper_long | microstructure_flow | SUI | paper_long | 0 | 0.00 | 2 | 235.69 | 1.000 | 193.13 | needs_repeat_oos |
-| chip_microstructure_flow_paper_long | microstructure_flow | CHIP | paper_long | 0 | 0.00 | 2 | 174.18 | 1.000 | 152.12 | needs_repeat_oos |
-| zec_wallet_entity_flow_paper_long | wallet_entity_flow | ZEC | paper_long | 1 | 346.42 | 1 | 175.30 | 1.000 | 113.75 | needs_repeat_oos |
-| sector_rotation_paper_long | sector_rotation |  | paper_long | 1 | 346.42 | 1 | 175.30 | 1.000 | 113.75 | needs_repeat_oos |
-| zec_sector_rotation_paper_long | sector_rotation | ZEC | paper_long | 1 | 346.42 | 1 | 175.30 | 1.000 | 113.75 | needs_repeat_oos |
-| sol_news_event_paper_long | news_event | SOL | paper_long | 1 | 263.22 | 1 | 179.96 | 1.000 | 111.15 | needs_repeat_oos |
-| link_volume_price_dislocation_paper_long | volume_price_dislocation | LINK | paper_long | 1 | 215.45 | 1 | 129.81 | 1.000 | 92.04 | needs_repeat_oos |
-| fartcoin_volume_price_dislocation_paper_long | volume_price_dislocation | FARTCOIN | paper_long | 1 | 317.53 | 1 | 113.30 | 1.000 | 91.64 | needs_repeat_oos |
-| xpl_volume_price_dislocation_paper_long | volume_price_dislocation | XPL | paper_long | 1 | 270.89 | 1 | 118.78 | 1.000 | 91.14 | needs_repeat_oos |
-| eth_wallet_entity_flow_paper_long | wallet_entity_flow | ETH | paper_long | 1 | 161.46 | 2 | 61.29 | 1.000 | 89.94 | needs_repeat_oos |
-| event_pressure_paper_long | event_pressure |  | paper_long | 1 | 228.43 | 1 | 97.91 | 1.000 | 82.06 | needs_repeat_oos |
-| aave_event_pressure_paper_long | event_pressure | AAVE | paper_long | 1 | 228.43 | 1 | 97.91 | 1.000 | 82.06 | needs_repeat_oos |
-| mon_microstructure_flow_paper_long | microstructure_flow | MON | paper_long | 0 | 0.00 | 2 | 83.55 | 0.500 | 76.70 | needs_repeat_oos |
-| hype_news_event_paper_long | news_event | HYPE | paper_long | 1 | 516.65 | 1 | 14.87 | 1.000 | 68.79 | needs_repeat_oos |
-| apt_wallet_entity_flow_paper_long | wallet_entity_flow | APT | paper_long | 1 | 123.57 | 1 | 68.01 | 1.000 | 66.85 | needs_repeat_oos |
-| pump_volume_price_dislocation_paper_long | volume_price_dislocation | PUMP | paper_long | 1 | 226.23 | 1 | 47.92 | 1.000 | 65.28 | needs_repeat_oos |
-| options_volatility_paper_long | options_volatility |  | paper_long | 1 | 88.69 | 1 | 29.18 | 1.000 | 52.16 | needs_repeat_oos |
+| zec_news_event_paper_long | news_event | ZEC | paper_long | 7 | 491.79 | 6 | 461.89 | 1.000 | 582.66 | oos_supported_action_preference |
+| zec_wallet_entity_flow_paper_long | wallet_entity_flow | ZEC | paper_long | 3 | 456.55 | 3 | 397.55 | 1.000 | 510.03 | oos_supported_action_preference |
+| news_event_paper_long | news_event |  | paper_long | 18 | 176.54 | 8 | 345.53 | 0.875 | 412.76 | oos_supported_action_preference |
+| zec_sector_rotation_paper_long | sector_rotation | ZEC | paper_long | 8 | 333.21 | 2 | 429.72 | 1.000 | 377.46 | oos_supported_action_preference |
+| sector_rotation_paper_long | sector_rotation |  | paper_long | 9 | 292.51 | 2 | 429.72 | 1.000 | 370.80 | oos_supported_action_preference |
+| wallet_entity_flow_paper_long | wallet_entity_flow |  | paper_long | 7 | 196.06 | 11 | 104.71 | 0.727 | 171.51 | oos_supported_action_preference |
+| sol_volume_price_dislocation_paper_long | volume_price_dislocation | SOL | paper_long | 2 | 127.75 | 6 | 123.60 | 0.667 | 170.87 | oos_supported_action_preference |
+| repeat_execution_paper_long | repeat_execution |  | paper_long | 3 | 283.91 | 6 | 53.89 | 0.667 | 133.48 | oos_supported_action_preference |
+| near_microstructure_flow_paper_long | microstructure_flow | NEAR | paper_long | 2 | 198.04 | 10 | 65.74 | 1.000 | 132.54 | oos_supported_action_preference |
+| execution_edge_paper_long | execution_edge |  | paper_long | 8 | 134.39 | 2 | 104.08 | 1.000 | 129.92 | oos_supported_action_preference |
+| sol_execution_edge_paper_long | execution_edge | SOL | paper_long | 2 | 176.13 | 2 | 104.08 | 1.000 | 128.00 | oos_supported_action_preference |
+| stablecoin_migration_paper_long | stablecoin_migration |  | paper_long | 2 | 127.75 | 4 | 68.13 | 0.500 | 110.40 | oos_supported_action_preference |
+| sol_stablecoin_migration_paper_long | stablecoin_migration | SOL | paper_long | 2 | 127.75 | 4 | 68.13 | 0.500 | 110.40 | oos_supported_action_preference |
+| sol_event_crypto_hedge_paper_long | event_crypto_hedge | SOL | paper_long | 4 | 86.14 | 7 | 57.82 | 0.571 | 102.39 | oos_supported_action_preference |
+| bera_microstructure_flow_paper_long | microstructure_flow | BERA | paper_long | 0 | 0.00 | 2 | 517.91 | 1.000 | 381.28 | needs_repeat_oos |
+| chip_microstructure_flow_paper_long | microstructure_flow | CHIP | paper_long | 0 | 0.00 | 2 | 477.95 | 1.000 | 354.63 | needs_repeat_oos |
+| liquidation_intensity_paper_long | liquidation_intensity |  | paper_long | 0 | 0.00 | 2 | 113.78 | 1.000 | 111.85 | needs_repeat_oos |
+| sui_liquidation_intensity_paper_long | liquidation_intensity | SUI | paper_long | 0 | 0.00 | 2 | 113.78 | 1.000 | 111.85 | needs_repeat_oos |
+| sui_microstructure_flow_paper_long | microstructure_flow | SUI | paper_long | 0 | 0.00 | 2 | 109.73 | 1.000 | 109.15 | needs_repeat_oos |
+| inj_volume_price_dislocation_paper_long | volume_price_dislocation | INJ | paper_long | 0 | 0.00 | 5 | 63.88 | 1.000 | 105.88 | needs_repeat_oos |
+| apt_wallet_entity_flow_paper_long | wallet_entity_flow | APT | paper_long | 1 | 17.05 | 3 | 42.81 | 1.000 | 87.66 | needs_repeat_oos |
+| sui_repeat_execution_paper_long | repeat_execution | SUI | paper_long | 0 | 0.00 | 6 | 53.89 | 0.667 | 85.89 | needs_repeat_oos |
+| near_unclassified_paper_long | unclassified | NEAR | paper_long | 2 | 39.52 | 1 | 38.60 | 1.000 | 54.82 | needs_repeat_oos |
+| chip_repeat_execution_paper_long | repeat_execution | CHIP | paper_long | 3 | 283.91 | 0 | 0.00 | 0.000 | 47.59 | needs_repeat_oos |
+| chip_execution_edge_paper_long | execution_edge | CHIP | paper_long | 3 | 283.91 | 0 | 0.00 | 0.000 | 47.59 | needs_repeat_oos |
+| zec_event_pressure_paper_long | event_pressure | ZEC | paper_long | 2 | 333.21 | 0 | 0.00 | 0.000 | 38.32 | needs_repeat_oos |
+| protocol_fee_paper_long | protocol_fee |  | paper_long | 3 | 75.96 | 0 | 0.00 | 0.000 | 16.39 | needs_repeat_oos |
+| uni_protocol_fee_paper_long | protocol_fee | UNI | paper_long | 3 | 75.96 | 0 | 0.00 | 0.000 | 16.39 | needs_repeat_oos |
+| basis_term_structure_paper_short | basis_term_structure |  | paper_short | 2 | 63.25 | 0 | 0.00 | 0.000 | 11.32 | needs_repeat_oos |
+| near_execution_edge_paper_long | execution_edge | NEAR | paper_long | 2 | 38.60 | 0 | 0.00 | 0.000 | 8.86 | needs_repeat_oos |
+| microstructure_flow_paper_long | microstructure_flow |  | paper_long | 5 | 222.96 | 40 | -10.61 | 0.450 | 53.33 | oos_failed_action_preference |
+| eth_event_crypto_hedge_paper_long | event_crypto_hedge | ETH | paper_long | 4 | 62.23 | 8 | -20.10 | 0.625 | 23.73 | oos_failed_action_preference |
 
 ## Interpretation
 
