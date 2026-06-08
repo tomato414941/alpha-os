@@ -1,0 +1,4 @@
+asset,decision,lifecycle_status,second_repeat_5m_bps,current_mark,spread_bps,near_depth_10bps_notional,annualized_funding,gate_action,reason,next_step
+BNB,paper_short,second_repeat_decay,-8.10909211,604.75000000,0.16535895,105912.62032000,0.10243594,cooldown_until_fresh_state,the immediate second repeat lost after earlier OFI wins,require a fresh OFI imbalance state plus a cooldown before another paper short
+ETH,paper_short,repeat_fill_audit_decay,,1699.60000000,0.58835643,11769550.71822000,-0.07747081,block_ofi_repeat,the later fill-audit window rejected the OFI short,wait for a new independent OFI state and do not reuse the existing paper/repeat chain
+SUI,paper_short,second_repeat_decay,-9.90465122,0.75797000,0.65962626,70765.75498950,0.10950000,cooldown_until_fresh_state,the immediate second repeat lost after earlier OFI wins,require a fresh OFI imbalance state plus a cooldown before another paper short

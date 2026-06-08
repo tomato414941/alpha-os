@@ -245,6 +245,7 @@ DEFAULT_COMMANDS = (
         "strategies/event_flow/current_ofi_second_repeat_fill_risk_check.md",
     ),
     ("strategies.event_flow.current_ofi_timing_decay_review",),
+    ("strategies.event_flow.current_ofi_cooldown_state_gate",),
     ("strategies.sector_rotation.current_coingecko_category_rotation",),
     ("strategies.sector_rotation.current_category_tradable_forward_labels",),
     ("strategies.sector_rotation.current_category_perp_context",),
