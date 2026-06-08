@@ -66,6 +66,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_promotion_frontier_row(root),
         _alpha_promotion_worklist_row(root),
         _alpha_repeat_fill_survival_row(root),
+        _alpha_conflict_resolution_progress_row(root),
         _cost_adjusted_cluster_repeat_plan_row(root),
         _split_first_cluster_lane_plan_row(root),
         _split_first_lane_repeat_queue_row(root),
@@ -1628,6 +1629,33 @@ def _alpha_repeat_fill_survival_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="repeat/fill worklist rows have not been checked against repeat evidence",
         next_step="run current alpha repeat fill survival after promotion worklist",
+    )
+
+
+def _alpha_conflict_resolution_progress_row(root: Path) -> ExplorationRow:
+    path = root / "current_alpha_conflict_resolution_progress.csv"
+    best = _best_numeric_row(path, key="progress_score")
+    if best:
+        return ExplorationRow(
+            lane="alpha_conflict_resolution_progress",
+            status=best.get("status", "alpha_conflict_resolution_progress"),
+            strongest_current_signal=(
+                f"{best.get('asset', '')}: "
+                f"{best.get('decision', '')}, "
+                f"action={best.get('cluster_action', '')}, "
+                f"plans={best.get('lane_plan_count', '')}, "
+                f"queued={best.get('queued_lane_count', '')}, "
+                f"repeats={best.get('lane_repeat_count', '')}"
+            ),
+            main_gap=best.get("blocker", "conflict resolution still has an unresolved blocker"),
+            next_step=best.get("next_step", "resolve top alpha cluster conflict"),
+        )
+    return ExplorationRow(
+        lane="alpha_conflict_resolution_progress",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="promotion worklist dedupe and source split rows have not been reconciled with split artifacts",
+        next_step="run current alpha conflict resolution progress after promotion worklist",
     )
 
 
