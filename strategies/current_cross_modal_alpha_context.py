@@ -42,12 +42,12 @@ def build_cross_modal_alpha_context(
     chain_context_path: Path = ROOT / "on_chain_flow" / "current_chain_tvl_flow_market_context.csv",
     dex_pool_flow_path: Path = ROOT / "dex_pool_flow" / "current_geckoterminal_pool_flow.csv",
 ) -> tuple[CrossModalAlphaContextRow, ...]:
-    evidence = (
-        _event_evidence(event_pressure_path)
-        + _stablecoin_evidence(stablecoin_migration_path)
-        + _wallet_evidence(wallet_actionability_path)
-        + _chain_context_evidence(chain_context_path)
-        + _dex_pool_evidence(dex_pool_flow_path)
+    evidence = collect_cross_modal_evidence(
+        event_pressure_path=event_pressure_path,
+        stablecoin_migration_path=stablecoin_migration_path,
+        wallet_actionability_path=wallet_actionability_path,
+        chain_context_path=chain_context_path,
+        dex_pool_flow_path=dex_pool_flow_path,
     )
     grouped: dict[str, list[ModalEvidence]] = {}
     for row in evidence:
@@ -56,6 +56,23 @@ def build_cross_modal_alpha_context(
     rows = tuple(_context_row(symbol=symbol, evidence=tuple(rows)) for symbol, rows in grouped.items())
     useful_rows = tuple(row for row in rows if row.source_count >= 2)
     return tuple(sorted(useful_rows, key=lambda row: row.total_score, reverse=True))
+
+
+def collect_cross_modal_evidence(
+    *,
+    event_pressure_path: Path = ROOT / "news_social" / "current_event_pressure_cluster.csv",
+    stablecoin_migration_path: Path = ROOT / "stablecoin_liquidity" / "current_chain_stablecoin_migration.csv",
+    wallet_actionability_path: Path = ROOT / "wallet_entity_flow" / "current_seed_wallet_flow_actionability.csv",
+    chain_context_path: Path = ROOT / "on_chain_flow" / "current_chain_tvl_flow_market_context.csv",
+    dex_pool_flow_path: Path = ROOT / "dex_pool_flow" / "current_geckoterminal_pool_flow.csv",
+) -> tuple[ModalEvidence, ...]:
+    return (
+        _event_evidence(event_pressure_path)
+        + _stablecoin_evidence(stablecoin_migration_path)
+        + _wallet_evidence(wallet_actionability_path)
+        + _chain_context_evidence(chain_context_path)
+        + _dex_pool_evidence(dex_pool_flow_path)
+    )
 
 
 def write_cross_modal_alpha_context_csv(

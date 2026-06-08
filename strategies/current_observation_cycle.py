@@ -105,6 +105,7 @@ DEFAULT_COMMANDS = (
     ("strategies.event_flow.current_lob_execution_world_replay",),
     ("strategies.event_flow.current_lob_sequence_state_probe",),
     ("strategies.current_cross_modal_alpha_context",),
+    ("strategies.current_cross_modal_source_split",),
     ("strategies.current_alpha_stack",),
     ("strategies.current_paper_probe_plan",),
     ("strategies.current_paper_ticket_outcomes",),

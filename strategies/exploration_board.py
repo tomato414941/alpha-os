@@ -25,6 +25,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_source_gaps_row(root),
         _alpha_method_frontier_row(root),
         _cross_modal_alpha_context_row(root),
+        _cross_modal_source_split_row(root),
         _paper_probe_plan_row(root),
         _paper_tickets_row(root),
         _paper_ticket_outcomes_row(root),
@@ -230,6 +231,34 @@ def _cross_modal_alpha_context_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="event, stablecoin, wallet, chain, and DEX contexts are not joined by tradable asset",
         next_step="run current cross-modal alpha context after source-specific probes",
+    )
+
+
+def _cross_modal_source_split_row(root: Path) -> ExplorationRow:
+    path = root / "current_cross_modal_source_split.csv"
+    best = _best_numeric_row(path, key="priority_score")
+    if best:
+        return ExplorationRow(
+            lane="cross_modal_source_split",
+            status=best.get("paper_action", "source_split"),
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}/{best.get('source', '')}: "
+                f"{best.get('source_role', '')}, "
+                f"{best.get('source_direction', '')}, "
+                f"priority={best.get('priority_score', '')}"
+            ),
+            main_gap=best.get(
+                "missing_work",
+                "cross-modal source still needs source-level labels before collapsed paper action",
+            ),
+            next_step=best.get("next_step", "label cross-modal source components separately"),
+        )
+    return ExplorationRow(
+        lane="cross_modal_source_split",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="cross-modal context has not been split into source-level label tasks",
+        next_step="run current cross-modal source split after cross-modal alpha context",
     )
 
 
