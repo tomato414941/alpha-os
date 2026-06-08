@@ -111,6 +111,10 @@ Promote code to the library only after multiple strategies need the same shape.
   - opens the current paper-observation plan into timestamped paper tickets
 - `current_paper_tickets.md`
   - latest current paper tickets with entry marks and required records
+- `current_paper_ticket_outcomes.py`
+  - checks opened paper tickets against latest public marks after checkpoints
+- `current_paper_ticket_outcomes.md`
+  - latest paper-ticket mark outcomes and remaining evidence gaps
 - `current_symbol_opportunity_map.py`
   - symbol-level cluster generator from the current alpha stack
 - `current_symbol_opportunity_map.md`

@@ -23,6 +23,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_stack_row(root),
         _paper_probe_plan_row(root),
         _paper_tickets_row(root),
+        _paper_ticket_outcomes_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -140,6 +141,34 @@ def _paper_tickets_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="paper probe plan has not been opened into observation tickets",
         next_step="run current paper tickets after the paper probe plan",
+    )
+
+
+def _paper_ticket_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_paper_ticket_outcomes.csv"
+    rows = _csv_rows(path)
+    best = _first_ready_or_first(rows)
+    if best:
+        return ExplorationRow(
+            lane="paper_ticket_outcomes",
+            status=best.get("outcome", "paper_ticket_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('decision', '')}, "
+                f"asset={best.get('asset', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"current={best.get('current_mark', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}"
+            ),
+            main_gap=best.get("missing_evidence", "paper-ticket outcome still lacks complete evidence"),
+            next_step=best.get("next_step", "refresh and record paper-ticket outcomes"),
+        )
+    return ExplorationRow(
+        lane="paper_ticket_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="opened paper tickets have not been checked against current marks",
+        next_step="run current paper ticket outcomes after ticket checkpoints mature",
     )
 
 
@@ -3012,6 +3041,13 @@ def _csv_rows(path: Path) -> tuple[dict[str, str], ...]:
         return ()
     with path.open(newline="", encoding="utf-8") as handle:
         return tuple(csv.DictReader(handle))
+
+
+def _first_ready_or_first(rows: tuple[dict[str, str], ...]) -> dict[str, str] | None:
+    for row in rows:
+        if row.get("outcome") in {"paper_mark_win", "paper_mark_loss"}:
+            return row
+    return rows[0] if rows else None
 
 
 def _best_abs_numeric_row(path: Path, *, key: str) -> dict[str, str] | None:
