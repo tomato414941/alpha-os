@@ -1761,7 +1761,6 @@ def _event_probability_actionability_stacks(root: Path) -> tuple[AlphaStackRow, 
                 "event_probability_candidate_after_refresh_check",
                 "event_probability_candidate_after_current_quote_check",
                 "event_probability_restart_after_failed_refresh",
-                "event_probability_edge_watch",
             }
         ),
         key=lambda row: _float(row.get("score")),
@@ -1769,14 +1768,20 @@ def _event_probability_actionability_stacks(root: Path) -> tuple[AlphaStackRow, 
     )
     output: list[AlphaStackRow] = []
     for ticket in tickets[:4]:
+        status = ticket.get("status", "")
+        source_count = 6
+        if status == "event_probability_candidate_after_current_quote_check":
+            source_count = 5
+        if status == "event_probability_restart_after_failed_refresh":
+            source_count = 3
         output.append(
             AlphaStackRow(
                 opportunity="event_probability_actionability",
-                status=ticket.get("status", ""),
+                status=status,
                 side=f"{ticket.get('suggested_side', '')}: {ticket.get('question', '')}",
                 priority_score=_priority_score(
-                    ticket.get("status", ""),
-                    source_count=6,
+                    status,
+                    source_count=source_count,
                     raw_score=_float(ticket.get("score")),
                 ),
                 sources="prediction_markets + external_news + probability_gap + clob_depth + source_quality + refresh",
