@@ -25,4 +25,5 @@ uv run python -m strategies.candidate_validation.current_followup_okx_repeat_for
 uv run python -m strategies.candidate_validation.current_followup_repeat_history
 uv run python -m strategies.candidate_validation.current_followup_repeat_history_labels
 uv run python -m strategies.candidate_validation.current_followup_repeat_history_summary
+uv run python -m strategies.candidate_validation.current_repeat_execution_gate
 ```

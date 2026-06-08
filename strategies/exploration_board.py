@@ -2430,6 +2430,23 @@ def _current_btc_etf_funding_paper_ticket(path: Path) -> dict[str, str] | None:
 
 
 def _candidate_validation_row(root: Path) -> ExplorationRow:
+    repeat_gate_path = root / "candidate_validation" / "current_repeat_execution_gate.csv"
+    best_repeat_gate = _best_repeat_execution_gate_row(repeat_gate_path)
+    if best_repeat_gate:
+        return ExplorationRow(
+            lane="candidate_validation",
+            status=best_repeat_gate.get("gate_action", "repeat_execution_gate"),
+            strongest_current_signal=(
+                f"{best_repeat_gate.get('venue', '')} "
+                f"{best_repeat_gate.get('asset', '')}/{best_repeat_gate.get('source', '')}: "
+                f"labels={best_repeat_gate.get('label_count', '')}, "
+                f"hit15={best_repeat_gate.get('hit_rate_15m', '')}, "
+                f"mean15_bps={best_repeat_gate.get('mean_dir15_bps', '')}, "
+                f"rough_net15_bps={best_repeat_gate.get('rough_net15_bps', '')}"
+            ),
+            main_gap="repeat execution gate still lacks 1h confirmation, realized fill, funding PnL, stop behavior, and adverse-selection checks",
+            next_step=best_repeat_gate.get("next_step", "paper-check the best repeat execution gate candidate"),
+        )
     repeat_label_path = root / "candidate_validation" / "current_followup_repeat_forward_labels.csv"
     best_repeat_label = _best_followup_repeat_label_row(repeat_label_path)
     if best_repeat_label:
@@ -3512,6 +3529,28 @@ def _best_followup_repeat_label_row(path: Path) -> dict[str, str] | None:
         key=lambda row: (
             float(row.get("directional_return_15m") or "-inf"),
             float(row.get("priority") or "0"),
+        ),
+    )
+
+
+def _best_repeat_execution_gate_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("gate_action") == "small_repeat_paper_check"
+            and row.get("rough_net15_bps", "") != ""
+        )
+    if not rows:
+        return None
+    return max(
+        rows,
+        key=lambda row: (
+            float(row.get("rough_net15_bps") or "-inf"),
+            float(row.get("mean_dir15_bps") or "0"),
+            float(row.get("label_count") or "0"),
         ),
     )
 

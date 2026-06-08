@@ -65,6 +65,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_token_unlock_stacks(root),
         *_liquidation_intensity_stacks(root),
         *_liquidation_flow_stacks(root),
+        *_candidate_validation_repeat_execution_gate_stacks(root),
         *_candidate_validation_repeat_stacks(root),
         *_microstructure_flow_stacks(root),
         *_l2_imbalance_stacks(root),
@@ -3250,6 +3251,55 @@ def _candidate_validation_repeat_stacks(root: Path) -> tuple[AlphaStackRow, ...]
     return tuple(output)
 
 
+def _candidate_validation_repeat_execution_gate_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        (
+            row
+            for row in _read_rows(root / "candidate_validation" / "current_repeat_execution_gate.csv")
+            if row.get("gate_action") == "small_repeat_paper_check"
+        ),
+        key=lambda row: _float(row.get("rough_net15_bps")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:8]:
+        asset = row.get("asset", "")
+        source = row.get("source", "")
+        venue = row.get("venue", "")
+        status = row.get("gate_action", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{asset.lower()}_{venue.lower()}_{_safe_fragment(source)}_repeat_execution_gate",
+                status=status,
+                side=f"{_safe_fragment(source)}_repeat_paper_check",
+                priority_score=_priority_score(
+                    status,
+                    source_count=_intish(row.get("label_count")),
+                    raw_score=_float(row.get("rough_net15_bps")),
+                ),
+                sources="candidate_validation + execution_context",
+                evidence=(
+                    f"{asset}: venue={venue}, source={source}, "
+                    f"labels={row.get('label_count', '')}, "
+                    f"hit15={row.get('hit_rate_15m', '')}, "
+                    f"mean15_bps={row.get('mean_dir15_bps', '')}, "
+                    f"spread={row.get('spread_bps', '')}, "
+                    f"depth10={row.get('near_depth_10bps_notional', '')}, "
+                    f"rough_net15_bps={row.get('rough_net15_bps', '')}"
+                ),
+                conflict=(
+                    "repeat execution gate uses rough public spread and taker-cost haircut only; "
+                    "1h confirmation, realized fills, funding PnL, stop behavior, and adverse selection are missing"
+                ),
+                next_step=row.get(
+                    "next_step",
+                    f"paper-check {venue} {asset}/{source} with 1h label and fill logs",
+                ),
+            )
+        )
+    return tuple(output)
+
+
 def _repeat_summary_opportunity(group_key: str) -> str:
     return "_".join(_safe_fragment(part) for part in group_key.split("/") if part)
 
@@ -3396,6 +3446,7 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "book_trade_divergence_watch": 58.0,
         "microstructure_15m_1h_supported": 70.0,
         "microstructure_15m_supported_pending_1h": 62.0,
+        "small_repeat_paper_check": 73.0,
         "cross_venue_repeat_15m_supported": 69.0,
         "l2_imbalance_15m_1h_supported_probe": 68.0,
         "l2_imbalance_15m_only_probe": 56.0,
