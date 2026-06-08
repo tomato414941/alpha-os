@@ -380,6 +380,8 @@ def _required_record(row: dict[str, str]) -> str:
         return "APY source, custody, withdrawal path, capacity, peg, exit liquidity"
     if probe_type == "cross_modal_context_probe":
         return "source split, timestamp quality, duplicate-source check, beta attribution, spread/depth, funding, adverse move"
+    if probe_type == "cross_modal_source_probe":
+        return "source-only forward label, timestamp quality, beta attribution, spread/depth, funding, negative-control comparison"
     return "mark move, spread/fill assumption, cost, funding where relevant, stop"
 
 

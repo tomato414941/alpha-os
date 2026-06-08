@@ -17,6 +17,15 @@ POLICY_EXPANSION_STATUSES = {
     "repeat_seed_before_expansion",
     "split_failure_before_expansion",
 }
+CROSS_MODAL_SOURCE_LABEL_ACTIONS = {
+    "label_source_component",
+    "label_after_conflict_check",
+    "label_conflict_or_negative_control",
+}
+CROSS_MODAL_SOURCE_ACTIONS = CROSS_MODAL_SOURCE_LABEL_ACTIONS | {
+    "split_before_label",
+    "collect_more_evidence",
+}
 
 
 @dataclass(frozen=True)
@@ -40,6 +49,7 @@ def build_paper_probe_plan(
     *,
     stack_path: Path = ROOT / "current_alpha_stack.csv",
     policy_expansion_path: Path = ROOT / "policy_learning" / "current_policy_expansion_targets.csv",
+    cross_modal_source_split_path: Path = ROOT / "current_cross_modal_source_split.csv",
     context_frontier_path: Path = ROOT / "policy_learning" / "current_policy_context_frontier.csv",
     top: int = 50,
 ) -> tuple[PaperProbePlanRow, ...]:
@@ -48,7 +58,9 @@ def build_paper_probe_plan(
         row
         for row in _read_rows(stack_path)
         if _probe_type(row) != ""
-    ) + _policy_expansion_candidates(policy_expansion_path)
+    ) + _policy_expansion_candidates(policy_expansion_path) + _cross_modal_source_split_candidates(
+        cross_modal_source_split_path
+    )
     candidates = tuple(row for row in candidates if _context_for_row(row) not in suppressed_contexts)
     sorted_candidates = sorted(candidates, key=lambda row: _float(row.get("priority_score")), reverse=True)
     selected_candidates = _select_diverse_candidates(sorted_candidates, top=top)
@@ -259,6 +271,8 @@ def _probe_type(row: dict[str, str]) -> str:
         return "basis_term_structure_probe"
     if status in POLICY_EXPANSION_STATUSES:
         return "policy_expansion_probe"
+    if status in CROSS_MODAL_SOURCE_ACTIONS:
+        return "cross_modal_source_probe"
     if status in {
         "paper_dex_pool_momentum_watch",
         "paper_dex_reversal_risk_watch",
@@ -385,6 +399,8 @@ def _venue(*, evidence: str, sources: str) -> str:
         return "OKX"
     if "prediction_markets" in sources:
         return "prediction_market"
+    if "source=wallet_flow" in evidence:
+        return "HL"
     return ""
 
 
@@ -400,6 +416,8 @@ def _candidate_size(row: dict[str, str]) -> str:
         return "1000"
     if row.get("status") == "label_cross_modal_context":
         return "100"
+    if row.get("status") in CROSS_MODAL_SOURCE_LABEL_ACTIONS:
+        return "100"
     if row.get("status") in POLICY_EXPANSION_STATUSES:
         return "100"
     return ""
@@ -410,6 +428,8 @@ def _observation_horizon(row: dict[str, str]) -> str:
         return "15m/1h/4h"
     if row.get("status") in POLICY_EXPANSION_STATUSES:
         return "15m/1h"
+    if row.get("status") in CROSS_MODAL_SOURCE_LABEL_ACTIONS:
+        return "15m/1h/4h"
     text = " ".join((row.get("evidence", ""), row.get("next_step", ""))).lower()
     horizons = tuple(horizon for horizon in ("15m", "1h", "4h", "12h", "24h") if horizon in text)
     if horizons:
@@ -468,6 +488,40 @@ def _policy_expansion_candidates(path: Path) -> tuple[dict[str, str], ...]:
     return tuple(rows)
 
 
+def _cross_modal_source_split_candidates(path: Path) -> tuple[dict[str, str], ...]:
+    rows: list[dict[str, str]] = []
+    for row in _read_rows(path):
+        action = row.get("paper_action", "")
+        if action not in CROSS_MODAL_SOURCE_ACTIONS:
+            continue
+        symbol = row.get("symbol", "")
+        source = row.get("source", "")
+        rows.append(
+            {
+                "opportunity": f"{symbol.lower()}_{source}_cross_modal_source",
+                "status": action,
+                "side": _cross_modal_source_side(row),
+                "priority_score": row.get("priority_score", ""),
+                "sources": "cross_modal_source_split",
+                "evidence": (
+                    f"{symbol}: source={source}; role={row.get('source_role', '')}; "
+                    f"context={row.get('context_decision', '')}; {row.get('evidence', '')}"
+                ),
+                "conflict": row.get("missing_work", ""),
+                "next_step": row.get("next_step", ""),
+            }
+        )
+    return tuple(rows)
+
+
+def _cross_modal_source_side(row: dict[str, str]) -> str:
+    action = row.get("paper_action", "")
+    direction = row.get("source_direction", "")
+    if action in CROSS_MODAL_SOURCE_LABEL_ACTIONS:
+        return f"paper_{direction}" if direction in {"long", "short"} else "paper_observe"
+    return f"context_{direction}" if direction in {"long", "short"} else "context_watch"
+
+
 def _suppressed_contexts(path: Path) -> frozenset[str]:
     return frozenset(
         row.get("context", "")
@@ -508,6 +562,11 @@ def main() -> None:
         default=ROOT / "policy_learning" / "current_policy_expansion_targets.csv",
     )
     parser.add_argument(
+        "--cross-modal-source-split-path",
+        type=Path,
+        default=ROOT / "current_cross_modal_source_split.csv",
+    )
+    parser.add_argument(
         "--context-frontier-path",
         type=Path,
         default=ROOT / "policy_learning" / "current_policy_context_frontier.csv",
@@ -520,6 +579,7 @@ def main() -> None:
     rows = build_paper_probe_plan(
         stack_path=args.stack_path,
         policy_expansion_path=args.policy_expansion_path,
+        cross_modal_source_split_path=args.cross_modal_source_split_path,
         context_frontier_path=args.context_frontier_path,
         top=args.top,
     )
