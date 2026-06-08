@@ -6,10 +6,13 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+import requests
+
 from strategies.current_paper_tickets import _load_marks
 
 
 ROOT = Path(__file__).resolve().parent
+OKX_BASE_URL = "https://www.okx.com"
 
 
 @dataclass(frozen=True)
@@ -208,6 +211,10 @@ def _current_mark(
         event_key = _event_key(row.get("side", ""))
         if event_key in event_marks:
             return event_marks[event_key]
+    if row.get("venue") == "OKX":
+        okx_mark = _okx_current_mark(row.get("asset", ""))
+        if okx_mark is not None:
+            return okx_mark
     return _entry_mark(asset=row.get("asset", ""), venue=row.get("venue", ""), marks=marks)
 
 
@@ -235,6 +242,27 @@ def _load_event_probability_marks(
 
 def _event_key(side: str) -> str:
     return side.strip()
+
+
+def _okx_current_mark(asset: str) -> tuple[str, str] | None:
+    if not asset:
+        return None
+    try:
+        response = requests.get(
+            f"{OKX_BASE_URL}/api/v5/market/ticker",
+            params={"instId": f"{asset.upper()}-USDT-SWAP"},
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException:
+        return None
+    data = response.json().get("data", ())
+    if not data:
+        return None
+    mark = data[0].get("last", "")
+    if not mark:
+        return None
+    return str(mark), "okx_ticker"
 
 
 def _mark_outcome(

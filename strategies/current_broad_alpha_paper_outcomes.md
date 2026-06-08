@@ -12,12 +12,24 @@ This checks opened paper tickets against the latest available public marks. It i
 | broad-paper-06-hype-lane-repeat-hype-volume-price-dislocation | pending | paper_long | HYPE |  | 63.504000000000 | 63.504000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-07-eth-seed-wallet-flow-public-hypertracker-example-eth-wallet-flow-actionability | pending | paper_long | ETH |  | 1687.400000000000 | 1687.400000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-08-apt-seed-wallet-flow-public-hypertracker-example-apt-wallet-flow-actionability | pending | paper_long | APT |  | 0.682000000000 | 0.682000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| broad-paper-09-beat-liquidation-intensity-beat-long-liquidation-cascade-watch | pending | paper_long | BEAT | OKX |  |  |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
-| broad-paper-10-allo-liquidation-intensity-allo-long-liquidation-cascade-watch | pending | paper_long | ALLO | OKX |  |  |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-09-beat-liquidation-intensity-beat-long-liquidation-cascade-watch | pending | paper_long | BEAT | OKX | 4.3527 | 4.3792 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-10-allo-liquidation-intensity-allo-long-liquidation-cascade-watch | pending | paper_long | ALLO | OKX | 0.39705 | 0.39596 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-11-btc-btc-etf-funding-hyperliquid | pending | paper_short | BTC | HL | 63490.000000000000 | 63490.000000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-12-jto-market-breadth-jto-long-momentum-watch | pending | paper_short | JTO |  | 0.633810000000 | 0.633810000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-13-xpl-market-breadth-xpl-long-reversal | pending | paper_long | XPL |  | 0.072000000000 | 0.072000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 | broad-paper-14-eth-option-options-volatility-eth-2026-06-10 | pending | paper_observe | ETH-OPTION |  |  |  |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-15-eth-option-options-volatility-eth-2026-06-12 | pending | paper_observe | ETH-OPTION |  |  |  |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-16-eth-option-options-volatility-eth-2026-06-26 | pending | paper_observe | ETH-OPTION |  |  |  |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-17-pol-stablecoin-proxy-stablecoin-flow-polygon-pol | pending | paper_short | POL | OKX | 0.080970000000 | 0.07838 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-18-hype-token-unlock-hype | pending | paper_short | HYPE |  | 63.504000000000 | 63.504000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-19-zro-token-unlock-zro | pending | paper_short | ZRO |  | 0.876290000000 | 0.876290000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-20-eigen-token-unlock-eigen | pending | paper_short | EIGEN |  | 0.183800000000 | 0.183800000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-21-aave-protocol-fee-aave-v3 | pending | paper_long | AAVE | HL | 64.106000000000 | 64.106000000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-22-crv-protocol-fee-curve-dex | pending | paper_long | CRV | HL | 0.199890000000 | 0.199890000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-23-morpho-protocol-fee-morpho-blue | pending | paper_long | MORPHO | HL | 1.831500000000 | 1.831500000000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-24-event-event-probability-1962237-yes | pending | paper_long | EVENT |  | 0.170000 | 0.170000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-25-event-event-probability-2296152-yes | pending | paper_long | EVENT |  | 0.160000 | 0.160000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
+| broad-paper-26-event-event-probability-947269-no | pending | paper_long | EVENT |  | 0.170000 | 0.170000 |  | pending | checkpoint has not matured | wait for the first checkpoint and refresh marks |
 
 ## Summary
 
@@ -26,4 +38,4 @@ This checks opened paper tickets against the latest available public marks. It i
 - losses: 0
 - flat: 0
 - observations: 0
-- pending: 14
+- pending: 26

@@ -6,11 +6,14 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 
+import requests
+
 from strategies.current_paper_tickets import PaperTicket, _load_marks, write_paper_tickets_csv, write_paper_tickets_md
 
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_TOP_PER_SOURCE = 3
+OKX_BASE_URL = "https://www.okx.com"
 
 
 def build_broad_alpha_paper_tickets(
@@ -35,12 +38,17 @@ def build_broad_alpha_paper_tickets(
         + _btc_funding_candidates(top_per_source)
         + _market_breadth_candidates(top_per_source)
         + _option_watch_candidates(top_per_source)
+        + _stablecoin_proxy_candidates(top_per_source)
+        + _token_unlock_candidates(top_per_source)
+        + _protocol_fee_candidates(top_per_source)
+        + _event_probability_candidates(top_per_source)
     )
+    marks.update(_okx_marks_for_candidates(candidates))
     tickets: list[PaperTicket] = []
     seen: set[tuple[str, str]] = set()
     rank = 1
     for candidate in candidates:
-        key = (candidate["asset"], candidate["decision"])
+        key = _dedupe_key(candidate)
         if key in seen:
             continue
         seen.add(key)
@@ -258,6 +266,101 @@ def _option_watch_candidates(top: int) -> tuple[dict[str, str], ...]:
     )
 
 
+def _stablecoin_proxy_candidates(top: int) -> tuple[dict[str, str], ...]:
+    return tuple(
+        {
+            "source": f"stablecoin_proxy:{row.get('ticket_id', '')}",
+            "asset": row.get("asset", ""),
+            "decision": row.get("decision", ""),
+            "side": row.get("side", ""),
+            "status": row.get("status", ""),
+            "required_record": row.get("required_record", ""),
+            "next_step": row.get("next_step", ""),
+            "venue": row.get("venue", ""),
+            "size_usd": row.get("candidate_size_usd", "100"),
+            "horizon": row.get("observation_horizon", "1h,4h"),
+            "checkpoints": row.get("checkpoints", "1h,4h"),
+            "entry_mark": row.get("entry_mark", ""),
+            "entry_source": row.get("entry_source", ""),
+        }
+        for row in _top_rows(
+            ROOT / "stablecoin_liquidity" / "current_stablecoin_flow_proxy_tickets.csv",
+            "rank",
+            top,
+            reverse=False,
+        )
+    )
+
+
+def _token_unlock_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = tuple(
+        row
+        for row in _top_rows(ROOT / "token_unlocks" / "current_token_unlock_paper_tickets.csv", "score", top * 2)
+        if row.get("status") == "paper_short_candidate"
+    )[:top]
+    return tuple(
+        _directional_candidate(
+            source=f"token_unlock:{row.get('symbol', '')}",
+            asset=row.get("symbol", ""),
+            decision="paper_short" if row.get("side") == "short" else "paper_observe",
+            status=row.get("status", ""),
+            required_record="event window, mark move, funding, depth, crowding, stop",
+            next_step=f"paper-check {row.get('symbol', '')} token unlock short with event-window and funding logs",
+            score=row.get("score", ""),
+        )
+        for row in rows
+    )
+
+
+def _protocol_fee_candidates(top: int) -> tuple[dict[str, str], ...]:
+    return tuple(
+        _directional_candidate(
+            source=f"protocol_fee:{row.get('protocol', '')}",
+            asset=row.get("token_symbol", ""),
+            decision="paper_long" if row.get("side") == "long_token" else "paper_observe",
+            status="protocol_fee_paper_observation",
+            required_record="4h/12h/24h return, funding, spread, depth, fee-growth persistence",
+            next_step=row.get("next_step", ""),
+            score=row.get("thesis_score", ""),
+            size_usd=row.get("paper_notional_usd", "100"),
+            venue="HL",
+            horizon=row.get("observation_horizons", "4h,12h,24h"),
+            checkpoints=row.get("observation_horizons", "4h,12h,24h"),
+        )
+        for row in _top_rows(
+            ROOT / "protocol_fundamentals" / "current_protocol_fee_paper_tickets.csv",
+            "thesis_score",
+            top,
+        )
+    )
+
+
+def _event_probability_candidates(top: int) -> tuple[dict[str, str], ...]:
+    rows = _top_rows(
+        ROOT / "prediction_markets" / "current_event_probability_paper_tickets.csv",
+        "score",
+        top,
+    )
+    return tuple(
+        {
+            "source": f"event_probability:{row.get('market_id', '')}:{row.get('outcome_to_buy', '')}",
+            "asset": "EVENT",
+            "decision": "paper_long",
+            "side": f"{row.get('suggested_side', '')}: {row.get('question', '')}",
+            "status": row.get("status", ""),
+            "required_record": "quote refresh, depth, fee, fill assumption, source quality, event-resolution risk",
+            "next_step": f"refresh quote and source quality for {row.get('question', '')}",
+            "score": row.get("score", ""),
+            "horizon": "1h,4h",
+            "checkpoints": "1h,4h",
+            "size_usd": row.get("max_loss_per_share", "0.10"),
+            "entry_mark": row.get("entry_ask", ""),
+            "entry_source": "event_probability_entry_ask",
+        }
+        for row in rows
+    )
+
+
 def _directional_candidate(
     *,
     source: str,
@@ -269,6 +372,8 @@ def _directional_candidate(
     score: str,
     venue: str = "",
     size_usd: str = "100",
+    horizon: str = "15m,1h,4h",
+    checkpoints: str = "15m,1h,4h",
 ) -> dict[str, str]:
     decision = "paper_short" if decision == "paper_short" else "paper_long"
     return {
@@ -282,9 +387,17 @@ def _directional_candidate(
         "score": score,
         "venue": venue,
         "size_usd": size_usd,
-        "horizon": "15m,1h,4h",
-        "checkpoints": "15m,1h,4h",
+        "horizon": horizon,
+        "checkpoints": checkpoints,
     }
+
+
+def _dedupe_key(candidate: dict[str, str]) -> tuple[str, str, str]:
+    asset = candidate["asset"]
+    decision = candidate["decision"]
+    if asset == "EVENT" or asset.endswith("-OPTION"):
+        return (asset, decision, candidate["source"])
+    return (asset, decision, "")
 
 
 def _wallet_decision(side: str) -> str:
@@ -305,8 +418,37 @@ def _entry_mark(
     return "", ""
 
 
-def _top_rows(path: Path, score_field: str, top: int) -> tuple[dict[str, str], ...]:
-    return tuple(sorted(_read_rows(path), key=lambda row: _float(row.get(score_field)), reverse=True)[:top])
+def _okx_marks_for_candidates(candidates: tuple[dict[str, str], ...]) -> dict[tuple[str, str], tuple[str, str]]:
+    assets = sorted(
+        {
+            candidate["asset"].upper()
+            for candidate in candidates
+            if candidate.get("venue") == "OKX" and candidate.get("asset")
+        }
+    )
+    if not assets:
+        return {}
+    try:
+        response = requests.get(
+            f"{OKX_BASE_URL}/api/v5/market/tickers",
+            params={"instType": "SWAP"},
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException:
+        return {}
+    marks: dict[tuple[str, str], tuple[str, str]] = {}
+    wanted = {f"{asset}-USDT-SWAP": asset for asset in assets}
+    for item in response.json().get("data", ()):
+        asset = wanted.get(str(item.get("instId", "")))
+        mark = item.get("last", "")
+        if asset and mark:
+            marks[("OKX", asset)] = (str(mark), "okx_ticker")
+    return marks
+
+
+def _top_rows(path: Path, score_field: str, top: int, *, reverse: bool = True) -> tuple[dict[str, str], ...]:
+    return tuple(sorted(_read_rows(path), key=lambda row: _float(row.get(score_field)), reverse=reverse)[:top])
 
 
 def _existing_tickets(path: Path | None) -> tuple[PaperTicket, ...]:
