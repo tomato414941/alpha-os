@@ -1877,6 +1877,32 @@ def _speculative_beta_row(root: Path) -> ExplorationRow:
 
 
 def _event_flow_row(root: Path) -> ExplorationRow:
+    replay_path = root / "event_flow" / "current_lob_execution_world_replay.csv"
+    replay_rows = tuple(
+        row
+        for row in _csv_rows(replay_path)
+        if row.get("decision") not in {"hold_baseline", "worse_than_hold", "no_test_samples"}
+    )
+    if replay_rows:
+        best = max(replay_rows, key=_lob_execution_replay_sort_key)
+        return ExplorationRow(
+            lane="event_flow",
+            status=best.get("decision", "lob_execution_world_replay"),
+            strongest_current_signal=(
+                f"{best.get('feature', '')} {best.get('bucket', '')} "
+                f"{best.get('signal_action', '')}/{best.get('execution_action', '')}, "
+                f"net={best.get('net_reward_bps', '')}bps, "
+                f"hit={best.get('hit_rate', '')}"
+            ),
+            main_gap=(
+                "LOB replay is still a tiny diagnostic; maker/internalized actions need queue/fill, "
+                "adverse-selection, cancellation, and longer OOS evidence"
+            ),
+            next_step=best.get(
+                "next_step",
+                "turn the strongest replay action into a queue/fill-aware execution probe",
+            ),
+        )
     cost_sweep_path = root / "event_flow" / "book_depth_execution_cost_sweep.csv"
     cost_sweep_rows = _csv_rows(cost_sweep_path)
     if cost_sweep_rows:
@@ -1944,6 +1970,22 @@ def _event_flow_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="tiny sample and naive label; no order book or liquidation context",
         next_step="extend sample window and add liquidation/funding-time labels",
+    )
+
+
+def _lob_execution_replay_sort_key(row: dict[str, str]) -> tuple[int, float, float]:
+    decision_rank = {
+        "market_action_candidate": 800,
+        "low_fee_action_candidate": 700,
+        "maker_fill_model_needed": 600,
+        "market_tail_candidate": 500,
+        "low_fee_tail_candidate": 400,
+        "maker_tail_or_queue_research": 300,
+    }.get(row.get("decision", ""), 0)
+    return (
+        decision_rank,
+        float(row.get("net_reward_bps") or "-inf"),
+        float(row.get("hit_rate") or "-inf"),
     )
 
 

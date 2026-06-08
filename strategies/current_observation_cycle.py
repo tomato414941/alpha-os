@@ -102,6 +102,7 @@ DEFAULT_COMMANDS = (
     ("strategies.anomaly_stress.current_cross_market_stress_anomaly",),
     ("strategies.anomaly_stress.current_peg_anomaly_tradeability",),
     ("strategies.execution_edge.current_execution_mode_candidates",),
+    ("strategies.event_flow.current_lob_execution_world_replay",),
     ("strategies.current_alpha_stack",),
     ("strategies.current_paper_probe_plan",),
     ("strategies.current_paper_ticket_outcomes",),

@@ -36,6 +36,7 @@ uv run python -m strategies.event_flow.fetch_book_depth_sample
 uv run python -m strategies.event_flow.book_depth_imbalance_screen
 uv run python -m strategies.event_flow.book_depth_walk_forward_check
 uv run python -m strategies.event_flow.book_depth_execution_cost_sweep
+uv run python -m strategies.event_flow.current_lob_execution_world_replay
 ```
 
 ## Current Status
@@ -50,3 +51,5 @@ The book-depth diagnostic asks whether shallow/deep liquidity imbalance, perp
 basis, and positioning context predict the next 1-minute close-to-close return.
 The walk-forward check chooses direction from the train side, skips a purge
 window, and checks whether the test side survives explicit round-trip costs.
+The LOB execution-world replay then compares hold, market, low-fee, and
+maker/internalized actions against the same train/test split.
