@@ -78,6 +78,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _surviving_alpha_fill_audit_outcomes_row(root),
         _broad_alpha_paper_tickets_row(root),
         _broad_alpha_paper_outcomes_row(root),
+        _broad_alpha_paper_action_queue_row(root),
+        _broad_alpha_paper_fill_risk_check_row(root),
         _surviving_alpha_exit_regime_candidates_row(root),
         _surviving_alpha_exit_regime_tickets_row(root),
         _surviving_alpha_exit_regime_outcomes_row(root),
@@ -1966,6 +1968,57 @@ def _broad_alpha_paper_outcomes_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="broad paper tickets have not been marked",
         next_step="run broad alpha paper outcomes after opening tickets",
+    )
+
+
+def _broad_alpha_paper_action_queue_row(root: Path) -> ExplorationRow:
+    path = root / "current_broad_alpha_paper_action_queue.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="broad_alpha_paper_action_queue",
+            status=best.get("action", "broad_alpha_paper_action"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')} {best.get('decision', '')}, "
+                f"dir={best.get('directional_return_bps', '')}, "
+                f"outcome={best.get('outcome', '')}"
+            ),
+            main_gap=best.get("reason", "broad paper action still needs follow-up evidence"),
+            next_step=best.get("next_step", "run the top broad paper action"),
+        )
+    return ExplorationRow(
+        lane="broad_alpha_paper_action_queue",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="broad paper outcomes have not been converted into actions",
+        next_step="run broad alpha paper action queue after outcomes",
+    )
+
+
+def _broad_alpha_paper_fill_risk_check_row(root: Path) -> ExplorationRow:
+    path = root / "current_broad_alpha_paper_fill_risk_check.csv"
+    best = _best_numeric_row(path, key="estimated_net_after_cost_bps")
+    if best:
+        return ExplorationRow(
+            lane="broad_alpha_paper_fill_risk_check",
+            status=best.get("risk_action", "broad_fill_risk_check"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')} {best.get('decision', '')}, "
+                f"net={best.get('estimated_net_after_cost_bps', '')}, "
+                f"spread={best.get('spread_bps', '')}, "
+                f"usage={best.get('visible_depth_usage', '')}"
+            ),
+            main_gap=best.get("reason", "broad paper winner still needs fill and risk evidence"),
+            next_step=best.get("next_step", "repeat cost-adjusted broad paper winner"),
+        )
+    return ExplorationRow(
+        lane="broad_alpha_paper_fill_risk_check",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="broad paper winners have not been checked against cost and depth",
+        next_step="run broad alpha paper fill risk check after action queue",
     )
 
 
