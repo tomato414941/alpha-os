@@ -4,16 +4,16 @@ This joins DeFiLlama annualized protocol fees to CoinGecko market cap and FDV. I
 
 | token | protocol | status | fee / mcap | fee / fdv | growth 7d | funding | score | reason |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| JUP | Jupiter Perpetual Exchange | paper_value_growth_candidate | 0.5995 | 0.2900 | 196.60 | 0.0743 | 68.8347 | fee yield and growth are both strong |
-| AAVE | Aave V3 | paper_value_growth_candidate | 0.9828 | 0.9324 | 128.95 | -0.0844 | 66.4475 | fee yield and growth are both strong |
-| ENA | Ethena USDe | watch | 0.4361 | 0.2702 | 27.29 | 0.0403 | 58.3843 | valuation context is not decisive |
-| UNI | Uniswap V3 | paper_value_growth_candidate | 0.3295 | 0.2293 | 95.01 | 0.1095 | 57.6782 | fee yield and growth are both strong |
-| AERO | Aerodrome Slipstream | watch | 0.3474 | 0.1722 | 28.89 | -0.6154 | 48.6607 | valuation context is not decisive |
-| CRV | Curve DEX | paper_value_growth_candidate | 0.1865 | 0.1188 | 190.42 | 0.1095 | 40.0555 | fee yield and growth are both strong |
-| MORPHO | Morpho Blue | paper_value_growth_candidate | 0.1828 | 0.1181 | 151.57 | 0.1095 | 37.6734 | fee yield and growth are both strong |
-| PENDLE | Pendle | paper_value_watch | 0.1174 | 0.0712 | 118.68 | -0.0018 | 24.7936 | fee yield is material and fees are growing |
-| UNI | Uniswap V4 | watch | 0.1499 | 0.1043 | -38.41 | 0.1095 | 23.4944 | valuation context is not decisive |
-| HYPE | Hyperliquid Perps | watch | 0.0748 | 0.0174 | 99.26 | -0.0682 | 14.1887 | valuation context is not decisive |
-| ETH | Ethereum | watch | 0.0015 | 0.0015 | 76.03 | -0.1570 | 4.1110 | valuation context is not decisive |
-| HYPE | Hyper Foundation HYPE Staking | watch | 0.0196 | 0.0046 | 8.24 | -0.0682 | 2.8336 | valuation context is not decisive |
-| SOL | Solana | expensive_fee_decay_watch | 0.0082 | 0.0075 | -8.44 | -0.3825 | 1.1459 | fee yield is low and fees are decelerating |
+| JUP | Jupiter Perpetual Exchange | paper_value_growth_candidate | 0.5887 | 0.2848 | 204.43 | 0.0143 | 68.7048 | fee yield and growth are both strong |
+| AAVE | Aave V3 | paper_value_growth_candidate | 0.9721 | 0.9222 | 129.80 | -0.0844 | 66.4900 | fee yield and growth are both strong |
+| ENA | Ethena USDe | watch | 0.4309 | 0.2670 | 27.49 | 0.0403 | 58.0701 | valuation context is not decisive |
+| UNI | Uniswap V3 | paper_value_growth_candidate | 0.3267 | 0.2273 | 105.16 | 0.1095 | 57.9894 | fee yield and growth are both strong |
+| AERO | Aerodrome Slipstream | watch | 0.3387 | 0.1679 | 40.32 | -0.7209 | 48.8034 | valuation context is not decisive |
+| CRV | Curve DEX | paper_value_growth_candidate | 0.1855 | 0.1182 | 210.10 | 0.1095 | 40.8691 | fee yield and growth are both strong |
+| MORPHO | Morpho Blue | paper_value_growth_candidate | 0.1792 | 0.1158 | 140.56 | 0.0839 | 36.5336 | fee yield and growth are both strong |
+| PENDLE | Pendle | paper_value_watch | 0.1156 | 0.0701 | 158.55 | 0.0081 | 26.4929 | fee yield is material and fees are growing |
+| UNI | Uniswap V4 | watch | 0.1491 | 0.1037 | -33.04 | 0.1095 | 23.6292 | valuation context is not decisive |
+| HYPE | Hyperliquid Perps | watch | 0.0722 | 0.0168 | 93.34 | -0.0682 | 13.5671 | valuation context is not decisive |
+| ETH | Ethereum | watch | 0.0015 | 0.0015 | 73.63 | -0.1570 | 3.9870 | valuation context is not decisive |
+| HYPE | Hyper Foundation HYPE Staking | expensive_fee_decay_watch | 0.0190 | 0.0044 | -10.50 | -0.0682 | 1.8132 | fee yield is low and fees are decelerating |
+| SOL | Solana | expensive_fee_decay_watch | 0.0081 | 0.0074 | -18.52 | -0.3825 | 0.6250 | fee yield is low and fees are decelerating |

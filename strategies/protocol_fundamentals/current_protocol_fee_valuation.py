@@ -258,7 +258,13 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    rows = build_protocol_fee_valuation_rows()
+    try:
+        rows = build_protocol_fee_valuation_rows()
+    except requests.RequestException as exc:
+        if args.output_path.exists() and args.markdown_output_path.exists():
+            print(f"preserving existing protocol fee valuation after market fetch failure: {exc}")
+            return
+        raise
     write_protocol_fee_valuation_csv(rows, output_path=args.output_path)
     write_protocol_fee_valuation_md(rows, output_path=args.markdown_output_path)
     for row in rows[:10]:

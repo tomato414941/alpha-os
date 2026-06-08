@@ -303,9 +303,15 @@ def main() -> None:
     parser.add_argument("--top", type=int, default=20)
     args = parser.parse_args()
 
-    rows = build_protocol_fee_price_context_rows(
-        valuation_path=args.valuation_path,
-    )
+    try:
+        rows = build_protocol_fee_price_context_rows(
+            valuation_path=args.valuation_path,
+        )
+    except requests.RequestException as exc:
+        if args.output_path.exists() and args.markdown_output_path.exists():
+            print(f"preserving existing protocol fee price context after market fetch failure: {exc}")
+            return
+        raise
     write_protocol_fee_price_context_csv(rows, output_path=args.output_path)
     write_protocol_fee_price_context_md(rows, output_path=args.markdown_output_path, top=args.top)
     for row in rows[: args.top]:

@@ -4,19 +4,19 @@ This joins protocol fee-growth valuation to current CoinGecko price movement. It
 
 | token | protocol | status | score | fee/mcap | fee/fdv | fee growth 7d | price 24h | price 7d | price 30d | next step |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| JUP | Jupiter Perpetual Exchange | fee_growth_price_lag_candidate | 94.3453 | 0.6135 | 0.2969 | 196.60 | 3.14 | -16.66 | -35.75 | paper-label JUP as fee-growth lag setup over 4h, 12h, 24h, and 7d |
-| AAVE | Aave V3 | fee_growth_price_lag_candidate | 87.8950 | 1.0017 | 0.9503 | 128.95 | 6.21 | -21.58 | -33.47 | paper-label AAVE as fee-growth lag setup over 4h, 12h, 24h, and 7d |
-| UNI | Uniswap V3 | fee_growth_price_lag_candidate | 77.9108 | 0.3375 | 0.2348 | 95.01 | 5.15 | -14.93 | -30.34 | paper-label UNI as fee-growth lag setup over 4h, 12h, 24h, and 7d |
-| MORPHO | Morpho Blue | fee_growth_price_lag_candidate | 60.8602 | 0.1865 | 0.1205 | 151.57 | 4.99 | -19.85 | -18.90 | paper-label MORPHO as fee-growth lag setup over 4h, 12h, 24h, and 7d |
-| ENA | Ethena USDe | fee_price_context_watch | 60.2752 | 0.4446 | 0.2755 | 27.29 | 0.12 | 3.23 | -32.74 | collect another ENA fee and price snapshot before promotion |
-| CRV | Curve DEX | fee_growth_price_lag_candidate | 59.1753 | 0.1902 | 0.1212 | 190.42 | 7.64 | -8.99 | -24.04 | paper-label CRV as fee-growth lag setup over 4h, 12h, 24h, and 7d |
-| AERO | Aerodrome Slipstream | fee_price_context_watch | 50.5962 | 0.3573 | 0.1771 | 28.89 | 6.70 | -18.11 | -25.78 | collect another AERO fee and price snapshot before promotion |
-| PENDLE | Pendle | fee_growth_price_lag_candidate | 39.2389 | 0.1204 | 0.0730 | 118.68 | 3.81 | -8.03 | -39.24 | paper-label PENDLE as fee-growth lag setup over 4h, 12h, 24h, and 7d |
-| UNI | Uniswap V4 | fee_decay_price_weakness_context | 32.1903 | 0.1535 | 0.1068 | -38.41 | 5.15 | -14.93 | -30.34 | test whether UNI fee decay and weak price persist before any short thesis |
-| HYPE | Hyperliquid Perps | fee_price_context_watch | 19.3177 | 0.0762 | 0.0177 | 99.26 | 5.34 | -15.08 | 37.43 | collect another HYPE fee and price snapshot before promotion |
-| SOL | Solana | fee_decay_price_weakness_context | 10.7636 | 0.0084 | 0.0077 | -8.44 | 7.48 | -19.08 | -28.18 | test whether SOL fee decay and weak price persist before any short thesis |
-| ETH | Ethereum | fee_price_context_watch | 7.9236 | 0.0016 | 0.0016 | 76.03 | 7.86 | -16.21 | -27.19 | collect another ETH fee and price snapshot before promotion |
-| HYPE | Hyper Foundation HYPE Staking | fee_price_context_watch | 3.2891 | 0.0200 | 0.0047 | 8.24 | 5.34 | -15.08 | 37.43 | collect another HYPE fee and price snapshot before promotion |
+| JUP | Jupiter Perpetual Exchange | fee_growth_price_lag_candidate | 93.9263 | 0.5887 | 0.2848 | 204.43 | 3.55 | -16.78 | -35.70 | paper-label JUP as fee-growth lag setup over 4h, 12h, 24h, and 7d |
+| AAVE | Aave V3 | fee_growth_price_lag_candidate | 87.9800 | 0.9721 | 0.9222 | 129.80 | 5.29 | -21.82 | -32.87 | paper-label AAVE as fee-growth lag setup over 4h, 12h, 24h, and 7d |
+| UNI | Uniswap V3 | fee_growth_price_lag_candidate | 77.8233 | 0.3267 | 0.2273 | 105.16 | 4.46 | -14.58 | -30.21 | paper-label UNI as fee-growth lag setup over 4h, 12h, 24h, and 7d |
+| CRV | Curve DEX | fee_growth_price_lag_candidate | 59.9474 | 0.1855 | 0.1182 | 210.10 | 6.12 | -8.57 | -23.50 | paper-label CRV as fee-growth lag setup over 4h, 12h, 24h, and 7d |
+| ENA | Ethena USDe | fee_price_context_watch | 59.4446 | 0.4309 | 0.2670 | 27.49 | 0.71 | 2.49 | -31.83 | collect another ENA fee and price snapshot before promotion |
+| MORPHO | Morpho Blue | fee_growth_price_lag_candidate | 58.5616 | 0.1792 | 0.1158 | 140.56 | 6.04 | -19.06 | -16.35 | paper-label MORPHO as fee-growth lag setup over 4h, 12h, 24h, and 7d |
+| AERO | Aerodrome Slipstream | fee_price_context_watch | 50.8194 | 0.3387 | 0.1679 | 40.32 | 8.20 | -16.56 | -24.13 | collect another AERO fee and price snapshot before promotion |
+| PENDLE | Pendle | fee_growth_price_lag_candidate | 40.2142 | 0.1156 | 0.0701 | 158.55 | 5.23 | -5.79 | -37.96 | paper-label PENDLE as fee-growth lag setup over 4h, 12h, 24h, and 7d |
+| UNI | Uniswap V4 | fee_decay_price_weakness_context | 31.9772 | 0.1491 | 0.1037 | -33.04 | 4.46 | -14.58 | -30.21 | test whether UNI fee decay and weak price persist before any short thesis |
+| HYPE | Hyperliquid Perps | fee_price_context_watch | 18.2341 | 0.0722 | 0.0168 | 93.34 | 7.88 | -14.98 | 42.41 | collect another HYPE fee and price snapshot before promotion |
+| HYPE | Hyper Foundation HYPE Staking | fee_decay_price_weakness_context | 11.2882 | 0.0190 | 0.0044 | -10.50 | 7.88 | -14.98 | 42.41 | test whether HYPE fee decay and weak price persist before any short thesis |
+| SOL | Solana | fee_decay_price_weakness_context | 9.6990 | 0.0081 | 0.0074 | -18.52 | 7.34 | -18.76 | -27.31 | test whether SOL fee decay and weak price persist before any short thesis |
+| ETH | Ethereum | fee_price_context_watch | 7.6685 | 0.0015 | 0.0015 | 73.63 | 8.74 | -15.06 | -26.20 | collect another ETH fee and price snapshot before promotion |
 
 ## Interpretation
 
