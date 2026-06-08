@@ -137,6 +137,7 @@ def build_alpha_source_gaps(
     book_depth_screen_path: Path = ROOT / "event_flow" / "book_depth_imbalance_screen.csv",
     book_depth_walk_forward_path: Path = ROOT / "event_flow" / "book_depth_walk_forward_check.csv",
     book_depth_execution_cost_sweep_path: Path = ROOT / "event_flow" / "book_depth_execution_cost_sweep.csv",
+    lob_maker_fill_survival_path: Path = ROOT / "event_flow" / "current_lob_maker_fill_survival.csv",
     news_event_forward_labels_path: Path = ROOT / "news_social" / "current_news_event_forward_labels.csv",
     news_event_quality_gate_path: Path = ROOT / "news_social" / "current_news_event_quality_gate.csv",
     news_event_source_independence_path: Path = ROOT / "news_social" / "current_news_event_source_independence.csv",
@@ -153,6 +154,7 @@ def build_alpha_source_gaps(
     book_depth_screen_rows = _read_rows(book_depth_screen_path)
     book_depth_walk_forward_rows = _read_rows(book_depth_walk_forward_path)
     book_depth_execution_cost_sweep_rows = _read_rows(book_depth_execution_cost_sweep_path)
+    lob_maker_fill_survival_rows = _read_rows(lob_maker_fill_survival_path)
     news_event_forward_label_rows = _read_rows(news_event_forward_labels_path)
     news_event_quality_gate_rows = _read_rows(news_event_quality_gate_path)
     news_event_source_independence_rows = _read_rows(news_event_source_independence_path)
@@ -167,6 +169,7 @@ def build_alpha_source_gaps(
             book_depth_screen_rows=book_depth_screen_rows,
             book_depth_walk_forward_rows=book_depth_walk_forward_rows,
             book_depth_execution_cost_sweep_rows=book_depth_execution_cost_sweep_rows,
+            lob_maker_fill_survival_rows=lob_maker_fill_survival_rows,
             news_event_forward_label_rows=news_event_forward_label_rows,
             news_event_quality_gate_rows=news_event_quality_gate_rows,
             news_event_source_independence_rows=news_event_source_independence_rows,
@@ -245,6 +248,7 @@ def _build_gap(
     book_depth_screen_rows: tuple[dict[str, str], ...],
     book_depth_walk_forward_rows: tuple[dict[str, str], ...],
     book_depth_execution_cost_sweep_rows: tuple[dict[str, str], ...],
+    lob_maker_fill_survival_rows: tuple[dict[str, str], ...],
     news_event_forward_label_rows: tuple[dict[str, str], ...],
     news_event_quality_gate_rows: tuple[dict[str, str], ...],
     news_event_source_independence_rows: tuple[dict[str, str], ...],
@@ -253,7 +257,33 @@ def _build_gap(
 ) -> AlphaSourceGap:
     available = _available_probe_rows(probe_rows, rule)
     missing_required = tuple(name for name in rule.required_probe_names if not _probe_available(probe_rows, name=name))
-    if rule.gap_id == "lob_ofi_hierarchical_model" and book_depth_execution_cost_sweep_rows:
+    if rule.gap_id == "lob_ofi_hierarchical_model" and lob_maker_fill_survival_rows:
+        best = max(lob_maker_fill_survival_rows, key=lambda row: _float(row.get("survival_score")))
+        status = best.get("survival_status", "maker_fill_checked")
+        coverage = (
+            f"{best.get('source_probe', '')}/{best.get('feature', '')}/{best.get('bucket', '')}/"
+            f"{best.get('signal_action', '')} fill_rate={best.get('fill_rate', '')} "
+            f"filled_bps={best.get('filled_mark_reward_bps', '')} "
+            f"all_bps={best.get('all_state_reward_bps', '')} "
+            f"adverse={best.get('adverse_fill_rate', '')}"
+        )
+        priority = rule.base_priority + 10.0
+        next_probe = best.get(
+            "next_step",
+            "replace optimistic maker full-fill rows with queue/cancel labels before promotion",
+        )
+    elif rule.gap_id == "rl_execution_policy" and lob_maker_fill_survival_rows:
+        best = max(lob_maker_fill_survival_rows, key=lambda row: _float(row.get("survival_score")))
+        status = "maker_fill_proxy_blocks_policy"
+        coverage = (
+            f"{best.get('source_probe', '')}/{best.get('feature', '')}/{best.get('bucket', '')}/"
+            f"{best.get('signal_action', '')} fill_rate={best.get('fill_rate', '')} "
+            f"filled_bps={best.get('filled_mark_reward_bps', '')} "
+            f"adverse={best.get('adverse_fill_rate', '')}"
+        )
+        priority = rule.base_priority + 8.0
+        next_probe = "add real queue position, cancel-before-cross, partial-fill, and post-fill adverse-selection labels"
+    elif rule.gap_id == "lob_ofi_hierarchical_model" and book_depth_execution_cost_sweep_rows:
         best = max(book_depth_execution_cost_sweep_rows, key=lambda row: _float(row.get("viability_score")))
         status = best.get("viability_status", "execution_cost_swept")
         coverage = (
