@@ -29,6 +29,9 @@ class PolicyLearningSample:
 
 OUTCOME_PATHS = (
     ("paper", ROOT / "current_paper_ticket_outcomes.csv"),
+    ("broad_alpha_paper", ROOT / "current_broad_alpha_paper_outcomes.csv"),
+    ("broad_alpha_repeat", ROOT / "current_broad_alpha_repeat_outcomes.csv"),
+    ("ofi", ROOT / "event_flow" / "current_ofi_paper_outcomes.csv"),
     ("repeat", ROOT / "current_promoted_ticket_repeat_outcomes.csv"),
     ("second_repeat", ROOT / "current_second_promoted_ticket_repeat_outcomes.csv"),
     ("symbol_lane", ROOT / "current_symbol_lane_paper_outcomes.csv"),
@@ -37,6 +40,9 @@ OUTCOME_PATHS = (
 
 FILL_RISK_PATHS = (
     ROOT / "current_paper_ticket_fill_risk_check.csv",
+    ROOT / "current_broad_alpha_paper_fill_risk_check.csv",
+    ROOT / "current_broad_alpha_repeat_fill_risk_check.csv",
+    ROOT / "event_flow" / "current_ofi_paper_fill_risk_check.csv",
     ROOT / "current_promoted_ticket_repeat_fill_risk_check.csv",
     ROOT / "current_second_promoted_ticket_repeat_fill_risk_check.csv",
     ROOT / "current_symbol_lane_paper_fill_risk_check.csv",

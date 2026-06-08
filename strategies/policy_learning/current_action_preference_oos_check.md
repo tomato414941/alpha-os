@@ -30,10 +30,12 @@ This checks whether action preferences found in initial paper samples survive re
 | chip_repeat_execution_paper_long | repeat_execution | CHIP | paper_long | 3 | 283.91 | 0 | 0.00 | 0.000 | 47.59 | needs_repeat_oos |
 | chip_execution_edge_paper_long | execution_edge | CHIP | paper_long | 3 | 283.91 | 0 | 0.00 | 0.000 | 47.59 | needs_repeat_oos |
 | zec_event_pressure_paper_long | event_pressure | ZEC | paper_long | 2 | 333.21 | 0 | 0.00 | 0.000 | 38.32 | needs_repeat_oos |
+| zec_unclassified_paper_long | unclassified | ZEC | paper_long | 1 | 333.21 | 0 | 0.00 | 0.000 | 21.66 | needs_repeat_oos |
 | protocol_fee_paper_long | protocol_fee |  | paper_long | 3 | 75.96 | 0 | 0.00 | 0.000 | 16.39 | needs_repeat_oos |
 | uni_protocol_fee_paper_long | protocol_fee | UNI | paper_long | 3 | 75.96 | 0 | 0.00 | 0.000 | 16.39 | needs_repeat_oos |
 | basis_term_structure_paper_short | basis_term_structure |  | paper_short | 2 | 63.25 | 0 | 0.00 | 0.000 | 11.32 | needs_repeat_oos |
 | near_execution_edge_paper_long | execution_edge | NEAR | paper_long | 2 | 38.60 | 0 | 0.00 | 0.000 | 8.86 | needs_repeat_oos |
+| ofi_execution_survival_paper_short | ofi_execution_survival |  | paper_short | 0 | 0.00 | 0 | 0.00 | 0.000 | 0.00 | needs_repeat_oos |
 | microstructure_flow_paper_long | microstructure_flow |  | paper_long | 5 | 222.96 | 40 | -10.61 | 0.450 | 53.33 | oos_failed_action_preference |
 | eth_event_crypto_hedge_paper_long | event_crypto_hedge | ETH | paper_long | 4 | 62.23 | 8 | -20.10 | 0.625 | 23.73 | oos_failed_action_preference |
 
