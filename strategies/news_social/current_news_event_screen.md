@@ -4,11 +4,11 @@ This classifies current crypto RSS headlines into event candidates and joins the
 
 | source | published | symbol | kind | status | side | score | funding | perp action | title |
 | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- |
-| cointelegraph | 2026-06-07T19:45:17+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 47.6694 | 0.000000 | - | Strategy’s Saylor signals BTC buy as preferred dividend pay date vote looms |
-| coindesk | 2026-06-07T17:41:57+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 45.6138 | 0.000000 | - | Michael Saylor revives bitcoin-buy speculation as scrutiny over Strategy grows |
-| cointelegraph | 2026-06-07T20:52:36+00:00 | BTC | macro_crypto | paper_news_macro_crypto_watch | risk_context | 44.7913 | 0.000000 | - | What happens to Bitcoin if the Nasdaq falls further? |
-| coindesk | 2026-06-07T16:14:08+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 44.1502 | 0.000000 | - | Bitcoin near $60,000 today vs February: Institutional sentiment has flipped |
-| coindesk | 2026-06-07T16:00:00+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 43.9147 | 0.000000 | - | Bitcoin's slide has no single cause. AI, tech IPOs, quantum, Strategy sale all play a role, NYDIG says |
+| cointelegraph | 2026-06-07T19:45:17+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 47.0662 | 0.000000 | - | Strategy’s Saylor signals BTC buy as preferred dividend pay date vote looms |
+| coindesk | 2026-06-07T17:41:57+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 45.0107 | 0.000000 | - | Michael Saylor revives bitcoin-buy speculation as scrutiny over Strategy grows |
+| cointelegraph | 2026-06-07T20:52:36+00:00 | BTC | macro_crypto | paper_news_macro_crypto_watch | risk_context | 44.1882 | 0.000000 | - | What happens to Bitcoin if the Nasdaq falls further? |
+| coindesk | 2026-06-07T16:14:08+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 43.5470 | 0.000000 | - | Bitcoin near $60,000 today vs February: Institutional sentiment has flipped |
+| coindesk | 2026-06-07T16:00:00+00:00 | BTC | institutional_flow | paper_news_context_watch | collect_label | 43.3115 | 0.000000 | - | Bitcoin's slide has no single cause. AI, tech IPOs, quantum, Strategy sale all play a role, NYDIG says |
 | decrypt | 2026-06-05T12:49:04+00:00 | ZEC | security_risk | paper_news_security_risk_watch | short_or_avoid | 41.1586 | -0.606761 | long_carry_reversion_watch | Morning Minute: Massive ZCash Exploit Found by Claude, Extent Unknown |
 | decrypt | 2026-06-05T15:49:08+00:00 | ZEC | institutional_flow | paper_news_event_reaction_watch | long_event_follow | 37.1586 | -0.606761 | long_carry_reversion_watch | Winklevoss-Backed Zcash Treasury Plunges Nearly 40% on ZEC Privacy Bug Concerns |
 | coindesk | 2026-06-06T13:30:00+00:00 | BTC | regulatory_risk | paper_news_regulatory_risk_watch | short_or_avoid | 30.0000 | 0.000000 | - | Satoshi-era bitcoin at center of $285 billion lawsuit moves after 14 years |

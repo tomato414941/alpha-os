@@ -1,11 +1,21 @@
 observed_at,symbol,name,coin_id,status,side,direction,priority,start_price,raw_return_1h,raw_return_4h,raw_return_12h,raw_return_24h,directional_return_1h,directional_return_4h,directional_return_12h,directional_return_24h,label_status
+2026-06-07T22:45:00+00:00,ETH,Ethereum,ethereum,attention_price_lag_candidate,long_attention_lag,1,39.09007864,1681.410000000000,0.00335092,,,,0.00335092,,,,labeled_1h_pending_4h
+2026-06-07T22:45:00+00:00,TAO,Bittensor,bittensor,attention_price_lag_candidate,long_attention_lag,1,37.83583808,212.690000000000,0.00316792,,,,0.00316792,,,,labeled_1h_pending_4h
+2026-06-07T22:45:00+00:00,BTC,Bitcoin,bitcoin,attention_price_lag_candidate,long_attention_lag,1,33.97431528,63099.000000000000,0.00246552,,,,0.00246552,,,,labeled_1h_pending_4h
+2026-06-08T00:40:00+00:00,ZEC,Zcash,zcash,attention_price_lag_candidate,long_attention_lag,1,53.11769913,438.020000000000,,,,,,,,,pending_1h
 2026-06-07T22:45:00+00:00,ZEC,Zcash,zcash,attention_price_lag_candidate,long_attention_lag,1,51.30429372,442.830000000000,,,,,,,,,pending_1h
+2026-06-08T00:40:00+00:00,PENGU,Pudgy Penguins,pudgy-penguins,attention_price_lag_candidate,long_attention_lag,1,47.17272935,0.006977490000,,,,,,,,,pending_1h
 2026-06-07T22:45:00+00:00,PENGU,Pudgy Penguins,pudgy-penguins,attention_price_lag_candidate,long_attention_lag,1,46.74526907,0.006908740000,,,,,,,,,pending_1h
 2026-06-07T22:45:00+00:00,SOL,Solana,solana,attention_price_lag_candidate,long_attention_lag,1,42.54414733,66.360000000000,,,,,,,,,pending_1h
-2026-06-07T22:45:00+00:00,ETH,Ethereum,ethereum,attention_price_lag_candidate,long_attention_lag,1,39.09007864,1681.410000000000,,,,,,,,,pending_1h
-2026-06-07T22:45:00+00:00,TAO,Bittensor,bittensor,attention_price_lag_candidate,long_attention_lag,1,37.83583808,212.690000000000,,,,,,,,,pending_1h
+2026-06-08T00:40:00+00:00,SOL,Solana,solana,attention_price_lag_candidate,long_attention_lag,1,41.16940205,66.740000000000,,,,,,,,,pending_1h
+2026-06-08T00:40:00+00:00,NEAR,NEAR Protocol,near,attention_price_lag_candidate,long_attention_lag,1,38.94878420,2.080000000000,,,,,,,,,pending_1h
+2026-06-08T00:40:00+00:00,PEPE,Pepe,pepe,attention_price_lag_candidate,long_attention_lag,1,37.91574099,0.000002830000,,,,,,,,,pending_1h
+2026-06-08T00:40:00+00:00,HYPE,Hyperliquid,hyperliquid,attention_price_lag_candidate,long_attention_lag,1,37.30621406,61.650000000000,,,,,,,,,pending_1h
 2026-06-07T22:45:00+00:00,NEAR,NEAR Protocol,near,attention_price_lag_candidate,long_attention_lag,1,36.87645605,2.050000000000,,,,,,,,,pending_1h
-2026-06-07T22:45:00+00:00,BTC,Bitcoin,bitcoin,attention_price_lag_candidate,long_attention_lag,1,33.97431528,63099.000000000000,,,,,,,,,pending_1h
 2026-06-07T22:45:00+00:00,HYPE,Hyperliquid,hyperliquid,attention_price_lag_candidate,long_attention_lag,1,33.11570394,59.340000000000,,,,,,,,,pending_1h
+2026-06-08T00:40:00+00:00,BTC,Bitcoin,bitcoin,attention_price_lag_candidate,long_attention_lag,1,33.05970860,63750.000000000000,,,,,,,,,pending_1h
 2026-06-07T22:45:00+00:00,WLD,Worldcoin,worldcoin-wld,attention_chase_risk,wait_or_fade_watch,-1,31.36316188,0.484989000000,,,,,,,,,pending_1h
 2026-06-07T22:45:00+00:00,XRP,XRP,ripple,attention_price_lag_candidate,long_attention_lag,1,30.06148771,1.160000000000,,,,,,,,,pending_1h
+2026-06-08T00:40:00+00:00,LINK,Chainlink,chainlink,attention_price_lag_candidate,long_attention_lag,1,29.97112947,7.970000000000,,,,,,,,,pending_1h
+2026-06-08T00:40:00+00:00,VVV,Venice Token,venice-token,attention_price_lag_candidate,long_attention_lag,1,29.66279052,16.700000000000,,,,,,,,,pending_1h
+2026-06-08T00:40:00+00:00,LAB,LAB,lab,attention_chase_risk,wait_or_fade_watch,-1,28.67156588,12.370000000000,,,,,,,,,pending_1h

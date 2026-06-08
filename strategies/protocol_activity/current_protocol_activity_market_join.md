@@ -4,12 +4,10 @@ This joins protocol developer/community activity to current Hyperliquid perp sta
 
 | symbol | action | commits 4w | telegram | funding | carry action | obs | score | reason |
 | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- |
-| ZEC | protocol_activity_funding_overlap | 144 | 0 | -0.331449 |  | 0 | 39.549468 | protocol activity overlaps material current funding state |
-| SUI | protocol_activity_watch | 217 | 0 | 0.109500 |  | 0 | 33.065420 | protocol has strong current non-price activity and is tradable |
-| BTC | protocol_activity_watch | 279 | 0 | 0.109500 |  | 0 | 32.151710 | protocol has strong current non-price activity and is tradable |
-| APT | protocol_activity_watch | 180 | 0 | 0.109500 |  | 0 | 28.529689 | protocol has strong current non-price activity and is tradable |
-| NEAR | protocol_activity_watch | 109 | 0 | 0.109500 |  | 0 | 26.436771 | protocol has strong current non-price activity and is tradable |
-| TON | protocol_activity_watch | 72 | 0 | 0.109500 |  | 0 | 26.150774 | protocol has strong current non-price activity and is tradable |
+| ZEC | protocol_activity_funding_overlap | 144 | 0 | -0.347298 |  | 0 | 40.564912 | protocol activity overlaps material current funding state |
+| BTC | protocol_activity_watch | 281 | 0 | 0.109500 |  | 0 | 37.164986 | protocol has strong current non-price activity and is tradable |
+| LINK | protocol_activity_watch | 212 | 0 | 0.109500 |  | 0 | 33.229618 | protocol has strong current non-price activity and is tradable |
+| NEAR | protocol_activity_watch | 109 | 0 | 0.109500 |  | 0 | 30.435058 | protocol has strong current non-price activity and is tradable |
 
 ## Interpretation
 

@@ -1,3 +1,4 @@
 timestamp,symbol,name,attention_rank,attention_24h_change,annualized_funding,mark_oracle_diff,impact_spread,carry_reversion_action,carry_reversion_observations,carry_reversion_score,action,score,reason
-2026-06-08T00:05:05.198765+00:00,ZEC,Zcash,2,21.61966801,-0.43711962,-0.001004818562,0.000674799630,,0,0.00000000,attention_funding_watch,19.13069288,trending asset has material price move and large funding state
-2026-06-08T00:05:05.198765+00:00,AAVE,Aave,14,4.25807123,0.10950000,-0.000706602811,0.000826868511,long_carry_reversion_watch,6,9.50745565,attention_carry_reversion_watch,18.49538305,trending asset overlaps with persistent carry/reversion perp state
+2026-06-08T00:40:58.931225+00:00,VIRTUAL,Virtuals Protocol,13,6.34795122,-0.01641274,-0.000984116022,0.000656610164,long_carry_reversion_watch,6,10.00515667,attention_carry_reversion_watch,20.24191138,trending asset overlaps with persistent carry/reversion perp state
+2026-06-08T00:40:58.931225+00:00,ZEC,Zcash,2,18.23221450,-0.34729808,-0.001014619748,0.000583532343,,0,0.00000000,attention_funding_watch,18.28268583,trending asset has material price move and large funding state
+2026-06-08T00:40:58.931225+00:00,PENGU,Pudgy Penguins,1,9.88622769,-0.25927147,-0.001016407725,0.000581310856,,0,0.00000000,attention_funding_watch,17.43765739,trending asset has material price move and large funding state

@@ -1,88 +1,89 @@
 timestamp,category_id,category_name,category_action,category_change_24h,coin_id,symbol,coin_name,coin_market_cap,coin_volume_24h,direction,raw_return_15m,raw_return_1h,directional_return_15m,directional_return_1h,label_status,score
-2026-06-07T18:28:52.395358+00:00,zero-knowledge-zk,Zero Knowledge (ZK),sector_momentum_watch,8.83329804,polygon-ecosystem-token,POL,POL (ex-MATIC),846686576.0000,46555270.0000,1,0.00348621,,0.00348621,,tradable_labeled,14.87477609
-2026-06-07T18:28:52.395358+00:00,launchpad,Launchpad,sector_momentum_watch,20.63132240,jupiter-exchange-solana,JUP,Jupiter,514465090.0000,19666599.0000,1,-0.00032352,,-0.00032352,,tradable_labeled,24.61587212
-2026-06-07T18:28:52.395358+00:00,ai-meme-coins,AI Meme,sector_momentum_watch,10.90474000,fartcoin,FARTCOIN,Fartcoin,113224044.0000,26613498.0000,1,-0.00044185,,-0.00044185,,tradable_labeled,12.40563571
-2026-06-07T18:28:52.395358+00:00,privacy,Privacy,sector_momentum_watch,19.26784933,chainlink,LINK,Chainlink,5626295273.0000,262998723.0000,1,-0.00067249,,-0.00067249,,tradable_labeled,28.06850603
-2026-06-07T18:28:52.395358+00:00,privacy-blockchain,Privacy Blockchain,sector_momentum_watch,10.93277547,canton-network,CC,Canton,6389566025.0000,29206061.0000,1,-0.00133019,,-0.00133019,,tradable_labeled,18.02686623
-2026-06-07T18:28:52.395358+00:00,privacy,Privacy,sector_momentum_watch,19.26784933,zcash,ZEC,Zcash,6997134181.0000,1227260126.0000,1,-0.00186701,,-0.00186701,,tradable_labeled,28.24482855
-2026-06-07T18:28:52.395358+00:00,zero-knowledge-zk,Zero Knowledge (ZK),sector_momentum_watch,8.83329804,zcash,ZEC,Zcash,6997134181.0000,1227260126.0000,1,-0.00186701,,-0.00186701,,tradable_labeled,15.67199932
-2026-06-07T18:28:52.395358+00:00,privacy,Privacy,sector_momentum_watch,19.26784933,monero,XMR,Monero,5758434566.0000,93051526.0000,1,-0.00224135,,-0.00224135,,tradable_labeled,26.63178897
-2026-06-07T18:28:52.395358+00:00,echo-launchpad,Echo Launchpad,sector_momentum_watch,33.94570751,plasma,XPL,Plasma,179471661.0000,64901296.0000,1,-0.00232032,,-0.00232032,,tradable_labeled,37.86096463
-2026-06-07T18:28:52.395358+00:00,launchpad,Launchpad,sector_momentum_watch,20.63132240,pump-fun,PUMP,Pump.fun,529139232.0000,45711345.0000,1,-0.00264901,,-0.00264901,,tradable_labeled,22.30505954
-2026-06-07T18:28:52.395358+00:00,binance-alpha-spotlight,Binance Alpha Spotlight,sector_momentum_watch,13.73734986,ondo-finance,ONDO,Ondo,1680556699.0000,138688883.0000,1,-0.00368191,,-0.00368191,,tradable_labeled,14.45958282
-2026-06-07T18:28:52.395358+00:00,ai-meme-coins,AI Meme,sector_momentum_watch,10.90474000,turbo,TURBO,Turbo,59464284.0000,9422803.0000,1,-0.00464037,,-0.00464037,,tradable_labeled,8.15335696
-2026-06-07T18:28:52.395358+00:00,analytics,Analytics,sector_momentum_watch,25.38861186,pyth-network,PYTH,Pyth Network,247209098.0000,10504381.0000,1,-0.00526064,,-0.00526064,,tradable_labeled,24.97420336
-2026-06-07T18:28:52.395358+00:00,arcade-games,Arcade Games,sector_momentum_watch,73.97365656,audiera,BEAT,Audiera,885533450.0000,50717445.0000,1,,,,,not_hyperliquid,87.23222250
-2026-06-07T18:28:52.395358+00:00,arcade-games,Arcade Games,sector_momentum_watch,73.97365656,hamster-kombat,HMSTR,Hamster Kombat,11754551.0000,5464272.0000,1,,,,,tradable_pending_label,86.35844360
-2026-06-07T18:28:52.395358+00:00,arcade-games,Arcade Games,sector_momentum_watch,73.97365656,pepecoin-2,PEPECOIN,PepeCoin,5995728.0000,664405.0000,1,,,,,not_hyperliquid,86.35268478
-2026-06-07T18:28:52.395358+00:00,drc-20,DRC-20,sector_stress_watch,-65.39807668,dogi,DOGI,dogi,2395182.0000,48.6900,-1,,,,,not_hyperliquid,70.68201567
-2026-06-07T18:28:52.395358+00:00,drc-20,DRC-20,sector_stress_watch,-65.39807668,fiwb-doginals,FIWB,FIWB (DRC-20),0.0000,0.0000,-1,,,,,not_hyperliquid,70.67962049
-2026-06-07T18:28:52.395358+00:00,drc-20,DRC-20,sector_stress_watch,-65.39807668,dall-doginals,DALL,Dall (DRC-20),0.0000,0.0000,-1,,,,,not_hyperliquid,70.67962049
-2026-06-07T18:28:52.395358+00:00,telegram_apps,Telegram Apps,sector_momentum_watch,49.12356695,audiera,BEAT,Audiera,885533450.0000,50717445.0000,1,,,,,not_hyperliquid,58.43331423
-2026-06-07T18:28:52.395358+00:00,telegram_apps,Telegram Apps,sector_momentum_watch,49.12356695,floki,FLOKI,FLOKI,236591817.0000,20885541.0000,1,,,,,not_hyperliquid,57.78437260
-2026-06-07T18:28:52.395358+00:00,telegram_apps,Telegram Apps,sector_momentum_watch,49.12356695,catizen,CATI,Catizen,19942019.0000,4607777.0000,1,,,,,tradable_pending_label,57.56772280
-2026-06-07T18:28:52.395358+00:00,echo-launchpad,Echo Launchpad,sector_momentum_watch,33.94570751,lab,LAB,LAB,4108967807.0000,96269451.0000,1,,,,,not_hyperliquid,44.11078269
-2026-06-07T18:28:52.395358+00:00,four-meme-ecosystem,Four.meme Ecosystem (BNB Memes),sector_momentum_watch,35.22842944,bianrensheng,币安人生,币安人生 (BinanceLife),823648608.0000,97461116.0000,1,,,,,not_hyperliquid,42.41629438
-2026-06-07T18:28:52.395358+00:00,four-meme-ecosystem,Four.meme Ecosystem (BNB Memes),sector_momentum_watch,35.22842944,siren-2,SIREN,Siren,759040112.0000,137515959.0000,1,,,,,not_hyperliquid,42.35168588
-2026-06-07T18:28:52.395358+00:00,four-meme-ecosystem,Four.meme Ecosystem (BNB Memes),sector_momentum_watch,35.22842944,hakimi,哈基米,哈基米 (Hajimi),13982295.0000,1570163.0000,1,,,,,not_hyperliquid,41.60662806
-2026-06-07T18:28:52.395358+00:00,sticker-themed-coin,Sticker-Themed Coins,sector_momentum_watch,36.11153404,utya,UTYA,Utya,21705686.0000,605608.0000,1,,,,,not_hyperliquid,40.86974190
-2026-06-07T18:28:52.395358+00:00,sticker-themed-coin,Sticker-Themed Coins,sector_momentum_watch,36.11153404,paper-plane,PLANE,Paper Plane,302487.0000,4437.9200,1,,,,,not_hyperliquid,40.84833870
-2026-06-07T18:28:52.395358+00:00,sticker-themed-coin,Sticker-Themed Coins,sector_momentum_watch,36.11153404,cubigator,CUB,Cubigator,47507.0000,1051.5400,1,,,,,not_hyperliquid,40.84808372
-2026-06-07T18:28:52.395358+00:00,openserv-ecosystem,OpenServ Ecosystem,sector_momentum_watch,33.40963352,solrouter,ROUTER,Solrouter,1151303.0000,107200.0000,1,,,,,not_hyperliquid,37.20060225
-2026-06-07T18:28:52.395358+00:00,openserv-ecosystem,OpenServ Ecosystem,sector_momentum_watch,33.40963352,better,BETTER,BETTER,433776.0000,4668.6000,1,,,,,not_hyperliquid,37.19988473
-2026-06-07T18:28:52.395358+00:00,openserv-ecosystem,OpenServ Ecosystem,sector_momentum_watch,33.40963352,cobot,COBOT,Cobot,129211.0000,4202.8800,1,,,,,not_hyperliquid,37.19958016
-2026-06-07T18:28:52.395358+00:00,fighting-games,Fighting Games,sector_stress_watch,-30.76699502,katana-inu,KATA,Katana Inu,922739.0000,30013.0000,-1,,,,,not_hyperliquid,34.31211706
-2026-06-07T18:28:52.395358+00:00,fighting-games,Fighting Games,sector_stress_watch,-30.76699502,galaxy-fight-club,GCOIN,Galaxy Fight Club,425780.0000,1556.3700,-1,,,,,not_hyperliquid,34.31162010
-2026-06-07T18:28:52.395358+00:00,fighting-games,Fighting Games,sector_stress_watch,-30.76699502,cryowar-token,CWAR,Cryowar,214609.0000,972.8600,-1,,,,,not_hyperliquid,34.31140893
-2026-06-07T18:28:52.395358+00:00,analytics,Analytics,sector_momentum_watch,25.38861186,lab,LAB,LAB,4108967807.0000,96269451.0000,1,,,,,not_hyperliquid,34.09660291
-2026-06-07T18:28:52.395358+00:00,groypad-ecosystem,Groypad Ecosystem,sector_momentum_watch,29.98913950,gotta-go-fast,FAST,Gotta Go Fast,234011.0000,3780.2800,1,,,,,not_hyperliquid,32.77031630
-2026-06-07T18:28:52.395358+00:00,groypad-ecosystem,Groypad Ecosystem,sector_momentum_watch,29.98913950,long-capital,LNG,Long Capital,139992.0000,241.5800,1,,,,,not_hyperliquid,32.77022228
-2026-06-07T18:28:52.395358+00:00,groypad-ecosystem,Groypad Ecosystem,sector_momentum_watch,29.98913950,durovs-dog,PYONYA,Durovs Dog,26776.0000,736.7100,1,,,,,not_hyperliquid,32.77010907
-2026-06-07T18:28:52.395358+00:00,farcaster-ecosystem,Farcaster Ecosystem,sector_momentum_watch,26.74758890,degen-base,DEGEN,Degen,57486637.0000,11084378.0000,1,,,,,not_hyperliquid,30.81208063
-2026-06-07T18:28:52.395358+00:00,farcaster-ecosystem,Farcaster Ecosystem,sector_momentum_watch,26.74758890,doginme,DOGINME,doginme,5768410.0000,1560599.0000,1,,,,,not_hyperliquid,30.76036240
-2026-06-07T18:28:52.395358+00:00,farcaster-ecosystem,Farcaster Ecosystem,sector_momentum_watch,26.74758890,the-doge-nft,DOG,Own The Doge,5062048.0000,31732.0000,1,,,,,not_hyperliquid,30.75965604
-2026-06-07T18:28:52.395358+00:00,analytics,Analytics,sector_momentum_watch,25.38861186,the-graph,GRT,The Graph,215953463.0000,10378039.0000,1,,,,,not_hyperliquid,30.20358856
-2026-06-07T18:28:52.395358+00:00,launchpad,Launchpad,sector_momentum_watch,20.63132240,lab,LAB,LAB,4108967807.0000,96269451.0000,1,,,,,not_hyperliquid,28.53389474
-2026-06-07T18:28:52.395358+00:00,chinese-meme,Chinese Meme,sector_momentum_watch,17.50395797,bianrensheng,币安人生,币安人生 (BinanceLife),823648608.0000,97461116.0000,1,,,,,not_hyperliquid,21.30444574
-2026-06-07T18:28:52.395358+00:00,market-making-solution,Market-Making Solution,sector_momentum_watch,18.88279911,milk-money,MM,Milk Money,1190675.0000,162878.0000,1,,,,,not_hyperliquid,21.07225415
-2026-06-07T18:28:52.395358+00:00,market-making-solution,Market-Making Solution,sector_momentum_watch,18.88279911,human-protocol,HMT,HUMAN Protocol,1048722.0000,78.6200,1,,,,,not_hyperliquid,21.07211220
-2026-06-07T18:28:52.395358+00:00,market-making-solution,Market-Making Solution,sector_momentum_watch,18.88279911,gamma-strategies,GAMMA,Gamma Strategies,40515.0000,1.4100,1,,,,,not_hyperliquid,21.07110399
-2026-06-07T18:28:52.395358+00:00,binance-alpha-spotlight,Binance Alpha Spotlight,sector_momentum_watch,13.73734986,lab,LAB,LAB,4108967807.0000,96269451.0000,1,,,,,not_hyperliquid,20.56990040
-2026-06-07T18:28:52.395358+00:00,chinese-meme,Chinese Meme,sector_momentum_watch,17.50395797,meme-horse,MHORSE,MEME HORSE,58184165.0000,589304.0000,1,,,,,not_hyperliquid,20.53898129
-2026-06-07T18:28:52.395358+00:00,binance-alpha-spotlight,Binance Alpha Spotlight,sector_momentum_watch,13.73734986,memecore,M,MemeCore,4055851725.0000,4464032.0000,1,,,,,not_hyperliquid,20.51678431
-2026-06-07T18:28:52.395358+00:00,chinese-meme,Chinese Meme,sector_momentum_watch,17.50395797,jixiangma,吉祥马,吉祥马,21908609.0000,288555.0000,1,,,,,not_hyperliquid,20.50270574
-2026-06-07T18:28:52.395358+00:00,duck-themed-coins,Duck-Themed,sector_momentum_watch,17.81829899,duckcoin,DUCK,DuckCoin,269630.0000,730.0200,1,,,,,not_hyperliquid,19.82973213
-2026-06-07T18:28:52.395358+00:00,duck-themed-coins,Duck-Themed,sector_momentum_watch,17.81829899,the-duck,DUCK,The Duck,50159.0000,228990.0000,1,,,,,not_hyperliquid,19.82951266
-2026-06-07T18:28:52.395358+00:00,duck-themed-coins,Duck-Themed,sector_momentum_watch,17.81829899,duck-token,DUCK,Duck Token,42429.0000,706.3300,1,,,,,not_hyperliquid,19.82950493
-2026-06-07T18:28:52.395358+00:00,yield-tokenization-product,Yield Tokenization Product,sector_momentum_watch,17.79422604,main-street-yield,MSY,Main Street Yield,75327917.0000,4.7500,1,,,,,not_hyperliquid,19.78828447
-2026-06-07T18:28:52.395358+00:00,yield-tokenization-product,Yield Tokenization Product,sector_momentum_watch,17.79422604,nest-alpha-vault,NALPHA,Nest Alpha Vault,7243038.0000,27.0800,1,,,,,not_hyperliquid,19.72019959
-2026-06-07T18:28:52.395358+00:00,yield-tokenization-product,Yield Tokenization Product,sector_momentum_watch,17.79422604,portfolio-of-risk-adjusted-investment-strategy-mix,PRISM,Portfolio of Risk-adjusted Investment Strategy Mix,0.0000,915.2700,1,,,,,not_hyperliquid,19.71295655
-2026-06-07T18:28:52.395358+00:00,buidlpad-launchpad,Buidlpad Launchpad,sector_momentum_watch,15.74274045,falcon-finance-ff,FF,Falcon Finance,270662261.0000,11810823.0000,1,,,,,not_hyperliquid,18.61028826
-2026-06-07T18:28:52.395358+00:00,buidlpad-launchpad,Buidlpad Launchpad,sector_momentum_watch,15.74274045,sahara-ai,SAHARA,Sahara AI,125629703.0000,40738696.0000,1,,,,,not_hyperliquid,18.46525570
-2026-06-07T18:28:52.395358+00:00,buidlpad-launchpad,Buidlpad Launchpad,sector_momentum_watch,15.74274045,lombard-protocol,BARD,Lombard,50329502.0000,4620903.0000,1,,,,,not_hyperliquid,18.38995550
-2026-06-07T18:28:52.395358+00:00,animal-racing,Animal Racing,sector_stress_watch,-16.25924137,crown-by-third-time-games,CROWN,Crown by Third Time Games,1103816.0000,11624.7600,-1,,,,,not_hyperliquid,18.11905114
-2026-06-07T18:28:52.395358+00:00,animal-racing,Animal Racing,sector_stress_watch,-16.25924137,derace,ZERC,zkRace,614111.0000,11148.4800,-1,,,,,not_hyperliquid,18.11856143
-2026-06-07T18:28:52.395358+00:00,animal-racing,Animal Racing,sector_stress_watch,-16.25924137,defi-land,DFL,DeFi Land,138569.0000,2.5100,-1,,,,,not_hyperliquid,18.11808589
-2026-06-07T18:28:52.395358+00:00,account-abstraction,Account Abstraction,sector_stress_watch,-14.32088053,trust-wallet-token,TWT,Trust Wallet,153538888.0000,9123395.0000,-1,,,,,not_hyperliquid,16.87063524
-2026-06-07T18:28:52.395358+00:00,account-abstraction,Account Abstraction,sector_stress_watch,-14.32088053,home,HOME,HOME,126497680.0000,86116237.0000,-1,,,,,not_hyperliquid,16.84359403
-2026-06-07T18:28:52.395358+00:00,account-abstraction,Account Abstraction,sector_stress_watch,-14.32088053,iotex,IOTX,IoTeX,32580950.0000,2225297.0000,-1,,,,,not_hyperliquid,16.74967730
-2026-06-07T18:28:52.395358+00:00,nft-lending-borrowing,NFT Lending/Borrowing,sector_momentum_watch,14.64617299,alpha-quark-token,AQT,Alpha Quark,11583165.0000,9813772.0000,1,,,,,not_hyperliquid,16.71701783
-2026-06-07T18:28:52.395358+00:00,layer-3-l3,Layer 3 (L3),sector_momentum_watch,13.96790983,degen-base,DEGEN,Degen,57486637.0000,11084378.0000,1,,,,,not_hyperliquid,16.22042286
-2026-06-07T18:28:52.395358+00:00,layer-3-l3,Layer 3 (L3),sector_momentum_watch,13.96790983,orbs,ORBS,Orbs,28809783.0000,594729.0000,1,,,,,tradable_pending_label,16.19174600
-2026-06-07T18:28:52.395358+00:00,layer-3-l3,Layer 3 (L3),sector_momentum_watch,13.96790983,cartesi,CTSI,Cartesi,23464084.0000,17296532.0000,1,,,,,not_hyperliquid,16.18640030
-2026-06-07T18:28:52.395358+00:00,racing-games,Racing Games,sector_momentum_watch,13.50120401,wilder-world,WILD,Wilder World,10413334.0000,175980.0000,1,,,,,not_hyperliquid,15.20672554
-2026-06-07T18:28:52.395358+00:00,racing-games,Racing Games,sector_momentum_watch,13.50120401,kompete,KOMPETE,KOMPETE,688323.0000,1428.8800,1,,,,,not_hyperliquid,15.19700053
-2026-06-07T18:28:52.395358+00:00,racing-games,Racing Games,sector_momentum_watch,13.50120401,revv,REVV,REVV,136152.0000,331.1700,1,,,,,not_hyperliquid,15.19644836
-2026-06-07T18:28:52.395358+00:00,privacy-blockchain,Privacy Blockchain,sector_momentum_watch,10.93277547,humanity,H,Humanity,1474984720.0000,241163638.0000,1,,,,,not_hyperliquid,14.44247417
-2026-06-07T18:28:52.395358+00:00,shooting-games,Shooting Games,sector_momentum_watch,12.15172482,gunz,GUN,Gunz,15569030.0000,14292767.0000,1,,,,,not_hyperliquid,13.95681168
-2026-06-07T18:28:52.395358+00:00,shooting-games,Shooting Games,sector_momentum_watch,12.15172482,farcana,FAR,FAR Labs,12882553.0000,196879.0000,1,,,,,not_hyperliquid,13.95412520
-2026-06-07T18:28:52.395358+00:00,shooting-games,Shooting Games,sector_momentum_watch,12.15172482,artyfact,ARTY,Artyfact,966720.0000,335251.0000,1,,,,,not_hyperliquid,13.94220937
-2026-06-07T18:28:52.395358+00:00,privacy-blockchain,Privacy Blockchain,sector_momentum_watch,10.93277547,beldex,BDX,Beldex,610345769.0000,9921747.0000,1,,,,,not_hyperliquid,13.57783522
-2026-06-07T18:28:52.395358+00:00,gaming,Gaming (GameFi),sector_momentum_watch,10.60069087,audiera,BEAT,Audiera,885533450.0000,50717445.0000,1,,,,,not_hyperliquid,13.42828518
-2026-06-07T18:28:52.395358+00:00,tourism,Tourism,sector_momentum_watch,11.17612342,epic-chain,EPIC,Epic Chain,24035203.0000,21452061.0000,1,,,,,not_hyperliquid,12.90320915
-2026-06-07T18:28:52.395358+00:00,tourism,Tourism,sector_momentum_watch,11.17612342,concierge-io,AVA,AVA (Travala),13308082.0000,11531944.0000,1,,,,,not_hyperliquid,12.89248203
-2026-06-07T18:28:52.395358+00:00,gaming,Gaming (GameFi),sector_momentum_watch,10.60069087,the9bit,9BIT,The9bit,344862408.0000,8048173.0000,1,,,,,not_hyperliquid,12.88761414
-2026-06-07T18:28:52.395358+00:00,tourism,Tourism,sector_momentum_watch,11.17612342,vow,VOW,Vow,5201010.0000,71454.0000,1,,,,,not_hyperliquid,12.88437496
-2026-06-07T18:28:52.395358+00:00,ai-meme-coins,AI Meme,sector_momentum_watch,10.90474000,ribbita-by-virtuals,TIBBIR,Ribbita by Virtuals,109351752.0000,1068614.0000,1,,,,,not_hyperliquid,12.84361566
-2026-06-07T18:28:52.395358+00:00,gaming,Gaming (GameFi),sector_momentum_watch,10.60069087,floki,FLOKI,FLOKI,236591817.0000,20885541.0000,1,,,,,not_hyperliquid,12.77934355
-2026-06-07T18:28:52.395358+00:00,zero-knowledge-zk,Zero Knowledge (ZK),sector_momentum_watch,8.83329804,humanity,H,Humanity,1474984720.0000,241163638.0000,1,,,,,not_hyperliquid,12.01686120
+2026-06-08T00:42:13.194039+00:00,arcade-games,Arcade Games,sector_momentum_watch,55.53529015,audiera,BEAT,Audiera,1022844346.0000,66880536.0000,1,,,,,not_hyperliquid,65.93533860
+2026-06-08T00:42:13.194039+00:00,arcade-games,Arcade Games,sector_momentum_watch,55.53529015,hamster-kombat,HMSTR,Hamster Kombat,12041442.0000,4595706.0000,1,,,,,tradable_pending_label,64.92453569
+2026-06-08T00:42:13.194039+00:00,arcade-games,Arcade Games,sector_momentum_watch,55.53529015,pepecoin-2,PEPECOIN,PepeCoin,6203607.0000,333664.0000,1,,,,,not_hyperliquid,64.91869786
+2026-06-08T00:42:13.194039+00:00,openserv-ecosystem,OpenServ Ecosystem,sector_momentum_watch,54.87040942,solrouter,ROUTER,Solrouter,1184390.0000,137472.0000,1,,,,,not_hyperliquid,61.17034296
+2026-06-08T00:42:13.194039+00:00,openserv-ecosystem,OpenServ Ecosystem,sector_momentum_watch,54.87040942,better,BETTER,BETTER,452218.0000,4434.8400,1,,,,,not_hyperliquid,61.16961079
+2026-06-08T00:42:13.194039+00:00,openserv-ecosystem,OpenServ Ecosystem,sector_momentum_watch,54.87040942,cobot,COBOT,Cobot,136617.0000,5091.4000,1,,,,,not_hyperliquid,61.16929519
+2026-06-08T00:42:13.194039+00:00,telegram_apps,Telegram Apps,sector_momentum_watch,37.75349208,audiera,BEAT,Audiera,1022844346.0000,66880536.0000,1,,,,,not_hyperliquid,45.29584123
+2026-06-08T00:42:13.194039+00:00,telegram_apps,Telegram Apps,sector_momentum_watch,37.75349208,floki,FLOKI,FLOKI,240557008.0000,24974552.0000,1,,,,,not_hyperliquid,44.51355389
+2026-06-08T00:42:13.194039+00:00,telegram_apps,Telegram Apps,sector_momentum_watch,37.75349208,catizen,CATI,Catizen,19458660.0000,5986874.0000,1,,,,,tradable_pending_label,44.29245554
+2026-06-08T00:42:13.194039+00:00,privacy,Privacy,sector_momentum_watch,23.96833071,zcash,ZEC,Zcash,7336732614.0000,1334991753.0000,1,,,,,tradable_pending_label,36.09662209
+2026-06-08T00:42:13.194039+00:00,market-making-solution,Market-Making Solution,sector_momentum_watch,31.19448935,human-protocol,HMT,HUMAN Protocol,1289527.0000,387.4700,1,,,,,not_hyperliquid,34.85987337
+2026-06-08T00:42:13.194039+00:00,market-making-solution,Market-Making Solution,sector_momentum_watch,31.19448935,milk-money,MM,Milk Money,1273695.0000,143256.0000,1,,,,,not_hyperliquid,34.85985754
+2026-06-08T00:42:13.194039+00:00,market-making-solution,Market-Making Solution,sector_momentum_watch,31.19448935,gamma-strategies,GAMMA,Gamma Strategies,40515.0000,1.4100,1,,,,,not_hyperliquid,34.85862436
+2026-06-08T00:42:13.194039+00:00,privacy,Privacy,sector_momentum_watch,23.96833071,chainlink,LINK,Chainlink,5791923148.0000,316514424.0000,1,,,,,tradable_pending_label,34.55181263
+2026-06-08T00:42:13.194039+00:00,privacy,Privacy,sector_momentum_watch,23.96833071,monero,XMR,Monero,5747009031.0000,95955520.0000,1,,,,,tradable_pending_label,34.50689851
+2026-06-08T00:42:13.194039+00:00,paal-ai,PAAL AI Launchpad,sector_momentum_watch,28.19868541,paal-ai,PAAL,PAAL AI,6609790.0000,292004.0000,1,,,,,not_hyperliquid,31.67069436
+2026-06-08T00:42:13.194039+00:00,paal-ai,PAAL AI Launchpad,sector_momentum_watch,28.19868541,ait-protocol,AIT,AIT Protocol,95941.0000,184.0500,1,,,,,not_hyperliquid,31.66418051
+2026-06-08T00:42:13.194039+00:00,paal-ai,PAAL AI Launchpad,sector_momentum_watch,28.19868541,vaulttech,$VAULT,Vault AI,30354.0000,2.9200,1,,,,,not_hyperliquid,31.66411492
+2026-06-08T00:42:13.194039+00:00,nft-lending-borrowing,NFT Lending/Borrowing,sector_stress_watch,-27.33581602,alpha-quark-token,AQT,Alpha Quark,11711994.0000,6669599.0000,-1,,,,,not_hyperliquid,31.14417385
+2026-06-08T00:42:13.194039+00:00,groypad-ecosystem,Groypad Ecosystem,sector_momentum_watch,27.96446088,gotta-go-fast,FAST,Gotta Go Fast,231263.0000,4588.9100,1,,,,,not_hyperliquid,30.60558427
+2026-06-08T00:42:13.194039+00:00,groypad-ecosystem,Groypad Ecosystem,sector_momentum_watch,27.96446088,long-capital,LNG,Long Capital,168938.0000,1054.6700,1,,,,,not_hyperliquid,30.60552195
+2026-06-08T00:42:13.194039+00:00,groypad-ecosystem,Groypad Ecosystem,sector_momentum_watch,27.96446088,durovs-dog,PYONYA,Durovs Dog,28365.0000,875.4200,1,,,,,not_hyperliquid,30.60538138
+2026-06-08T00:42:13.194039+00:00,quantum-resistant,Quantum-Resistant,sector_momentum_watch,18.27807738,zcash,ZEC,Zcash,7336732614.0000,1334991753.0000,1,,,,,tradable_pending_label,29.10834789
+2026-06-08T00:42:13.194039+00:00,sticker-themed-coin,Sticker-Themed Coins,sector_momentum_watch,25.31825280,utya,UTYA,Utya,22525001.0000,581179.0000,1,,,,,not_hyperliquid,28.66470702
+2026-06-08T00:42:13.194039+00:00,sticker-themed-coin,Sticker-Themed Coins,sector_momentum_watch,25.31825280,paper-plane,PLANE,Paper Plane,307431.0000,2017.2100,1,,,,,not_hyperliquid,28.64248945
+2026-06-08T00:42:13.194039+00:00,sticker-themed-coin,Sticker-Themed Coins,sector_momentum_watch,25.31825280,cubigator,CUB,Cubigator,46557.0000,1056.4000,1,,,,,not_hyperliquid,28.64222858
+2026-06-08T00:42:13.194039+00:00,four-meme-ecosystem,Four.meme Ecosystem (BNB Memes),sector_momentum_watch,22.27791574,siren-2,SIREN,Siren,946897530.0000,150352137.0000,1,,,,,not_hyperliquid,27.25539878
+2026-06-08T00:42:13.194039+00:00,four-meme-ecosystem,Four.meme Ecosystem (BNB Memes),sector_momentum_watch,22.27791574,bianrensheng,币安人生,币安人生 (BinanceLife),834181814.0000,76743793.0000,1,,,,,not_hyperliquid,27.14268306
+2026-06-08T00:42:13.194039+00:00,four-meme-ecosystem,Four.meme Ecosystem (BNB Memes),sector_momentum_watch,22.27791574,hakimi,哈基米,哈基米 (Hajimi),13810688.0000,1446812.0000,1,,,,,not_hyperliquid,26.32231194
+2026-06-08T00:42:13.194039+00:00,zero-knowledge-zk,Zero Knowledge (ZK),sector_momentum_watch,14.53120728,zcash,ZEC,Zcash,7336732614.0000,1334991753.0000,1,,,,,tradable_pending_label,24.68406610
+2026-06-08T00:42:13.194039+00:00,buidlpad-launchpad,Buidlpad Launchpad,sector_momentum_watch,19.76448269,falcon-finance-ff,FF,Falcon Finance,269532013.0000,12792359.0000,1,,,,,not_hyperliquid,23.31304322
+2026-06-08T00:42:13.194039+00:00,buidlpad-launchpad,Buidlpad Launchpad,sector_momentum_watch,19.76448269,sahara-ai,SAHARA,Sahara AI,128013020.0000,55762403.0000,1,,,,,not_hyperliquid,23.17152423
+2026-06-08T00:42:13.194039+00:00,buidlpad-launchpad,Buidlpad Launchpad,sector_momentum_watch,19.76448269,lombard-protocol,BARD,Lombard,51711336.0000,5065197.0000,1,,,,,not_hyperliquid,23.09522255
+2026-06-08T00:42:13.194039+00:00,yield-tokenization-product,Yield Tokenization Product,sector_momentum_watch,20.71929709,main-street-yield,MSY,Main Street Yield,75327917.0000,4.7500,1,,,,,not_hyperliquid,23.03380239
+2026-06-08T00:42:13.194039+00:00,yield-tokenization-product,Yield Tokenization Product,sector_momentum_watch,20.71929709,nest-alpha-vault,NALPHA,Nest Alpha Vault,7242937.0000,38.0800,1,,,,,not_hyperliquid,22.96571741
+2026-06-08T00:42:13.194039+00:00,yield-tokenization-product,Yield Tokenization Product,sector_momentum_watch,20.71929709,portfolio-of-risk-adjusted-investment-strategy-mix,PRISM,Portfolio of Risk-adjusted Investment Strategy Mix,0.0000,915.2700,1,,,,,not_hyperliquid,22.95847447
+2026-06-08T00:42:13.194039+00:00,quantum-resistant,Quantum-Resistant,sector_momentum_watch,18.27807738,algorand,ALGO,Algorand,846423881.0000,35812421.0000,1,,,,,tradable_pending_label,22.61803916
+2026-06-08T00:42:13.194039+00:00,quantum-resistant,Quantum-Resistant,sector_momentum_watch,18.27807738,starknet,STRK,Starknet,215484163.0000,19564498.0000,1,,,,,tradable_pending_label,21.98709944
+2026-06-08T00:42:13.194039+00:00,virtual-reality,Virtual Reality,sector_momentum_watch,19.32579933,paal-ai,PAAL,PAAL AI,6609790.0000,292004.0000,1,,,,,not_hyperliquid,21.81431723
+2026-06-08T00:42:13.194039+00:00,virtual-reality,Virtual Reality,sector_momentum_watch,19.32579933,ceek,CEEK,CEEK Smart VR,2387547.0000,249575.0000,1,,,,,not_hyperliquid,21.81009499
+2026-06-08T00:42:13.194039+00:00,virtual-reality,Virtual Reality,sector_momentum_watch,19.32579933,somnium-space-cubes,CUBE,Somnium Space CUBEs,2000824.0000,23.6500,1,,,,,not_hyperliquid,21.80970826
+2026-06-08T00:42:13.194039+00:00,privacy-coins,Privacy Coins,sector_momentum_watch,12.02480324,zcash,ZEC,Zcash,7336732614.0000,1334991753.0000,1,,,,,tradable_pending_label,21.68448707
+2026-06-08T00:42:13.194039+00:00,privacy-coins,Privacy Coins,sector_momentum_watch,12.02480324,monero,XMR,Monero,5747009031.0000,95955520.0000,1,,,,,tradable_pending_label,20.09476349
+2026-06-08T00:42:13.194039+00:00,leveraged-token,Leveraged Token,sector_momentum_watch,17.71425606,hylo-leveraged-sol,XSOL,Hylo Leveraged SOL,4974802.0000,54802.0000,1,,,,,not_hyperliquid,19.47216643
+2026-06-08T00:42:13.194039+00:00,leveraged-token,Leveraged Token,sector_momentum_watch,17.71425606,eth-2x-flexible-leverage-index,ETH2X-FLI,Index Coop - ETH 2x Flexible Leverage Index,1134845.0000,7250.3000,1,,,,,not_hyperliquid,19.46832648
+2026-06-08T00:42:13.194039+00:00,leveraged-token,Leveraged Token,sector_momentum_watch,17.71425606,btc-2x-flexible-leverage-index,BTC2X-FLI,BTC 2x Flexible Leverage Index,702845.0000,1100.0500,1,,,,,not_hyperliquid,19.46789448
+2026-06-08T00:42:13.194039+00:00,zero-knowledge-zk,Zero Knowledge (ZK),sector_momentum_watch,14.53120728,humanity,H,Humanity,1293013143.0000,241060883.0000,1,,,,,not_hyperliquid,18.64034663
+2026-06-08T00:42:13.194039+00:00,zero-knowledge-zk,Zero Knowledge (ZK),sector_momentum_watch,14.53120728,polygon-ecosystem-token,POL,POL (ex-MATIC),852352740.0000,43890452.0000,1,,,,,tradable_pending_label,18.19968623
+2026-06-08T00:42:13.194039+00:00,account-abstraction,Account Abstraction,sector_stress_watch,-14.57307042,trust-wallet-token,TWT,Trust Wallet,155301156.0000,9446556.0000,-1,,,,,not_hyperliquid,17.16516476
+2026-06-08T00:42:13.194039+00:00,account-abstraction,Account Abstraction,sector_stress_watch,-14.57307042,home,HOME,HOME,119333894.0000,88365524.0000,-1,,,,,not_hyperliquid,17.12919749
+2026-06-08T00:42:13.194039+00:00,account-abstraction,Account Abstraction,sector_stress_watch,-14.57307042,iotex,IOTX,IoTeX,32606097.0000,2599660.0000,-1,,,,,not_hyperliquid,17.04246970
+2026-06-08T00:42:13.194039+00:00,ai-meme-coins,AI Meme,sector_momentum_watch,14.32571531,fartcoin,FARTCOIN,Fartcoin,116278687.0000,30178067.0000,1,,,,,tradable_pending_label,16.85783075
+2026-06-08T00:42:13.194039+00:00,ai-meme-coins,AI Meme,sector_momentum_watch,14.32571531,ribbita-by-virtuals,TIBBIR,Ribbita by Virtuals,112673322.0000,1110489.0000,1,,,,,not_hyperliquid,16.85422538
+2026-06-08T00:42:13.194039+00:00,ai-meme-coins,AI Meme,sector_momentum_watch,14.32571531,turbo,TURBO,Turbo,60914912.0000,10518159.0000,1,,,,,tradable_pending_label,16.80246697
+2026-06-08T00:42:13.194039+00:00,nft-launchpad,NFT Launchpad,sector_momentum_watch,14.69739210,bmx,BMX,Boardwalk,1797908.0000,15033.5400,1,,,,,not_hyperliquid,16.31390225
+2026-06-08T00:42:13.194039+00:00,nft-launchpad,NFT Launchpad,sector_momentum_watch,14.69739210,nomu,NOMU,Nomu,1047365.0000,560.9300,1,,,,,not_hyperliquid,16.31315171
+2026-06-08T00:42:13.194039+00:00,nft-launchpad,NFT Launchpad,sector_momentum_watch,14.69739210,book-2,STUFF,STUFF.io,1046635.0000,1030.8800,1,,,,,not_hyperliquid,16.31315098
+2026-06-08T00:42:13.194039+00:00,superchain-ecosystem,Optimism Superchain Ecosystem,sector_momentum_watch,8.55104761,chainlink,LINK,Chainlink,5791923148.0000,316514424.0000,1,,,,,tradable_pending_label,15.96858751
+2026-06-08T00:42:13.194039+00:00,chain-abstraction,Chain Abstraction,sector_momentum_watch,8.43554806,chainlink,LINK,Chainlink,5791923148.0000,316514424.0000,1,,,,,tradable_pending_label,15.82544020
+2026-06-08T00:42:13.194039+00:00,data-availability,Data Availability,sector_momentum_watch,10.50891531,near,NEAR,NEAR Protocol,2692730474.0000,663310532.0000,1,,,,,tradable_pending_label,15.13679121
+2026-06-08T00:42:13.194039+00:00,identity,Decentralized Identifier (DID),sector_momentum_watch,11.00278350,worldcoin-wld,WLD,Worldcoin,1644421348.0000,641073104.0000,1,,,,,tradable_pending_label,14.67363567
+2026-06-08T00:42:13.194039+00:00,privacy-coins,Privacy Coins,sector_momentum_watch,12.02480324,decred,DCR,Decred,218055524.0000,1389161.0000,1,,,,,not_hyperliquid,14.56580998
+2026-06-08T00:42:13.194039+00:00,mev-protection,MEV Protection,sector_momentum_watch,12.30743444,gnosis,GNO,Gnosis,253698098.0000,1382210.0000,1,,,,,not_hyperliquid,14.52170502
+2026-06-08T00:42:13.194039+00:00,mev-protection,MEV Protection,sector_momentum_watch,12.30743444,railgun,RAIL,Railgun,172640662.0000,963307.0000,1,,,,,not_hyperliquid,14.44064758
+2026-06-08T00:42:13.194039+00:00,liquid-staking-governance-tokens,Liquid Staking Governance Tokens,sector_momentum_watch,12.02098258,jito-governance-token,JTO,Jito,301395915.0000,84552313.0000,1,,,,,tradable_pending_label,14.38728890
+2026-06-08T00:42:13.194039+00:00,mev-protection,MEV Protection,sector_momentum_watch,12.30743444,cow-protocol,COW,CoW Protocol,81693040.0000,3927252.0000,1,,,,,not_hyperliquid,14.34969996
+2026-06-08T00:42:13.194039+00:00,liquid-staking-governance-tokens,Liquid Staking Governance Tokens,sector_momentum_watch,12.02098258,lido-dao,LDO,Lido DAO,231408074.0000,28144721.0000,1,,,,,tradable_pending_label,14.31730105
+2026-06-08T00:42:13.194039+00:00,gaming,Gaming (GameFi),sector_momentum_watch,11.22604100,audiera,BEAT,Audiera,1022844346.0000,66880536.0000,1,,,,,not_hyperliquid,14.31223256
+2026-06-08T00:42:13.194039+00:00,liquid-staking-governance-tokens,Liquid Staking Governance Tokens,sector_momentum_watch,12.02098258,kinetiq,KNTQ,Kinetiq,68820036.0000,1735459.0000,1,,,,,not_hyperliquid,14.15471302
+2026-06-08T00:42:13.194039+00:00,gaming,Gaming (GameFi),sector_momentum_watch,11.22604100,the9bit,9BIT,The9bit,343881443.0000,8050240.0000,1,,,,,not_hyperliquid,13.63326965
+2026-06-08T00:42:13.194039+00:00,gaming,Gaming (GameFi),sector_momentum_watch,11.22604100,floki,FLOKI,FLOKI,240557008.0000,24974552.0000,1,,,,,not_hyperliquid,13.52994522
+2026-06-08T00:42:13.194039+00:00,non-fungible-tokens-nft,NFT,sector_momentum_watch,10.49779553,audiera,BEAT,Audiera,1022844346.0000,66880536.0000,1,,,,,not_hyperliquid,13.47669189
+2026-06-08T00:42:13.194039+00:00,non-fungible-tokens-nft,NFT,sector_momentum_watch,10.49779553,render-token,RENDER,Render,875983564.0000,75656149.0000,1,,,,,tradable_pending_label,13.32983110
+2026-06-08T00:42:13.194039+00:00,identity,Decentralized Identifier (DID),sector_momentum_watch,11.00278350,ethereum-name-service,ENS,Ethereum Name Service,192141885.0000,16225902.0000,1,,,,,tradable_pending_label,13.22135620
+2026-06-08T00:42:13.194039+00:00,identity,Decentralized Identifier (DID),sector_momentum_watch,11.00278350,billions-network,BILL,Billions Network,182747026.0000,64659535.0000,1,,,,,not_hyperliquid,13.21196135
+2026-06-08T00:42:13.194039+00:00,bittensor-subnets,Bittensor Subnets,sector_momentum_watch,11.11204200,chutes,SN64,Chutes,74309750.0000,1143303.0000,1,,,,,not_hyperliquid,13.00246738
+2026-06-08T00:42:13.194039+00:00,bittensor-subnets,Bittensor Subnets,sector_momentum_watch,11.11204200,targon,SN4,Targon,55637955.0000,205550.0000,1,,,,,not_hyperliquid,12.98379559
+2026-06-08T00:42:13.194039+00:00,bittensor-subnets,Bittensor Subnets,sector_momentum_watch,11.11204200,celium,SN51,lium,41675107.0000,210464.0000,1,,,,,not_hyperliquid,12.96983274
+2026-06-08T00:42:13.194039+00:00,non-fungible-tokens-nft,NFT,sector_momentum_watch,10.49779553,fetch-ai,FET,Artificial Superintelligence Alliance,482730657.0000,107984758.0000,1,,,,,tradable_pending_label,12.93657820
+2026-06-08T00:42:13.194039+00:00,data-availability,Data Availability,sector_momentum_watch,10.50891531,unibase,UB,Unibase,310274982.0000,20216327.0000,1,,,,,not_hyperliquid,12.75433572
+2026-06-08T00:42:13.194039+00:00,data-availability,Data Availability,sector_momentum_watch,10.50891531,celestia,TIA,Celestia,298005234.0000,39335405.0000,1,,,,,tradable_pending_label,12.74206597
+2026-06-08T00:42:13.194039+00:00,chain-abstraction,Chain Abstraction,sector_momentum_watch,8.43554806,near,NEAR,NEAR Protocol,2692730474.0000,663310532.0000,1,,,,,tradable_pending_label,12.72624752
+2026-06-08T00:42:13.194039+00:00,defai,DeFAI,sector_momentum_watch,10.25715736,ribbita-by-virtuals,TIBBIR,Ribbita by Virtuals,112673322.0000,1110489.0000,1,,,,,not_hyperliquid,12.09095468
+2026-06-08T00:42:13.194039+00:00,defai,DeFAI,sector_momentum_watch,10.25715736,velvet,VELVET,Velvet,108248364.0000,14378668.0000,1,,,,,not_hyperliquid,12.08652972
+2026-06-08T00:42:13.194039+00:00,defai,DeFAI,sector_momentum_watch,10.25715736,derive,DRV,Derive,106855223.0000,679521.0000,1,,,,,not_hyperliquid,12.08513658
+2026-06-08T00:42:13.194039+00:00,superchain-ecosystem,Optimism Superchain Ecosystem,sector_momentum_watch,8.55104761,worldcoin-wld,WLD,Worldcoin,1644421348.0000,641073104.0000,1,,,,,tradable_pending_label,11.82108571
+2026-06-08T00:42:13.194039+00:00,superchain-ecosystem,Optimism Superchain Ecosystem,sector_momentum_watch,8.55104761,optimism,OP,Optimism,209787329.0000,59504603.0000,1,,,,,tradable_pending_label,10.38645169
+2026-06-08T00:42:13.194039+00:00,chain-abstraction,Chain Abstraction,sector_momentum_watch,8.43554806,river,RIVER,River,105222884.0000,6599301.0000,1,,,,,not_hyperliquid,10.13873993

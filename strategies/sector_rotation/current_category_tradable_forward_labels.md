@@ -4,31 +4,31 @@ This maps CoinGecko category rotation into Hyperliquid-tradable constituents and
 
 | category | coin | action | change24 | dir | raw 15m | dir 15m | raw 1h | dir 1h | status |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| Zero Knowledge (ZK) | POL | sector_momentum_watch | 8.8333 | 1 | 0.003486 | 0.003486 |  |  | tradable_labeled |
-| Launchpad | JUP | sector_momentum_watch | 20.6313 | 1 | -0.000324 | -0.000324 |  |  | tradable_labeled |
-| AI Meme | FARTCOIN | sector_momentum_watch | 10.9047 | 1 | -0.000442 | -0.000442 |  |  | tradable_labeled |
-| Privacy | LINK | sector_momentum_watch | 19.2678 | 1 | -0.000672 | -0.000672 |  |  | tradable_labeled |
-| Privacy Blockchain | CC | sector_momentum_watch | 10.9328 | 1 | -0.001330 | -0.001330 |  |  | tradable_labeled |
-| Privacy | ZEC | sector_momentum_watch | 19.2678 | 1 | -0.001867 | -0.001867 |  |  | tradable_labeled |
-| Zero Knowledge (ZK) | ZEC | sector_momentum_watch | 8.8333 | 1 | -0.001867 | -0.001867 |  |  | tradable_labeled |
-| Privacy | XMR | sector_momentum_watch | 19.2678 | 1 | -0.002241 | -0.002241 |  |  | tradable_labeled |
-| Echo Launchpad | XPL | sector_momentum_watch | 33.9457 | 1 | -0.002320 | -0.002320 |  |  | tradable_labeled |
-| Launchpad | PUMP | sector_momentum_watch | 20.6313 | 1 | -0.002649 | -0.002649 |  |  | tradable_labeled |
-| Binance Alpha Spotlight | ONDO | sector_momentum_watch | 13.7373 | 1 | -0.003682 | -0.003682 |  |  | tradable_labeled |
-| AI Meme | TURBO | sector_momentum_watch | 10.9047 | 1 | -0.004640 | -0.004640 |  |  | tradable_labeled |
-| Analytics | PYTH | sector_momentum_watch | 25.3886 | 1 | -0.005261 | -0.005261 |  |  | tradable_labeled |
-| Arcade Games | BEAT | sector_momentum_watch | 73.9737 | 1 |  |  |  |  | not_hyperliquid |
-| Arcade Games | HMSTR | sector_momentum_watch | 73.9737 | 1 |  |  |  |  | tradable_pending_label |
-| Arcade Games | PEPECOIN | sector_momentum_watch | 73.9737 | 1 |  |  |  |  | not_hyperliquid |
-| DRC-20 | DOGI | sector_stress_watch | -65.3981 | -1 |  |  |  |  | not_hyperliquid |
-| DRC-20 | FIWB | sector_stress_watch | -65.3981 | -1 |  |  |  |  | not_hyperliquid |
-| DRC-20 | DALL | sector_stress_watch | -65.3981 | -1 |  |  |  |  | not_hyperliquid |
-| Telegram Apps | BEAT | sector_momentum_watch | 49.1236 | 1 |  |  |  |  | not_hyperliquid |
-| Telegram Apps | FLOKI | sector_momentum_watch | 49.1236 | 1 |  |  |  |  | not_hyperliquid |
-| Telegram Apps | CATI | sector_momentum_watch | 49.1236 | 1 |  |  |  |  | tradable_pending_label |
-| Echo Launchpad | LAB | sector_momentum_watch | 33.9457 | 1 |  |  |  |  | not_hyperliquid |
-| Four.meme Ecosystem (BNB Memes) | 币安人生 | sector_momentum_watch | 35.2284 | 1 |  |  |  |  | not_hyperliquid |
-| Four.meme Ecosystem (BNB Memes) | SIREN | sector_momentum_watch | 35.2284 | 1 |  |  |  |  | not_hyperliquid |
+| Arcade Games | BEAT | sector_momentum_watch | 55.5353 | 1 |  |  |  |  | not_hyperliquid |
+| Arcade Games | HMSTR | sector_momentum_watch | 55.5353 | 1 |  |  |  |  | tradable_pending_label |
+| Arcade Games | PEPECOIN | sector_momentum_watch | 55.5353 | 1 |  |  |  |  | not_hyperliquid |
+| OpenServ Ecosystem | ROUTER | sector_momentum_watch | 54.8704 | 1 |  |  |  |  | not_hyperliquid |
+| OpenServ Ecosystem | BETTER | sector_momentum_watch | 54.8704 | 1 |  |  |  |  | not_hyperliquid |
+| OpenServ Ecosystem | COBOT | sector_momentum_watch | 54.8704 | 1 |  |  |  |  | not_hyperliquid |
+| Telegram Apps | BEAT | sector_momentum_watch | 37.7535 | 1 |  |  |  |  | not_hyperliquid |
+| Telegram Apps | FLOKI | sector_momentum_watch | 37.7535 | 1 |  |  |  |  | not_hyperliquid |
+| Telegram Apps | CATI | sector_momentum_watch | 37.7535 | 1 |  |  |  |  | tradable_pending_label |
+| Privacy | ZEC | sector_momentum_watch | 23.9683 | 1 |  |  |  |  | tradable_pending_label |
+| Market-Making Solution | HMT | sector_momentum_watch | 31.1945 | 1 |  |  |  |  | not_hyperliquid |
+| Market-Making Solution | MM | sector_momentum_watch | 31.1945 | 1 |  |  |  |  | not_hyperliquid |
+| Market-Making Solution | GAMMA | sector_momentum_watch | 31.1945 | 1 |  |  |  |  | not_hyperliquid |
+| Privacy | LINK | sector_momentum_watch | 23.9683 | 1 |  |  |  |  | tradable_pending_label |
+| Privacy | XMR | sector_momentum_watch | 23.9683 | 1 |  |  |  |  | tradable_pending_label |
+| PAAL AI Launchpad | PAAL | sector_momentum_watch | 28.1987 | 1 |  |  |  |  | not_hyperliquid |
+| PAAL AI Launchpad | AIT | sector_momentum_watch | 28.1987 | 1 |  |  |  |  | not_hyperliquid |
+| PAAL AI Launchpad | $VAULT | sector_momentum_watch | 28.1987 | 1 |  |  |  |  | not_hyperliquid |
+| NFT Lending/Borrowing | AQT | sector_stress_watch | -27.3358 | -1 |  |  |  |  | not_hyperliquid |
+| Groypad Ecosystem | FAST | sector_momentum_watch | 27.9645 | 1 |  |  |  |  | not_hyperliquid |
+| Groypad Ecosystem | LNG | sector_momentum_watch | 27.9645 | 1 |  |  |  |  | not_hyperliquid |
+| Groypad Ecosystem | PYONYA | sector_momentum_watch | 27.9645 | 1 |  |  |  |  | not_hyperliquid |
+| Quantum-Resistant | ZEC | sector_momentum_watch | 18.2781 | 1 |  |  |  |  | tradable_pending_label |
+| Sticker-Themed Coins | UTYA | sector_momentum_watch | 25.3183 | 1 |  |  |  |  | not_hyperliquid |
+| Sticker-Themed Coins | PLANE | sector_momentum_watch | 25.3183 | 1 |  |  |  |  | not_hyperliquid |
 
 ## Interpretation
 
