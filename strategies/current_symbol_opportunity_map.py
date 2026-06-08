@@ -30,10 +30,14 @@ STOP_TOKENS = {
     "BETA",
     "BITCOIN",
     "BID",
+    "BIN",
+    "BINANCE",
+    "BINPERP",
     "BLUE",
     "BORROW",
     "BPS",
     "BYBIT",
+    "BYBITPERP",
     "CALENDAR",
     "BRIDGE",
     "CANDIDATE",
@@ -388,6 +392,8 @@ def _normalize_symbol(token: str) -> str:
     if not value:
         return ""
     value = value.replace(":", "_").replace("-", "_")
+    if value in STOP_TOKENS:
+        return ""
     for suffix in ("_PERP", "_SWAP", "PERP", "USDTM", "USDT"):
         if value.endswith(suffix) and len(value) > len(suffix) + 1:
             value = value[: -len(suffix)]

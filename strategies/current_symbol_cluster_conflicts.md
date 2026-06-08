@@ -31,10 +31,11 @@ This separates symbol clusters that confirm one direction from clusters that mix
 | PENDLE | multi_source_watch | 103.4239 | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | pendle_fee_growth_price_context | collect more PENDLE snapshots before treating this as a cluster |
 | REUSD | multi_source_watch | 101.5000 | 2 | 2 | L=0, S=0, RV=0, Y=1, R=1, N=0 | mixed | reusd_stablecoin_peg_stress, ethereum_re_reusd_yield_peg | collect more REUSD snapshots before treating this as a cluster |
 | APXUSD | multi_source_watch | 101.5000 | 2 | 2 | L=0, S=0, RV=0, Y=1, R=1, N=0 | mixed | apxusd_stablecoin_peg_stress, ethereum_apyx-protocol_apxusd_yield_peg | collect more APXUSD snapshots before treating this as a cluster |
-| STABLE | multi_source_watch | 100.9295 | 2 | 3 | L=1, S=0, RV=0, Y=0, R=0, N=2 | neutral | stable_extreme_funding_carry_long_perp, stable_bybitperp_hlperp_funding, stable_okxswap_hlperp_funding | collect more STABLE snapshots before treating this as a cluster |
+| STABLE | multi_source_watch | 100.9295 | 2 | 3 | L=1, S=0, RV=0, Y=0, R=0, N=2 | neutral | stable_extreme_funding_carry_long_perp, stable_hlperp_cash_or_spot_proxy_funding, stable_bybitperp_binperp_funding | collect more STABLE snapshots before treating this as a cluster |
 | MSTR | multi_source_watch | 96.3986 | 2 | 1 | L=0, S=0, RV=1, Y=0, R=0, N=0 | relative_value | mstr_btc_relative_value | collect more MSTR snapshots before treating this as a cluster |
 | PMUSD | single_candidate_watch | 93.0000 | 1 | 1 | L=0, S=0, RV=0, Y=0, R=1, N=0 | risk_or_avoid | pmusd_stablecoin_peg_stress | collect more PMUSD snapshots before treating this as a cluster |
 | USYC | single_candidate_watch | 93.0000 | 1 | 1 | L=0, S=0, RV=0, Y=0, R=1, N=0 | risk_or_avoid | usyc_stablecoin_peg_stress | collect more USYC snapshots before treating this as a cluster |
+| MON | multi_source_watch | 91.1238 | 2 | 3 | L=0, S=0, RV=0, Y=0, R=0, N=3 | neutral | mon_okxswap_hlperp_funding, okx_mon_chain_flow_context, mon_chain_flow_context | collect more MON snapshots before treating this as a cluster |
 | EIGEN | single_candidate_watch | 90.0175 | 1 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | eigen_crowded_momentum_continuation_long_perp | collect more EIGEN snapshots before treating this as a cluster |
 | STBL | single_candidate_watch | 89.9505 | 1 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | stbl_crowded_momentum_continuation_long_perp | collect more STBL snapshots before treating this as a cluster |
 | MANTA | single_candidate_watch | 89.9342 | 1 | 1 | L=0, S=1, RV=0, Y=0, R=0, N=0 | short | manta_crowded_momentum_continuation_short_perp | collect more MANTA snapshots before treating this as a cluster |
@@ -43,7 +44,6 @@ This separates symbol clusters that confirm one direction from clusters that mix
 | XPL | multi_source_watch | 87.2220 | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | xpl_volume_price_dislocation | collect more XPL snapshots before treating this as a cluster |
 | NEAR | multi_source_watch | 87.0160 | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | near_attention_price_context | collect more NEAR snapshots before treating this as a cluster |
 | COINDESK | mixed_direction_conflict | 86.9159 | 1 | 2 | L=1, S=1, RV=0, Y=0, R=0, N=0 | mixed | zec_narrative_event_news_event, btc_regulatory_risk_news_event | split COINDESK labels by lane before trading; do not collapse conflicting ideas into one action |
-| ADA | multi_source_watch | 86.6629 | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0, N=0 | long | ada_attention_price_context | collect more ADA snapshots before treating this as a cluster |
 
 ## Interpretation
 

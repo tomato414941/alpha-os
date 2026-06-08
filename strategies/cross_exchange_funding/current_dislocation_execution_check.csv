@@ -1,6 +1,6 @@
 asset,fee_bps_per_fill_per_venue,mean_net_24h_proxy,fee_round_trip_rate,combined_taker_slippage_bps,fee_only_net_24h,conservative_taker_net_24h,okx_size_valid,hl_size_valid,book_fully_filled,action,reason
-STABLE,0.000000,0.0021031200,0.0000000000,11.294032,0.0021031200,0.0009737168,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
-STABLE,0.250000,0.0021031200,0.0001000000,11.294032,0.0020031200,0.0008737168,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
-STABLE,0.500000,0.0021031200,0.0002000000,11.294032,0.0019031200,0.0007737168,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
-STABLE,1.000000,0.0021031200,0.0004000000,11.294032,0.0017031200,0.0005737168,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
-STABLE,2.000000,0.0021031200,0.0008000000,11.294032,0.0013031200,0.0001737168,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
+MON,0.000000,0.0010255700,0.0000000000,9.275463,0.0010255700,0.0000980237,True,True,True,conservative_taker_monitor,survives fees and visible taker slippage in the conservative check
+MON,0.250000,0.0010255700,0.0001000000,9.275463,0.0009255700,-0.0000019763,True,True,True,fee_only_monitor,"survives fees, but visible taker slippage consumes the conservative edge"
+MON,0.500000,0.0010255700,0.0002000000,9.275463,0.0008255700,-0.0001019763,True,True,True,fee_only_monitor,"survives fees, but visible taker slippage consumes the conservative edge"
+MON,1.000000,0.0010255700,0.0004000000,9.275463,0.0006255700,-0.0003019763,True,True,True,fee_only_monitor,"survives fees, but visible taker slippage consumes the conservative edge"
+MON,2.000000,0.0010255700,0.0008000000,9.275463,0.0002255700,-0.0007019763,True,True,True,fee_only_monitor,"survives fees, but visible taker slippage consumes the conservative edge"

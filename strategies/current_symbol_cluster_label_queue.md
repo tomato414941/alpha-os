@@ -31,9 +31,10 @@ This turns symbol-level clusters into concrete next labeling work. It is a workf
 | PENDLE | collect_cluster_observations | 109.9239 | multi_source_watch | long | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0 | pendle_fee_growth_price_context | collect more PENDLE observations and then rerun cluster conflict review |
 | REUSD | collect_cluster_observations | 108.5000 | multi_source_watch | mixed | 2 | 2 | L=0, S=0, RV=0, Y=1, R=1 | reusd_stablecoin_peg_stress, ethereum_re_reusd_yield_peg | collect more REUSD observations and then rerun cluster conflict review |
 | APXUSD | collect_cluster_observations | 108.5000 | multi_source_watch | mixed | 2 | 2 | L=0, S=0, RV=0, Y=1, R=1 | apxusd_stablecoin_peg_stress, ethereum_apyx-protocol_apxusd_yield_peg | collect more APXUSD observations and then rerun cluster conflict review |
-| STABLE | collect_cluster_observations | 108.4295 | multi_source_watch | neutral | 2 | 3 | L=1, S=0, RV=0, Y=0, R=0 | stable_extreme_funding_carry_long_perp, stable_bybitperp_hlperp_funding, stable_okxswap_hlperp_funding | collect more STABLE observations and then rerun cluster conflict review |
+| STABLE | collect_cluster_observations | 108.4295 | multi_source_watch | neutral | 2 | 3 | L=1, S=0, RV=0, Y=0, R=0 | stable_extreme_funding_carry_long_perp, stable_hlperp_cash_or_spot_proxy_funding, stable_bybitperp_binperp_funding | collect more STABLE observations and then rerun cluster conflict review |
 | MSTR | collect_cluster_observations | 102.8986 | multi_source_watch | relative_value | 2 | 1 | L=0, S=0, RV=1, Y=0, R=0 | mstr_btc_relative_value | collect more MSTR observations and then rerun cluster conflict review |
 | COINDESK | split_lane_forward_label | 101.4159 | mixed_direction_conflict | mixed | 1 | 2 | L=1, S=1, RV=0, Y=0, R=0 | zec_narrative_event_news_event, btc_regulatory_risk_news_event | label COINDESK per lane and compare direction, costs, depth, and failure regime separately |
+| MON | collect_cluster_observations | 98.6238 | multi_source_watch | neutral | 2 | 3 | L=0, S=0, RV=0, Y=0, R=0 | mon_okxswap_hlperp_funding, okx_mon_chain_flow_context, mon_chain_flow_context | collect more MON observations and then rerun cluster conflict review |
 | PMUSD | repeat_single_candidate_observation | 97.0000 | single_candidate_watch | risk_or_avoid | 1 | 1 | L=0, S=0, RV=0, Y=0, R=1 | pmusd_stablecoin_peg_stress | repeat PMUSD observation and require a second independent signal or fresh positive label |
 | USYC | repeat_single_candidate_observation | 97.0000 | single_candidate_watch | risk_or_avoid | 1 | 1 | L=0, S=0, RV=0, Y=0, R=1 | usyc_stablecoin_peg_stress | repeat USYC observation and require a second independent signal or fresh positive label |
 | TRX | collect_cluster_observations | 96.6653 | multi_source_watch | mixed | 2 | 2 | L=0, S=1, RV=0, Y=0, R=0 | coinw_(futures)_trx/usdt_positioning, tron_stablecoin_migration | collect more TRX observations and then rerun cluster conflict review |
@@ -43,7 +44,6 @@ This turns symbol-level clusters into concrete next labeling work. It is a workf
 | FARTCOIN | collect_cluster_observations | 93.7466 | multi_source_watch | long | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0 | fartcoin_volume_price_dislocation | collect more FARTCOIN observations and then rerun cluster conflict review |
 | XPL | collect_cluster_observations | 93.7220 | multi_source_watch | long | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0 | xpl_volume_price_dislocation | collect more XPL observations and then rerun cluster conflict review |
 | NEAR | collect_cluster_observations | 93.5160 | multi_source_watch | long | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0 | near_attention_price_context | collect more NEAR observations and then rerun cluster conflict review |
-| ADA | collect_cluster_observations | 93.1629 | multi_source_watch | long | 2 | 1 | L=1, S=0, RV=0, Y=0, R=0 | ada_attention_price_context | collect more ADA observations and then rerun cluster conflict review |
 
 ## Interpretation
 

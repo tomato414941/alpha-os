@@ -83,7 +83,7 @@ def write_funding_spreads(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             (
                 "timestamp",
