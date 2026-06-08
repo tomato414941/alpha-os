@@ -9,6 +9,7 @@ observed_at,symbol,name,coin_id,status,side,direction,score,start_price,raw_retu
 2026-06-07T22:55:00+00:00,VIRTUAL,Virtuals Protocol,virtual-protocol,volume_reversal_candidate,long_reversal,1,45.94458804,0.576870000000,0.00199352,0.00381368,,,0.00199352,0.00381368,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,PUMP,Pump.fun,pump-fun,volume_reversal_candidate,long_reversal,1,39.06249091,0.001521000000,0.00197239,0.02038133,,,0.00197239,0.02038133,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,TAO,Bittensor,bittensor,volume_reversal_candidate,long_reversal,1,45.27202242,212.790000000000,0.00131585,0.00070492,,,0.00131585,0.00070492,,,hyperliquid,labeled_4h_pending_12h
+2026-06-07T22:55:00+00:00,ARB,Arbitrum,arbitrum,volume_reversal_candidate,long_reversal,1,41.84739584,0.082580000000,0.00121095,0.00254299,,,0.00121095,0.00254299,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,LINK,Chainlink,chainlink,volume_reversal_candidate,long_reversal,1,37.45194966,7.887100000000,0.00114110,0.00588302,,,0.00114110,0.00588302,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,SOL,Solana,solana,volume_reversal_candidate,long_reversal,1,45.97076715,66.087000000000,0.00104408,0.00641579,,,0.00104408,0.00641579,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,DOGE,Dogecoin,dogecoin,volume_reversal_candidate,long_reversal,1,37.68614915,0.085833000000,0.00094369,0.00236506,,,0.00094369,0.00236506,,,hyperliquid,labeled_4h_pending_12h
@@ -18,13 +19,11 @@ observed_at,symbol,name,coin_id,status,side,direction,score,start_price,raw_retu
 2026-06-07T22:55:00+00:00,UNI,Uniswap,uniswap,volume_reversal_candidate,long_reversal,1,37.93284373,2.557000000000,0.00031287,0.00015643,,,0.00031287,0.00015643,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,JTO,Jito,jito-governance-token,breakout_continuation_watch,long_momentum_watch,1,59.82256335,0.616000000000,0.00030844,-0.01920455,,,0.00030844,-0.01920455,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,DOT,Polkadot,polkadot,volume_reversal_candidate,long_reversal,1,38.23488257,0.970730000000,-0.00065930,0.00006181,,,-0.00065930,0.00006181,,,hyperliquid,labeled_4h_pending_12h
-2026-06-07T22:55:00+00:00,BAT,Basic Attention,basic-attention-token,volume_reversal_candidate,long_reversal,1,40.69157202,0.087192000000,-0.00130368,-0.01228385,,,-0.00130368,-0.01228385,,,coingecko,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,FIL,Filecoin,filecoin,volume_reversal_candidate,long_reversal,1,42.01226671,0.771530000000,-0.00149054,0.00054437,,,-0.00149054,0.00054437,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,LTC,Litecoin,litecoin,volume_reversal_candidate,long_reversal,1,41.76643674,42.810000000000,-0.00163513,-0.00429806,,,-0.00163513,-0.00429806,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,XPL,Plasma,plasma,volume_reversal_candidate,long_reversal,1,54.02830401,0.069216000000,-0.00215268,0.01031553,,,-0.00215268,0.01031553,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,FET,Artificial Superintelligence Alliance,fetch-ai,volume_reversal_candidate,long_reversal,1,53.79486251,0.212480000000,-0.00216491,-0.01736634,,,-0.00216491,-0.01736634,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,TIA,Celestia,celestia,volume_reversal_candidate,long_reversal,1,41.51080747,0.317540000000,-0.00258235,0.00393651,,,-0.00258235,0.00393651,,,hyperliquid,labeled_4h_pending_12h
-2026-06-07T22:55:00+00:00,ARB,Arbitrum,arbitrum,volume_reversal_candidate,long_reversal,1,41.84739584,0.083053000000,-0.00286978,-0.00676987,,,-0.00286978,-0.00676987,,,coingecko,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,OP,Optimism,optimism,volume_reversal_candidate,long_reversal,1,45.81028509,0.096920000000,-0.00330169,-0.00484936,,,-0.00330169,-0.00484936,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,DYDX,dYdX,dydx-chain,volume_reversal_candidate,long_reversal,1,39.48701188,0.145170000000,-0.00427085,-0.01460357,,,-0.00427085,-0.01460357,,,hyperliquid,labeled_4h_pending_12h
 2026-06-07T22:55:00+00:00,WIF,dogwifhat,dogwifcoin,volume_reversal_candidate,long_reversal,1,41.19132114,0.158190000000,-0.00429863,0.00012643,,,-0.00429863,0.00012643,,,hyperliquid,labeled_4h_pending_12h
@@ -45,6 +44,7 @@ observed_at,symbol,name,coin_id,status,side,direction,score,start_price,raw_retu
 2026-06-07T22:55:00+00:00,BTW,Bitway,bitway,chase_risk,wait_or_fade_watch,-1,46.61693406,0.072196000000,,,,,,,,,unavailable,pending_1h
 2026-06-07T22:55:00+00:00,LUNC,Terra Luna Classic,terra-luna,volume_reversal_candidate,long_reversal,1,46.29091743,0.000066990000,,,,,,,,,unavailable,pending_1h
 2026-06-07T22:55:00+00:00,PEPE,Pepe,pepe,volume_reversal_candidate,long_reversal,1,44.94528256,0.000002820000,,,,,,,,,unavailable,pending_1h
+2026-06-07T22:55:00+00:00,BAT,Basic Attention,basic-attention-token,volume_reversal_candidate,long_reversal,1,40.69157202,0.087192000000,,,,,,,,,unavailable,pending_1h
 2026-06-07T22:55:00+00:00,VELVET,Velvet,velvet,chase_risk,wait_or_fade_watch,-1,39.72940538,0.255468000000,,,,,,,,,unavailable,pending_1h
 2026-06-07T22:55:00+00:00,BONK,Bonk,bonk,volume_reversal_candidate,long_reversal,1,38.70084356,0.000004440000,,,,,,,,,unavailable,pending_1h
 2026-06-07T22:55:00+00:00,CFG,Centrifuge,centrifuge-2,volume_reversal_candidate,long_reversal,1,37.54885477,0.203322000000,,,,,,,,,unavailable,pending_1h
