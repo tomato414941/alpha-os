@@ -242,6 +242,7 @@ DEFAULT_COMMANDS = (
     ("strategies.current_symbol_lane_split_review",),
     ("strategies.policy_learning.current_policy_learning_samples",),
     ("strategies.policy_learning.current_observation_action_reward_dataset",),
+    ("strategies.policy_learning.current_policy_context_frontier",),
     ("strategies.policy_learning.current_action_preference_candidates",),
     ("strategies.policy_learning.current_action_preference_oos_check",),
     ("strategies.policy_learning.current_policy_expansion_targets",),

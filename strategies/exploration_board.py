@@ -49,6 +49,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_cluster_label_queue_row(root),
         _symbol_lane_split_review_row(root),
         _policy_learning_row(root),
+        _policy_context_frontier_row(root),
         _policy_action_preference_row(root),
         _policy_action_preference_oos_row(root),
         _wallet_entity_flow_row(root),
@@ -231,6 +232,36 @@ def _policy_action_preference_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="policy samples have not been aggregated into context/action preferences",
         next_step="run current action preference candidates after policy-learning samples",
+    )
+
+
+def _policy_context_frontier_row(root: Path) -> ExplorationRow:
+    path = root / "policy_learning" / "current_policy_context_frontier.csv"
+    best = _best_numeric_row(path, key="frontier_score")
+    if best:
+        return ExplorationRow(
+            lane="policy_context_frontier",
+            status=best.get("decision", "context_frontier"),
+            strongest_current_signal=(
+                f"{best.get('context', '')}: "
+                f"records={best.get('records', '')}, "
+                f"repeat={best.get('repeat_records', '')}, "
+                f"mean={best.get('mean_reward_bps', '')}, "
+                f"repeat_mean={best.get('repeat_mean_reward_bps', '')}, "
+                f"score={best.get('frontier_score', '')}"
+            ),
+            main_gap=(
+                "context frontier is still paper-only; observation state, action constraints, "
+                "and stop/adverse-excursion fields are incomplete"
+            ),
+            next_step=best.get("next_step", "expand the strongest OAR-supported context"),
+        )
+    return ExplorationRow(
+        lane="policy_context_frontier",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="OAR records have not been summarized by context",
+        next_step="run policy context frontier after the OAR dataset",
     )
 
 
