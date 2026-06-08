@@ -14,6 +14,7 @@ class RepeatExecutionGateRow:
     asset: str
     source: str
     venue: str
+    trade_direction: str
     label_count: int
     hit_rate_15m: float
     mean_dir15: float
@@ -31,6 +32,7 @@ class RepeatExecutionGateRow:
 def build_repeat_execution_gate_rows(
     *,
     summary_path: Path = ROOT / "current_followup_repeat_history_summary.csv",
+    label_path: Path = ROOT / "current_followup_repeat_history_labels.csv",
     hl_context_path: Path = ROOT / "current_followup_execution_context.csv",
     okx_context_path: Path = ROOT / "current_followup_okx_execution_context.csv",
     taker_cost_bps: float = 8.0,
@@ -39,6 +41,7 @@ def build_repeat_execution_gate_rows(
         hl_context_path=hl_context_path,
         okx_context_path=okx_context_path,
     )
+    directions = _trade_directions(label_path)
     rows: list[RepeatExecutionGateRow] = []
     for summary in _read_rows(summary_path):
         if summary.get("action") != "repeat_priority" or summary.get("group_type") != "asset_source":
@@ -53,6 +56,7 @@ def build_repeat_execution_gate_rows(
                     asset=asset,
                     source=source,
                     venue=venue,
+                    trade_direction=directions.get((asset, source), "unknown"),
                     context=contexts.get((venue, asset)),
                     taker_cost_bps=taker_cost_bps,
                 )
@@ -73,6 +77,7 @@ def write_repeat_execution_gate_csv(
                 "asset",
                 "source",
                 "venue",
+                "trade_direction",
                 "label_count",
                 "hit_rate_15m",
                 "mean_dir15",
@@ -93,6 +98,7 @@ def write_repeat_execution_gate_csv(
                     row.asset,
                     row.source,
                     row.venue,
+                    row.trade_direction,
                     row.label_count,
                     f"{row.hit_rate_15m:.6f}",
                     f"{row.mean_dir15:.8f}",
@@ -126,15 +132,16 @@ def write_repeat_execution_gate_md(
             "It is a paper-check queue, not a trade instruction.\n\n"
         )
         handle.write(
-            "| asset | source | venue | labels | hit15 | mean15 bps | spread bps | depth 10bps USD | rough net15 bps | gate | next step |\n"
+            "| asset | source | venue | direction | labels | hit15 | mean15 bps | spread bps | depth 10bps USD | rough net15 bps | gate | next step |\n"
         )
-        handle.write("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n")
+        handle.write("| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n")
         for row in rows[:top]:
             handle.write(
                 "| "
                 f"{row.asset} | "
                 f"{row.source} | "
                 f"{row.venue} | "
+                f"{row.trade_direction} | "
                 f"{row.label_count} | "
                 f"{row.hit_rate_15m:.3f} | "
                 f"{row.mean_dir15_bps:.2f} | "
@@ -160,6 +167,7 @@ def _build_gate_row(
     asset: str,
     source: str,
     venue: str,
+    trade_direction: str,
     context: dict[str, str] | None,
     taker_cost_bps: float,
 ) -> RepeatExecutionGateRow:
@@ -174,6 +182,7 @@ def _build_gate_row(
             asset=asset,
             source=source,
             venue=venue,
+            trade_direction=trade_direction,
             label_count=label_count,
             hit_rate_15m=hit_rate,
             mean_dir15=mean_dir15,
@@ -204,6 +213,7 @@ def _build_gate_row(
         asset=asset,
         source=source,
         venue=venue,
+        trade_direction=trade_direction,
         label_count=label_count,
         hit_rate_15m=hit_rate,
         mean_dir15=mean_dir15,
@@ -238,6 +248,26 @@ def _venue_contexts(
         if row.get("action") == "okx_context_ok":
             contexts[("OKX", row.get("asset", ""))] = row
     return contexts
+
+
+def _trade_directions(label_path: Path) -> dict[tuple[str, str], str]:
+    grouped: dict[tuple[str, str], set[int]] = {}
+    for row in _read_rows(label_path):
+        asset = row.get("asset", "")
+        source = row.get("source", "")
+        direction = _int(row.get("direction"))
+        if not asset or not source or direction == 0:
+            continue
+        grouped.setdefault((asset, source), set()).add(direction)
+    output: dict[tuple[str, str], str] = {}
+    for key, directions in grouped.items():
+        if directions == {1}:
+            output[key] = "long"
+        elif directions == {-1}:
+            output[key] = "short"
+        else:
+            output[key] = "mixed"
+    return output
 
 
 def _gate_action(
@@ -339,6 +369,7 @@ def _int(value: object) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--summary-path", type=Path, default=ROOT / "current_followup_repeat_history_summary.csv")
+    parser.add_argument("--label-path", type=Path, default=ROOT / "current_followup_repeat_history_labels.csv")
     parser.add_argument("--hl-context-path", type=Path, default=ROOT / "current_followup_execution_context.csv")
     parser.add_argument("--okx-context-path", type=Path, default=ROOT / "current_followup_okx_execution_context.csv")
     parser.add_argument("--taker-cost-bps", type=float, default=8.0)
@@ -348,6 +379,7 @@ def main() -> None:
 
     rows = build_repeat_execution_gate_rows(
         summary_path=args.summary_path,
+        label_path=args.label_path,
         hl_context_path=args.hl_context_path,
         okx_context_path=args.okx_context_path,
         taker_cost_bps=args.taker_cost_bps,
@@ -359,6 +391,7 @@ def main() -> None:
             row.asset,
             row.source,
             row.venue,
+            row.trade_direction,
             row.gate_action,
             "" if row.rough_net15_bps is None else f"net15={row.rough_net15_bps:.2f}bps",
         )

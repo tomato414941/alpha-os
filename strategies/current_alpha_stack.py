@@ -3461,12 +3461,13 @@ def _candidate_validation_repeat_execution_gate_stacks(root: Path) -> tuple[Alph
         asset = row.get("asset", "")
         source = row.get("source", "")
         venue = row.get("venue", "")
+        trade_direction = row.get("trade_direction", "unknown")
         status = row.get("gate_action", "")
         output.append(
             AlphaStackRow(
                 opportunity=f"{asset.lower()}_{venue.lower()}_{_safe_fragment(source)}_repeat_execution_gate",
                 status=status,
-                side=f"{_safe_fragment(source)}_repeat_paper_check",
+                side=f"{trade_direction}_{_safe_fragment(source)}_repeat_paper_check",
                 priority_score=_priority_score(
                     status,
                     source_count=_intish(row.get("label_count")),
@@ -3475,6 +3476,7 @@ def _candidate_validation_repeat_execution_gate_stacks(root: Path) -> tuple[Alph
                 sources="candidate_validation + execution_context",
                 evidence=(
                     f"{asset}: venue={venue}, source={source}, "
+                    f"side={trade_direction}, "
                     f"labels={row.get('label_count', '')}, "
                     f"hit15={row.get('hit_rate_15m', '')}, "
                     f"mean15_bps={row.get('mean_dir15_bps', '')}, "
