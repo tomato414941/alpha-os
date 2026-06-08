@@ -277,6 +277,8 @@ DEFAULT_COMMANDS = (
     ("strategies.current_surviving_alpha_path_risk",),
     ("strategies.current_surviving_alpha_fill_audit_tickets", "--preserve-opened-at"),
     ("strategies.current_surviving_alpha_fill_audit_outcomes",),
+    ("strategies.current_broad_alpha_paper_tickets", "--preserve-opened-at"),
+    ("strategies.current_broad_alpha_paper_outcomes",),
     ("strategies.current_surviving_alpha_exit_regime_candidates",),
     ("strategies.current_surviving_alpha_exit_regime_tickets", "--preserve-opened-at"),
     ("strategies.current_surviving_alpha_exit_regime_outcomes",),

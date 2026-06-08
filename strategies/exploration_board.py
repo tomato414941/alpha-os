@@ -76,6 +76,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _surviving_alpha_path_risk_row(root),
         _surviving_alpha_fill_audit_tickets_row(root),
         _surviving_alpha_fill_audit_outcomes_row(root),
+        _broad_alpha_paper_tickets_row(root),
+        _broad_alpha_paper_outcomes_row(root),
         _surviving_alpha_exit_regime_candidates_row(root),
         _surviving_alpha_exit_regime_tickets_row(root),
         _surviving_alpha_exit_regime_outcomes_row(root),
@@ -1912,6 +1914,61 @@ def _surviving_alpha_fill_audit_outcomes_row(root: Path) -> ExplorationRow:
     )
 
 
+def _broad_alpha_paper_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_broad_alpha_paper_tickets.csv"
+    rows = _csv_rows(path)
+    if rows:
+        row = rows[0]
+        sources = len({item.get("opportunity", "") for item in rows if item.get("opportunity")})
+        assets = len({item.get("asset", "") for item in rows if item.get("asset")})
+        return ExplorationRow(
+            lane="broad_alpha_paper_tickets",
+            status="broad_paper_batch_open",
+            strongest_current_signal=(
+                f"{row.get('ticket_id', '')}: "
+                f"{row.get('asset', '')} {row.get('decision', '')}, "
+                f"sources={sources}, assets={assets}, tickets={len(rows)}"
+            ),
+            main_gap=row.get("required_record", "broad paper batch still needs marks and fill/risk records"),
+            next_step=row.get("next_step", "refresh broad alpha paper outcomes"),
+        )
+    return ExplorationRow(
+        lane="broad_alpha_paper_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="strong candidates from separate lanes are not tracked in one broad paper batch",
+        next_step="run broad alpha paper tickets after promotion and lane queues",
+    )
+
+
+def _broad_alpha_paper_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_broad_alpha_paper_outcomes.csv"
+    rows = _csv_rows(path)
+    if rows:
+        best = _best_paper_outcome(rows)
+        ready = sum(1 for row in rows if row.get("checkpoint_status") == "ready")
+        wins = sum(1 for row in rows if row.get("outcome") == "paper_mark_win")
+        return ExplorationRow(
+            lane="broad_alpha_paper_outcomes",
+            status=best.get("outcome", "broad_paper_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')} {best.get('decision', '')}, "
+                f"dir={best.get('directional_return_bps', '')}, "
+                f"ready={ready}, wins={wins}, total={len(rows)}"
+            ),
+            main_gap=best.get("missing_evidence", "broad paper batch still needs fill/risk evidence"),
+            next_step=best.get("next_step", "refresh broad paper outcomes"),
+        )
+    return ExplorationRow(
+        lane="broad_alpha_paper_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="broad paper tickets have not been marked",
+        next_step="run broad alpha paper outcomes after opening tickets",
+    )
+
+
 def _surviving_alpha_exit_regime_candidates_row(root: Path) -> ExplorationRow:
     path = root / "current_surviving_alpha_exit_regime_candidates.csv"
     best = _best_numeric_row(path, key="priority")
@@ -2006,6 +2063,24 @@ def _best_fill_audit_outcome(rows: tuple[dict[str, str], ...]) -> dict[str, str]
             outcome_rank.get(row.get("outcome", ""), 0),
             _safe_float(row.get("close_return_bps")),
             -abs(_safe_float(row.get("max_adverse_bps"))),
+        ),
+    )
+
+
+def _best_paper_outcome(rows: tuple[dict[str, str], ...]) -> dict[str, str]:
+    outcome_rank = {
+        "paper_mark_win": 4,
+        "pending": 3,
+        "paper_mark_flat": 2,
+        "paper_mark_loss": 1,
+        "missing_current_mark": 0,
+    }
+    return max(
+        rows,
+        key=lambda row: (
+            outcome_rank.get(row.get("outcome", ""), 0),
+            _safe_float(row.get("directional_return_bps")),
+            _safe_float(row.get("raw_return_bps")),
         ),
     )
 
