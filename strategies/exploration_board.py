@@ -63,6 +63,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _cost_adjusted_alpha_candidates_row(root),
         _cost_adjusted_alpha_clusters_row(root),
         _cost_survival_cross_section_row(root),
+        _alpha_promotion_frontier_row(root),
         _cost_adjusted_cluster_repeat_plan_row(root),
         _split_first_cluster_lane_plan_row(root),
         _split_first_lane_repeat_queue_row(root),
@@ -1543,6 +1544,35 @@ def _cost_survival_cross_section_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="cost-adjusted clusters are not ranked by repeat, depth, and duplicate survival",
         next_step="run current cost survival cross section after cost-adjusted clustering",
+    )
+
+
+def _alpha_promotion_frontier_row(root: Path) -> ExplorationRow:
+    path = root / "current_alpha_promotion_frontier.csv"
+    best = _first_matching_row(path, key="lane", value="cost_survival") or _best_numeric_row(
+        path,
+        key="frontier_score",
+    )
+    if best:
+        return ExplorationRow(
+            lane="alpha_promotion_frontier",
+            status=best.get("status", "alpha_promotion_frontier"),
+            strongest_current_signal=(
+                f"{best.get('frontier_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"{best.get('action', '')}, "
+                f"score={best.get('frontier_score', '')}, "
+                f"edge={best.get('edge_bps', '')}"
+            ),
+            main_gap=best.get("blocker", "alpha frontier row still has an unresolved promotion blocker"),
+            next_step=best.get("next_step", "clear the top promotion blocker or reject the row"),
+        )
+    return ExplorationRow(
+        lane="alpha_promotion_frontier",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="paper candidates and modern-lane blockers are not summarized in one promotion view",
+        next_step="run current alpha promotion frontier after cost survival and modern-lane survival checks",
     )
 
 
