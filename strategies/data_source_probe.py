@@ -139,6 +139,12 @@ PROBE_TARGETS = (
         url="https://decrypt.co/feed",
     ),
     ProbeTarget(
+        category="prediction_market",
+        name="polymarket_gamma_markets",
+        method="GET",
+        url="https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=1",
+    ),
+    ProbeTarget(
         category="exchange",
         name="coinbase_products",
         method="GET",
@@ -254,6 +260,8 @@ def _notes(target: ProbeTarget, status_code: int, available: bool) -> str:
         return "current crypto options surface data path is available"
     if target.category == "news":
         return "current crypto RSS news data path is available"
+    if target.category == "prediction_market":
+        return "current prediction-market listing data path is available"
     if target.category == "perp_dex":
         return "perp DEX market metadata path is available"
     if target.category == "cross_exchange":

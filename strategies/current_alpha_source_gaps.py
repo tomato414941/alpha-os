@@ -124,6 +124,16 @@ GAP_RULES = (
         research_reference="https://link.springer.com/article/10.1007/s41109-026-00778-3",
         base_priority=88.0,
     ),
+    GapRule(
+        gap_id="prediction_market_order_flow_skill",
+        lane="prediction-market order-flow skill",
+        probe_categories=("prediction_market", "news"),
+        required_probe_names=("polymarket_gamma_markets",),
+        missing_work="account/order-flow history, lifecycle timestamps, market-specific leakage score, and event-to-crypto mapping",
+        next_probe="separate pure prediction-market quote skill from crypto hedge labels before using event odds as a crypto signal",
+        research_reference="https://arxiv.org/abs/2605.02287",
+        base_priority=93.0,
+    ),
 )
 
 

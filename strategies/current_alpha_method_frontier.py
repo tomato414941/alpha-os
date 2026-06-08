@@ -160,6 +160,18 @@ METHOD_RULES = (
         base_priority=106.0,
     ),
     MethodRule(
+        method_id="prediction_market_order_flow_skill",
+        family="prediction-market microstructure",
+        ml_rl_analogy="market-specific skill/leakage detector before using event odds as strategy state",
+        related_gaps=("prediction_market_order_flow_skill", "cross_modal_event_graph"),
+        alpha_lane_tokens=("prediction", "event_crypto_hedge", "event_probability"),
+        data_categories=("prediction_market", "news"),
+        missing_link="account-level order-flow history, per-market leakage score, event timestamp, and crypto beta attribution",
+        first_probe="split prediction-market quote outcomes from crypto hedge outcomes and require event-alignment evidence before promotion",
+        research_reference="https://arxiv.org/abs/2605.02287",
+        base_priority=107.0,
+    ),
+    MethodRule(
         method_id="options_surface_vol_policy",
         family="volatility trading",
         ml_rl_analogy="forecast or policy over IV surface, realized vol, hedge path, and max-loss constraint",
