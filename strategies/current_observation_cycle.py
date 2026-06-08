@@ -241,6 +241,7 @@ DEFAULT_COMMANDS = (
         "--md-output-path",
         "strategies/current_symbol_lane_promoted_repeat_fill_risk_check.md",
     ),
+    ("strategies.current_cost_adjusted_alpha_candidates",),
     ("strategies.current_symbol_opportunity_map",),
     ("strategies.current_symbol_cluster_conflicts",),
     ("strategies.current_symbol_cluster_label_queue",),

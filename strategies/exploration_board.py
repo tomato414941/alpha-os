@@ -48,6 +48,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_lane_promoted_repeat_outcomes_row(root),
         _symbol_lane_promoted_repeat_action_queue_row(root),
         _symbol_lane_promoted_repeat_fill_risk_check_row(root),
+        _cost_adjusted_alpha_candidates_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -1097,6 +1098,31 @@ def _symbol_lane_promoted_repeat_fill_risk_check_row(root: Path) -> ExplorationR
         strongest_current_signal="not run yet",
         main_gap="symbol-lane repeat wins have not been checked against cost and depth",
         next_step="run symbol-lane repeat fill risk check after action queue",
+    )
+
+
+def _cost_adjusted_alpha_candidates_row(root: Path) -> ExplorationRow:
+    path = root / "current_cost_adjusted_alpha_candidates.csv"
+    best = _best_numeric_row(path, key="priority_score")
+    if best:
+        return ExplorationRow(
+            lane="cost_adjusted_alpha_candidates",
+            status=best.get("status", "cost_adjusted_alpha_candidate"),
+            strongest_current_signal=(
+                f"{best.get('candidate_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"net={best.get('estimated_net_after_cost_bps', '')}bps, "
+                f"priority={best.get('priority_score', '')}"
+            ),
+            main_gap=best.get("missing_work", "cost-adjusted candidates still need repeat and fill evidence"),
+            next_step=best.get("next_step", "repeat the strongest cost-adjusted alpha candidate"),
+        )
+    return ExplorationRow(
+        lane="cost_adjusted_alpha_candidates",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="cost-adjusted candidates are still scattered across fill-risk lanes",
+        next_step="run current cost adjusted alpha candidates after fill-risk checks",
     )
 
 
