@@ -254,7 +254,7 @@ def _protocol_fee_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
     selected = tuple(
         row
         for row in _read_rows(path)
-        if row.get("action") == "wait_for_forward_label"
+        if row.get("action") in {"repeat_paper_probe", "refresh_execution_gate", "wait_for_forward_label"}
         and row.get("execution_action") in {"paper_observation_ready", "thin_volume_watch"}
     )[:6]
     return tuple(
