@@ -23,6 +23,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _alpha_stack_row(root),
         _alpha_frontier_row(root),
         _alpha_source_gaps_row(root),
+        _factor_hypothesis_templates_row(root),
+        _factor_template_validation_queue_row(root),
         _alpha_method_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
         _fundamental_sentiment_cross_section_row(root),
@@ -194,6 +196,56 @@ def _alpha_source_gaps_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="modern external alpha-source gaps are not summarized",
         next_step="run current alpha source gaps after data source probe",
+    )
+
+
+def _factor_hypothesis_templates_row(root: Path) -> ExplorationRow:
+    path = root / "llm_factor_generation" / "current_factor_hypothesis_templates.csv"
+    best = _best_numeric_row(path, key="priority_score")
+    if best:
+        return ExplorationRow(
+            lane="factor_hypothesis_templates",
+            status=best.get("status", "factor_hypothesis_template"),
+            strongest_current_signal=(
+                f"{best.get('template_id', '')}: "
+                f"{best.get('lane', '')}, "
+                f"priority={best.get('priority_score', '')}, "
+                f"seeds={best.get('seed_opportunities', '')}"
+            ),
+            main_gap=best.get("failure_mode", "factor template still needs falsification route"),
+            next_step=best.get("next_step", "route the top factor template to validation"),
+        )
+    return ExplorationRow(
+        lane="factor_hypothesis_templates",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="factor hypotheses are not generated from current alpha stack rows",
+        next_step="run current factor hypothesis templates after cross-modal source split",
+    )
+
+
+def _factor_template_validation_queue_row(root: Path) -> ExplorationRow:
+    path = root / "llm_factor_generation" / "current_factor_template_validation_queue.csv"
+    best = _best_numeric_row(path, key="priority_score")
+    if best:
+        return ExplorationRow(
+            lane="factor_template_validation_queue",
+            status=best.get("current_status", "factor_template_validation"),
+            strongest_current_signal=(
+                f"{best.get('template_id', '')}: "
+                f"priority={best.get('priority_score', '')}, "
+                f"artifact={best.get('current_artifact', '')}, "
+                f"route={best.get('validation_route', '')}"
+            ),
+            main_gap=best.get("best_evidence", "template route still needs validation evidence"),
+            next_step=best.get("next_step", "validate the top factor template route"),
+        )
+    return ExplorationRow(
+        lane="factor_template_validation_queue",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="factor templates are not routed to concrete validation artifacts",
+        next_step="run current factor template validation queue after template generation",
     )
 
 
