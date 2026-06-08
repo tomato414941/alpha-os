@@ -164,7 +164,11 @@ def _outcome_for_ticket(
     horizon_end = opened_at + timedelta(minutes=horizon)
     mature = checked_at >= horizon_end
     end_at = horizon_end if mature else checked_at
-    candles = _fetch_candles(asset=row.get("asset", ""), start=opened_at, end=end_at, url=url)
+    candles = tuple(
+        candle
+        for candle in _fetch_candles(asset=row.get("asset", ""), start=opened_at, end=end_at, url=url)
+        if _datetime_from_ms(candle.get("t")) >= opened_at and _datetime_from_ms(candle.get("T")) <= end_at
+    )
     if not candles:
         if not mature:
             return _pending_row(row=row, checked_at=checked_at, reason="waiting for first public 1m candle")
@@ -342,6 +346,10 @@ def _parse_time(value: str) -> datetime | None:
 
 def _time_from_ms(value: object) -> str:
     return datetime.fromtimestamp(float(value) / 1000.0, tz=UTC).isoformat(timespec="seconds")
+
+
+def _datetime_from_ms(value: object) -> datetime:
+    return datetime.fromtimestamp(float(value) / 1000.0, tz=UTC)
 
 
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:

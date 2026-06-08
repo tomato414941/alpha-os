@@ -10,7 +10,7 @@ from strategies.current_paper_tickets import _load_marks
 
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_TOP = 1
+DEFAULT_TOP = 3
 DEFAULT_STOP_BPS = 100.0
 
 
