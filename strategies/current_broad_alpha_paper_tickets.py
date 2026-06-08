@@ -12,7 +12,7 @@ from strategies.current_paper_tickets import PaperTicket, _load_marks, write_pap
 
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_TOP_PER_SOURCE = 3
+DEFAULT_TOP_PER_SOURCE = 8
 OKX_BASE_URL = "https://www.okx.com"
 
 
@@ -22,7 +22,9 @@ def build_broad_alpha_paper_tickets(
     top_per_source: int = DEFAULT_TOP_PER_SOURCE,
 ) -> tuple[PaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
-    existing = {ticket.ticket_id: ticket for ticket in _existing_tickets(existing_tickets_path)}
+    existing_tickets = _existing_tickets(existing_tickets_path)
+    existing = {ticket.ticket_id: ticket for ticket in existing_tickets}
+    existing_by_key = {_ticket_key(ticket): ticket for ticket in existing_tickets}
     marks = _load_marks(
         hyperliquid_snapshot_path=ROOT / "perp_market_map" / "current_hyperliquid_snapshot.csv",
         hl_context_path=ROOT / "candidate_validation" / "current_followup_execution_context.csv",
@@ -58,7 +60,7 @@ def build_broad_alpha_paper_tickets(
             opened_at=opened_at,
             marks=marks,
         )
-        prior = existing.get(ticket.ticket_id)
+        prior = existing.get(ticket.ticket_id) or existing_by_key.get(key)
         tickets.append(
             ticket
             if prior is None
@@ -100,7 +102,7 @@ def _ticket_for_candidate(
         entry_mark = candidate["entry_mark"]
         entry_source = candidate.get("entry_source", "source_file")
     return PaperTicket(
-        ticket_id=f"broad-paper-{rank:02d}-{_slug(asset)}-{_slug(candidate['source'])}",
+        ticket_id=_ticket_id(candidate),
         opened_at=opened_at,
         rank=rank,
         opportunity=candidate["source"],
@@ -398,6 +400,20 @@ def _dedupe_key(candidate: dict[str, str]) -> tuple[str, str, str]:
     if asset == "EVENT" or asset.endswith("-OPTION"):
         return (asset, decision, candidate["source"])
     return (asset, decision, "")
+
+
+def _ticket_key(ticket: PaperTicket) -> tuple[str, str, str]:
+    if ticket.asset == "EVENT" or ticket.asset.endswith("-OPTION"):
+        return (ticket.asset, ticket.decision, ticket.opportunity)
+    return (ticket.asset, ticket.decision, "")
+
+
+def _ticket_id(candidate: dict[str, str]) -> str:
+    asset = candidate["asset"]
+    decision = candidate["decision"]
+    if asset == "EVENT" or asset.endswith("-OPTION"):
+        return f"broad-paper-{_slug(asset)}-{_slug(decision)}-{_slug(candidate['source'])}"
+    return f"broad-paper-{_slug(asset)}-{_slug(decision)}"
 
 
 def _wallet_decision(side: str) -> str:
