@@ -198,21 +198,23 @@ def _options_volatility_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem,
 
 def _stablecoin_flow_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
     path = root / "stablecoin_liquidity/current_stablecoin_flow_proxy_tickets.csv"
+    outcome_path = root / "stablecoin_liquidity/current_stablecoin_flow_proxy_outcomes.csv"
+    outcomes = {row.get("ticket_id", ""): row for row in _read_rows(outcome_path)}
     return tuple(
         BroadAlphaExecutionQueueItem(
             queue_id=row.get("ticket_id", ""),
             lane="stablecoin_chain_liquidity_proxy",
             subject=row.get("asset", "") or row.get("opportunity", ""),
             side=row.get("side", ""),
-            action=row.get("decision", ""),
-            status=row.get("status", ""),
-            score=str(max(0.0, 100.0 - _float(row.get("rank")))),
+            action=_stablecoin_action(row=row, outcome=outcomes.get(row.get("ticket_id", ""), {})),
+            status=_stablecoin_status(row=row, outcome=outcomes.get(row.get("ticket_id", ""), {})),
+            score=_stablecoin_score(row=row, outcome=outcomes.get(row.get("ticket_id", ""), {})),
             size_or_risk=f"entry_mark={row.get('entry_mark', '')}; venue={row.get('venue', '')}",
-            evidence=row.get("opportunity", ""),
+            evidence=_stablecoin_evidence(row=row, outcome=outcomes.get(row.get("ticket_id", ""), {})),
             checkpoints=row.get("checkpoints", ""),
             source_path=_relative(path),
-            required_record=row.get("required_record", ""),
-            next_step=row.get("next_step", ""),
+            required_record=outcomes.get(row.get("ticket_id", ""), {}).get("missing_evidence") or row.get("required_record", ""),
+            next_step=outcomes.get(row.get("ticket_id", ""), {}).get("next_step") or row.get("next_step", ""),
         )
         for row in _read_rows(path)
     )
@@ -320,6 +322,34 @@ def _best_by_subject(
         if row_score == current_score and _float(row.get(size_key)) < _float(current.get(size_key)):
             best[subject] = row
     return tuple(best.values())
+
+
+def _stablecoin_action(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome.get("checkpoint_status") == "ready":
+        return outcome.get("outcome", "")
+    return row.get("decision", "")
+
+
+def _stablecoin_status(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome.get("checkpoint_status") == "ready":
+        return f"{row.get('status', '')}:{outcome.get('outcome', '')}"
+    return row.get("status", "")
+
+
+def _stablecoin_score(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome.get("checkpoint_status") == "ready":
+        return _fmt(outcome.get("directional_return_bps"))
+    return str(max(0.0, 100.0 - _float(row.get("rank"))))
+
+
+def _stablecoin_evidence(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome.get("checkpoint_status") == "ready":
+        return (
+            f"{row.get('opportunity', '')}; "
+            f"mark_bps={outcome.get('directional_return_bps', '')}; "
+            f"current={outcome.get('current_mark', '')}"
+        )
+    return row.get("opportunity", "")
 
 
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
