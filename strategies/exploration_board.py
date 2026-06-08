@@ -30,6 +30,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _promoted_ticket_repeat_outcomes_row(root),
         _symbol_lane_paper_tickets_row(root),
         _symbol_lane_paper_outcomes_row(root),
+        _symbol_lane_paper_action_queue_row(root),
+        _symbol_lane_paper_fill_risk_check_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -332,6 +334,57 @@ def _symbol_lane_paper_outcomes_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="symbol-lane tickets have not been checked against current marks",
         next_step="run symbol-lane paper outcomes after checkpoint maturation",
+    )
+
+
+def _symbol_lane_paper_action_queue_row(root: Path) -> ExplorationRow:
+    path = root / "current_symbol_lane_paper_action_queue.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="symbol_lane_paper_action_queue",
+            status=best.get("action", "symbol_lane_action"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}, "
+                f"outcome={best.get('outcome', '')}"
+            ),
+            main_gap=best.get("reason", "symbol-lane action still needs follow-up evidence"),
+            next_step=best.get("next_step", "run the top symbol-lane action"),
+        )
+    return ExplorationRow(
+        lane="symbol_lane_paper_action_queue",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="symbol-lane outcomes have not been converted into next actions",
+        next_step="run symbol-lane paper action queue after outcomes",
+    )
+
+
+def _symbol_lane_paper_fill_risk_check_row(root: Path) -> ExplorationRow:
+    path = root / "current_symbol_lane_paper_fill_risk_check.csv"
+    best = _best_numeric_row(path, key="estimated_net_after_cost_bps")
+    if best:
+        return ExplorationRow(
+            lane="symbol_lane_paper_fill_risk_check",
+            status=best.get("risk_action", "symbol_lane_fill_risk_check"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"net={best.get('estimated_net_after_cost_bps', '')}bps, "
+                f"spread={best.get('spread_bps', '')}, "
+                f"usage={best.get('visible_depth_usage', '')}"
+            ),
+            main_gap=best.get("reason", "symbol-lane paper ticket still needs fill and risk evidence"),
+            next_step=best.get("next_step", "repeat cost-adjusted symbol-lane paper ticket"),
+        )
+    return ExplorationRow(
+        lane="symbol_lane_paper_fill_risk_check",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="promoted symbol-lane wins have not been checked against cost and depth",
+        next_step="run symbol-lane fill risk check after action queue",
     )
 
 

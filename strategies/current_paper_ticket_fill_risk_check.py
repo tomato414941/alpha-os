@@ -277,11 +277,12 @@ def _escape(value: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--action-queue-path", type=Path, default=ROOT / "current_paper_ticket_action_queue.csv")
+    parser.add_argument("--tickets-path", type=Path, default=ROOT / "current_paper_tickets.csv")
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_ticket_fill_risk_check.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_ticket_fill_risk_check.md")
     args = parser.parse_args()
 
-    rows = build_fill_risk_checks(action_queue_path=args.action_queue_path)
+    rows = build_fill_risk_checks(action_queue_path=args.action_queue_path, tickets_path=args.tickets_path)
     write_fill_risk_checks_csv(rows, output_path=args.output_path)
     write_fill_risk_checks_md(rows, output_path=args.md_output_path)
     for row in rows[:10]:
