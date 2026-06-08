@@ -82,6 +82,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_microstructure_flow_paper_gate_stacks(root),
         *_microstructure_flow_stacks(root),
         *_l2_imbalance_stacks(root),
+        *_cross_modal_alpha_context_stacks(root),
     ]
     return tuple(
         sorted((row for row in rows if row is not None), key=lambda row: row.priority_score, reverse=True)
@@ -4185,6 +4186,59 @@ def _l2_imbalance_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
         if len(output) >= 8:
             break
     return tuple(output)
+
+
+def _cross_modal_alpha_context_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = sorted(
+        _read_rows(root / "current_cross_modal_alpha_context.csv"),
+        key=lambda row: _cross_modal_priority(row),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for row in rows[:8]:
+        symbol = row.get("symbol", "")
+        decision = row.get("decision", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_cross_modal_context",
+                status=decision,
+                side=_cross_modal_side(row),
+                priority_score=_cross_modal_priority(row),
+                sources="cross_modal_alpha_context",
+                evidence=(
+                    f"{symbol}: aligned={row.get('aligned_sources', '')}; "
+                    f"conflict={row.get('conflicting_sources', '')}; "
+                    f"score={row.get('total_score', '')}; "
+                    f"{row.get('evidence', '')}"
+                ),
+                conflict=row.get("missing_work", ""),
+                next_step=row.get("next_step", ""),
+            )
+        )
+    return tuple(output)
+
+
+def _cross_modal_side(row: dict[str, str]) -> str:
+    direction = row.get("aligned_direction", "")
+    if row.get("decision") == "label_cross_modal_context":
+        return f"paper_{direction}"
+    if row.get("decision") in {"cross_modal_probe_after_conflict_check", "split_conflicting_modal_context"}:
+        return f"context_{direction}"
+    return "context_watch"
+
+
+def _cross_modal_priority(row: dict[str, str]) -> float:
+    decision = row.get("decision", "")
+    raw_score = _float(row.get("total_score"))
+    if decision == "label_cross_modal_context":
+        raw_score += 80.0
+    elif decision in {"cross_modal_probe_after_conflict_check", "split_conflicting_modal_context"}:
+        raw_score -= 70.0
+    return _priority_score(
+        decision,
+        source_count=_int(row.get("source_count")),
+        raw_score=raw_score,
+    )
 
 
 def _microstructure_flow_paper_gate_stacks(root: Path) -> tuple[AlphaStackRow, ...]:

@@ -265,6 +265,13 @@ def _probe_type(row: dict[str, str]) -> str:
         "dex_liquidity_stress_watch",
     }:
         return "dex_pool_flow_probe"
+    if status in {
+        "label_cross_modal_context",
+        "cross_modal_probe_after_conflict_check",
+        "split_conflicting_modal_context",
+        "watch_cross_modal_context",
+    }:
+        return "cross_modal_context_probe"
     if row.get("sources") == "crypto_equity_proxy":
         if row.get("status") == "eth_treasury_proxy_watch":
             return "eth_treasury_proxy_probe"
@@ -369,7 +376,7 @@ def _derivative_base_symbol(value: str) -> str:
 
 
 def _venue(*, evidence: str, sources: str) -> str:
-    match = re.search(r"\bvenue=([^,\s]+)", evidence)
+    match = re.search(r"\bvenue=([A-Za-z0-9_-]+)", evidence)
     if match:
         return match.group(1)
     if "source=hyperliquid" in evidence.lower() or "hyperliquid" in sources.lower():
@@ -391,6 +398,8 @@ def _candidate_size(row: dict[str, str]) -> str:
         return match.group(1)
     if row.get("status") == "small_repeat_paper_check":
         return "1000"
+    if row.get("status") == "label_cross_modal_context":
+        return "100"
     if row.get("status") in POLICY_EXPANSION_STATUSES:
         return "100"
     return ""

@@ -378,6 +378,8 @@ def _required_record(row: dict[str, str]) -> str:
         return "timestamp, source freshness, forward label, spread/depth, crowding"
     if probe_type in {"defi_lending_probe", "defi_yield_probe"}:
         return "APY source, custody, withdrawal path, capacity, peg, exit liquidity"
+    if probe_type == "cross_modal_context_probe":
+        return "source split, timestamp quality, duplicate-source check, beta attribution, spread/depth, funding, adverse move"
     return "mark move, spread/fill assumption, cost, funding where relevant, stop"
 
 
