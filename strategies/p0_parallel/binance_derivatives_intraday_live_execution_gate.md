@@ -4,12 +4,12 @@ This checks the current execution side of Binance-derived intraday paper labels.
 
 | symbol | feature | action | size | source | condition | spread | depth5 | slippage | funding1h | paper net | low-fee net | taker net | gate | reason |
 | --- | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| ARBUSDT | count_long_short_ratio | short_opposite | 100 | binance_region_blocked | unknown | 1.2239 | 1940 | 2.8128 | 0.1181 | 5.8666 | 1.9480 | -6.0520 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
-| ARBUSDT | count_long_short_ratio | short_opposite | 250 | binance_region_blocked | unknown | 1.2239 | 1940 | 3.0681 | 0.1181 | 5.8666 | 1.6927 | -6.3073 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
-| ARBUSDT | count_long_short_ratio | short_opposite | 1000 | binance_region_blocked | unknown | 1.2239 | 1940 | 3.9798 | 0.1181 | 5.8666 | 0.7810 | -7.2190 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
-| ARBUSDT | count_top_long_short_ratio | short_opposite | 100 | binance_region_blocked | unknown | 1.2239 | 2200 | 2.8128 | 0.1181 | 4.4252 | 0.5065 | -7.4935 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
-| ARBUSDT | count_top_long_short_ratio | short_opposite | 250 | binance_region_blocked | unknown | 1.2239 | 2200 | 3.0681 | 0.1181 | 4.4252 | 0.2513 | -7.7487 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
-| ARBUSDT | count_top_long_short_ratio | short_opposite | 1000 | binance_region_blocked | unknown | 1.2239 | 2200 | 3.9798 | 0.1181 | 4.4252 | -0.6604 | -8.6604 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
+| ARBUSDT | count_long_short_ratio | short_opposite | 100 | binance_region_blocked | unknown | 1.2181 | 6933 | 1.7022 | 0.1210 | 5.8666 | 3.0673 | -4.9327 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
+| ARBUSDT | count_long_short_ratio | short_opposite | 250 | binance_region_blocked | unknown | 1.2181 | 6933 | 1.7772 | 0.1210 | 5.8666 | 2.9923 | -5.0077 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
+| ARBUSDT | count_long_short_ratio | short_opposite | 1000 | binance_region_blocked | unknown | 1.2181 | 6933 | 2.1011 | 0.1210 | 5.8666 | 2.6684 | -5.3316 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
+| ARBUSDT | count_top_long_short_ratio | short_opposite | 100 | binance_region_blocked | unknown | 1.2181 | 6069 | 1.7022 | 0.1210 | 4.4252 | 1.6259 | -6.3741 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
+| ARBUSDT | count_top_long_short_ratio | short_opposite | 250 | binance_region_blocked | unknown | 1.2181 | 6069 | 1.7772 | 0.1210 | 4.4252 | 1.5509 | -6.4491 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
+| ARBUSDT | count_top_long_short_ratio | short_opposite | 1000 | binance_region_blocked | unknown | 1.2181 | 6069 | 2.1011 | 0.1210 | 4.4252 | 1.2269 | -6.7731 | feature_source_blocked | Binance live feature endpoint is unavailable; execution context only |
 
 ## Interpretation
 

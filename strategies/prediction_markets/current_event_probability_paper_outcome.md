@@ -5,8 +5,8 @@ This marks event-probability paper tickets against the current prediction-market
 | question | side | entry ask | bid | ask | bid pnl | mid pnl | edge after ask | source quality | score | status |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |
 | Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.0900 | 0.1000 | -0.0100 | -0.0050 | 0.2600 | source_quality_pass | 55.7500 | paper_outcome_active_watch |
-| Israel closes its airspace by June 15? | buy_no | 0.4300 | 0.4200 | 0.4300 | -0.0100 | -0.0050 | 0.1600 | source_quality_pass | 45.7500 | paper_outcome_active_watch |
 | Strait of Hormuz traffic returns to normal by July 31? | buy_yes | 0.2800 | 0.2700 | 0.2800 | -0.0100 | -0.0050 | 0.1400 | source_quality_pass | 43.7500 | paper_outcome_active_watch |
+| Israel closes its airspace by June 15? | buy_no | 0.4600 | 0.4500 | 0.4600 | -0.0100 | -0.0050 | 0.1300 | source_quality_pass | 42.7500 | paper_outcome_active_watch |
 
 ## Caveat
 
