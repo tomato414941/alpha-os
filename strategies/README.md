@@ -131,6 +131,14 @@ Promote code to the library only after multiple strategies need the same shape.
   - checks promoted repeat tickets against latest public marks
 - `current_promoted_ticket_repeat_outcomes.md`
   - latest promoted repeat-ticket outcomes
+- `current_symbol_lane_paper_tickets.py`
+  - opens separate paper tickets for the top symbol's conflicting lanes
+- `current_symbol_lane_paper_tickets.md`
+  - latest symbol-lane paper tickets
+- `current_symbol_lane_paper_outcomes.py`
+  - checks symbol-lane paper tickets against latest public marks
+- `current_symbol_lane_paper_outcomes.md`
+  - latest symbol-lane paper outcomes
 - `current_observation_cycle.py`
   - refreshes current stack, plan, ticket outcomes, symbol queues, and board
     without reopening paper tickets unless `--open-new-tickets` is passed;

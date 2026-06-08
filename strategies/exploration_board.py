@@ -28,6 +28,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _paper_ticket_fill_risk_check_row(root),
         _promoted_ticket_repeat_tickets_row(root),
         _promoted_ticket_repeat_outcomes_row(root),
+        _symbol_lane_paper_tickets_row(root),
+        _symbol_lane_paper_outcomes_row(root),
         _symbol_opportunity_map_row(root),
         _symbol_cluster_conflicts_row(root),
         _symbol_cluster_label_queue_row(root),
@@ -277,6 +279,59 @@ def _promoted_ticket_repeat_outcomes_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="promoted repeat tickets have not been checked against current marks",
         next_step="run promoted repeat ticket outcomes after checkpoint maturation",
+    )
+
+
+def _symbol_lane_paper_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "current_symbol_lane_paper_tickets.csv"
+    rows = _csv_rows(path)
+    best = rows[0] if rows else None
+    if best:
+        return ExplorationRow(
+            lane="symbol_lane_paper_tickets",
+            status="lane_ticket_open",
+            strongest_current_signal=(
+                f"{best.get('symbol', '')}: "
+                f"{best.get('opportunity', '')}, "
+                f"bias={best.get('lane_bias', '')}, "
+                f"entry={best.get('entry_mark', '')}"
+            ),
+            main_gap=best.get("required_record", "symbol-lane ticket still needs outcome evidence"),
+            next_step=best.get("next_step", "refresh symbol-lane paper outcomes"),
+        )
+    return ExplorationRow(
+        lane="symbol_lane_paper_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="top symbol lanes have not been opened as separate paper tickets",
+        next_step="open symbol-lane paper tickets for the top conflict cluster",
+    )
+
+
+def _symbol_lane_paper_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "current_symbol_lane_paper_outcomes.csv"
+    rows = _csv_rows(path)
+    best = _best_paper_ticket_outcome(rows)
+    if best:
+        return ExplorationRow(
+            lane="symbol_lane_paper_outcomes",
+            status=best.get("outcome", "symbol_lane_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"current={best.get('current_mark', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}"
+            ),
+            main_gap=best.get("missing_evidence", "symbol-lane outcome still needs follow-up evidence"),
+            next_step=best.get("next_step", "refresh symbol-lane paper outcomes"),
+        )
+    return ExplorationRow(
+        lane="symbol_lane_paper_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="symbol-lane tickets have not been checked against current marks",
+        next_step="run symbol-lane paper outcomes after checkpoint maturation",
     )
 
 
