@@ -13,7 +13,18 @@ import requests
 
 BINANCE_UM_DAILY_BOOK_DEPTH_URL = "https://data.binance.vision/data/futures/um/daily/bookDepth"
 BINANCE_UM_DAILY_KLINES_URL = "https://data.binance.vision/data/futures/um/daily/klines"
-DEFAULT_SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT")
+DEFAULT_SYMBOLS = (
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "BNBUSDT",
+    "XRPUSDT",
+    "DOGEUSDT",
+    "ADAUSDT",
+    "LINKUSDT",
+    "AVAXUSDT",
+    "NEARUSDT",
+)
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "market_data" / "binance_um_book_depth_liquidity"
 
 
@@ -57,7 +68,7 @@ def _fetch_daily_book_depth_liquidity(symbol: str, day: date) -> tuple[BookDepth
     close_by_minute = _fetch_1m_closes(symbol, day)
     grouped: dict[str, dict[int, float]] = {}
     for row in depth_rows:
-        grouped.setdefault(row["timestamp"], {})[int(row["percentage"])] = float(row["notional"])
+        grouped.setdefault(row["timestamp"], {})[int(float(row["percentage"]))] = float(row["notional"])
     snapshots = []
     for timestamp, buckets in sorted(grouped.items()):
         minute_ms = _timestamp_to_minute_ms(timestamp)
@@ -179,8 +190,8 @@ def _parse_date(value: str) -> date:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--symbols", nargs="+", default=list(DEFAULT_SYMBOLS))
-    parser.add_argument("--start-date", type=_parse_date, default=date(2024, 1, 1))
-    parser.add_argument("--end-date", type=_parse_date, default=date(2024, 1, 2))
+    parser.add_argument("--start-date", type=_parse_date, default=date(2026, 6, 1))
+    parser.add_argument("--end-date", type=_parse_date, default=date(2026, 6, 8))
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
 

@@ -1804,8 +1804,8 @@ def _event_flow_row(root: Path) -> ExplorationRow:
                 f"mean_next_return={best.get('mean_next_return', '')}, "
                 f"hit_rate={best.get('hit_rate', '')}"
             ),
-            main_gap="one-day LOB sample only; no costs, funding timing, liquidation context, or purged walk-forward split",
-            next_step="extend bookDepth labels across more days/symbols, then join funding and liquidation timestamps",
+            main_gap="recent-week LOB sample only; no costs, funding timing, liquidation context, or purged walk-forward split",
+            next_step="join funding and liquidation timestamps, then run a purged walk-forward check before any policy",
         )
     flow_path = root / "event_flow" / "flow_imbalance_screen.csv"
     top = _row_by_value(flow_path, field="bucket", value="top_20")
