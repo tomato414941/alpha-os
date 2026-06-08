@@ -6,6 +6,7 @@ oracle, and it does not promote generated text into trades.
 
 ```bash
 uv run python -m strategies.llm_factor_generation.current_factor_hypothesis_templates
+uv run python -m strategies.llm_factor_generation.current_factor_template_validation_queue
 ```
 
 The output is a broad queue of formula-like factor ideas. A template must still

@@ -108,6 +108,9 @@ def build_alpha_source_gaps(
     factor_hypothesis_templates_path: Path = (
         ROOT / "llm_factor_generation" / "current_factor_hypothesis_templates.csv"
     ),
+    factor_template_validation_queue_path: Path = (
+        ROOT / "llm_factor_generation" / "current_factor_template_validation_queue.csv"
+    ),
 ) -> tuple[AlphaSourceGap, ...]:
     probe_rows = _read_rows(data_source_probe_path)
     policy_sample_count = len(_read_rows(policy_samples_path))
@@ -116,6 +119,7 @@ def build_alpha_source_gaps(
     news_event_forward_label_rows = _read_rows(news_event_forward_labels_path)
     news_event_quality_gate_rows = _read_rows(news_event_quality_gate_path)
     factor_hypothesis_template_rows = _read_rows(factor_hypothesis_templates_path)
+    factor_template_validation_queue_rows = _read_rows(factor_template_validation_queue_path)
     rows = tuple(
         _build_gap(
             rule,
@@ -126,6 +130,7 @@ def build_alpha_source_gaps(
             news_event_forward_label_rows=news_event_forward_label_rows,
             news_event_quality_gate_rows=news_event_quality_gate_rows,
             factor_hypothesis_template_rows=factor_hypothesis_template_rows,
+            factor_template_validation_queue_rows=factor_template_validation_queue_rows,
         )
         for rule in GAP_RULES
     )
@@ -200,6 +205,7 @@ def _build_gap(
     news_event_forward_label_rows: tuple[dict[str, str], ...],
     news_event_quality_gate_rows: tuple[dict[str, str], ...],
     factor_hypothesis_template_rows: tuple[dict[str, str], ...],
+    factor_template_validation_queue_rows: tuple[dict[str, str], ...],
 ) -> AlphaSourceGap:
     available = _available_probe_rows(probe_rows, rule)
     missing_required = tuple(name for name in rule.required_probe_names if not _probe_available(probe_rows, name=name))
@@ -249,6 +255,15 @@ def _build_gap(
         )
         priority = rule.base_priority + 12.0
         next_probe = "repeat news-event labels with duplicate-source, stale-headline, and execution-cost checks"
+    elif rule.gap_id == "llm_factor_generation" and factor_template_validation_queue_rows:
+        best = max(factor_template_validation_queue_rows, key=lambda row: _float(row.get("priority_score")))
+        status = "templates_routed_to_validation"
+        coverage = (
+            f"routes={len(factor_template_validation_queue_rows)} "
+            f"top={best.get('template_id', '')} artifact_status={best.get('current_status', '')}"
+        )
+        priority = rule.base_priority + 15.0
+        next_probe = "execute the top validation routes and reject templates that only restate existing weak artifacts"
     elif rule.gap_id == "llm_factor_generation" and factor_hypothesis_template_rows:
         best = max(factor_hypothesis_template_rows, key=lambda row: _float(row.get("priority_score")))
         status = "templates_generated"
