@@ -55,6 +55,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         *_on_chain_flow_stacks(root),
         *_chain_stablecoin_migration_stacks(root),
         *_stablecoin_peg_stress_stacks(root),
+        *_token_unlock_actionability_stacks(root),
         *_token_unlock_stacks(root),
         *_liquidation_flow_stacks(root),
         _l2_imbalance_stack(root),
@@ -2189,6 +2190,8 @@ def _chain_stablecoin_migration_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
 
 
 def _token_unlock_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    if (root / "token_unlocks" / "current_token_unlock_actionability.csv").exists():
+        return ()
     rows = _read_rows(root / "token_unlocks" / "current_token_unlock_paper_tickets.csv")
     tickets = sorted(
         (row for row in rows if row.get("status") in {"paper_short_candidate", "crowded_short_risk"}),
@@ -2214,6 +2217,56 @@ def _token_unlock_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
                 ),
                 conflict="unlock event can be crowded or already priced; negative funding can turn short into squeeze risk",
                 next_step=f"label {symbol} pre/post unlock returns, funding persistence, depth decay, and stop behavior",
+            )
+        )
+    return tuple(output)
+
+
+def _token_unlock_actionability_stacks(root: Path) -> tuple[AlphaStackRow, ...]:
+    rows = _read_rows(root / "token_unlocks" / "current_token_unlock_actionability.csv")
+    tickets = sorted(
+        (
+            row
+            for row in rows
+            if row.get("status")
+            in {
+                "unlock_event_label_pending",
+                "unlock_event_crowded_squeeze_watch",
+                "unlock_event_execution_blocked",
+            }
+        ),
+        key=lambda row: _float(row.get("score")),
+        reverse=True,
+    )
+    output: list[AlphaStackRow] = []
+    for ticket in tickets[:6]:
+        symbol = ticket.get("symbol", "")
+        status = ticket.get("status", "")
+        output.append(
+            AlphaStackRow(
+                opportunity=f"{symbol.lower()}_unlock_actionability",
+                status=status,
+                side=ticket.get("side", ""),
+                priority_score=_priority_score(status, source_count=2, raw_score=_float(ticket.get("score"))),
+                sources="token_unlocks + perp_market_context",
+                evidence=(
+                    f"{symbol}: ticket={ticket.get('ticket_status', '')} {ticket.get('ticket_score', '')}, "
+                    f"days_until={ticket.get('days_until', '')}, "
+                    f"unlock_value={ticket.get('unlock_value_usd', '')}, "
+                    f"supply={ticket.get('percent_supply', '')}%, "
+                    f"funding={ticket.get('annualized_funding', '')}, "
+                    f"volume={ticket.get('day_notional_volume', '')}, "
+                    f"impact={ticket.get('impact_spread', '')}, "
+                    f"market_action={ticket.get('market_action', '')}"
+                ),
+                conflict=ticket.get(
+                    "reason",
+                    "unlock event has no event-window label and can be already priced or crowded",
+                ),
+                next_step=ticket.get(
+                    "next_step",
+                    f"label {symbol} unlock event window before promotion",
+                ),
             )
         )
     return tuple(output)
@@ -2374,6 +2427,10 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "peg_anomaly_deprioritize": 35.0,
         "paper_short_candidate": 72.0,
         "paper_long_candidate": 72.0,
+        "unlock_event_label_pending": 36.0,
+        "unlock_event_crowded_squeeze_watch": 32.0,
+        "unlock_event_execution_blocked": 24.0,
+        "unlock_event_not_tradeable": 12.0,
         "paper_short_put_spread_candidate": 68.0,
         "paper_long_vol_candidate": 66.0,
         "paper_long_vol_quote_candidate": 70.0,

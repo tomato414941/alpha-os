@@ -1345,6 +1345,30 @@ def _exchange_catalyst_row(root: Path) -> ExplorationRow:
 
 
 def _token_unlocks_row(root: Path) -> ExplorationRow:
+    actionability_path = root / "token_unlocks" / "current_token_unlock_actionability.csv"
+    best_actionability = _best_token_unlock_actionability_row(actionability_path)
+    if best_actionability:
+        return ExplorationRow(
+            lane="token_unlocks",
+            status=best_actionability.get("status", "unlock_event_label_pending"),
+            strongest_current_signal=(
+                f"{best_actionability.get('symbol', '')}: side={best_actionability.get('side', '')}, "
+                f"score={best_actionability.get('score', '')}, "
+                f"ticket={best_actionability.get('ticket_status', '')}, "
+                f"value={best_actionability.get('unlock_value_usd', '')}, "
+                f"supply={best_actionability.get('percent_supply', '')}, "
+                f"funding={best_actionability.get('annualized_funding', '')}, "
+                f"impact={best_actionability.get('impact_spread', '')}"
+            ),
+            main_gap=best_actionability.get(
+                "reason",
+                "unlock event has no event-window label and can be already priced or crowded",
+            ),
+            next_step=best_actionability.get(
+                "next_step",
+                "label top unlock event window before promotion",
+            ),
+        )
     ticket_path = root / "token_unlocks" / "current_token_unlock_paper_tickets.csv"
     best_ticket = _best_token_unlock_paper_ticket(ticket_path)
     if best_ticket:
@@ -1399,6 +1423,25 @@ def _token_unlocks_row(root: Path) -> ExplorationRow:
         main_gap="scheduled supply events are not connected",
         next_step="fetch token unlock calendar and join tradable tokens to venue state",
     )
+
+
+def _best_token_unlock_actionability_row(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("status")
+            in {
+                "unlock_event_label_pending",
+                "unlock_event_crowded_squeeze_watch",
+                "unlock_event_execution_blocked",
+            }
+        )
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("score") or "0"))
 
 
 def _best_token_unlock_paper_ticket(path: Path) -> dict[str, str] | None:
