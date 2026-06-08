@@ -239,6 +239,31 @@ def _build_lane(rule: LaneRule, *, alpha_rows: tuple[dict[str, str], ...]) -> Fr
                 next_probe=rule.next_probe,
             )
     if rule.lane == "directional ML / RL policy learning":
+        oos_rows = _read_rows(ROOT / "policy_learning" / "current_action_preference_oos_check.csv")
+        if oos_rows:
+            supported = tuple(
+                row
+                for row in oos_rows
+                if row.get("decision")
+                in {"oos_supported_action_preference", "mixed_oos_action_preference"}
+            )
+            best_pool = supported or oos_rows
+            best = max(best_pool, key=lambda row: _float(row.get("oos_score")))
+            best_score = _float(best.get("oos_score"))
+            active_candidates = len(supported) or len(oos_rows)
+            return FrontierLane(
+                lane=rule.lane,
+                current_status=best.get("decision", "action_preference_oos_ready"),
+                frontier_score=rule.base_priority
+                + min(active_candidates * 1.0, 12.0)
+                + min(best_score / 10.0, 12.0),
+                active_candidates=active_candidates,
+                best_score=best_score,
+                best_opportunity=best.get("candidate_id", ""),
+                evidence_sources="policy_learning/current_action_preference_oos_check",
+                missing_work=rule.missing_work,
+                next_probe="paper-check OOS-supported action preferences with explicit fill and stop rules",
+            )
         preference_rows = _read_rows(ROOT / "policy_learning" / "current_action_preference_candidates.csv")
         if preference_rows:
             best = max(preference_rows, key=lambda row: _float(row.get("score")))

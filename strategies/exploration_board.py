@@ -49,6 +49,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _symbol_lane_split_review_row(root),
         _policy_learning_row(root),
         _policy_action_preference_row(root),
+        _policy_action_preference_oos_row(root),
         _wallet_entity_flow_row(root),
         _hyperliquid_seed_wallet_flow_row(root),
         _execution_edge_mode_row(root),
@@ -202,6 +203,37 @@ def _policy_action_preference_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="policy samples have not been aggregated into context/action preferences",
         next_step="run current action preference candidates after policy-learning samples",
+    )
+
+
+def _policy_action_preference_oos_row(root: Path) -> ExplorationRow:
+    path = root / "policy_learning" / "current_action_preference_oos_check.csv"
+    best = _best_numeric_row(path, key="oos_score")
+    if best:
+        return ExplorationRow(
+            lane="policy_action_preference_oos",
+            status=best.get("decision", "oos_check"),
+            strongest_current_signal=(
+                f"{best.get('candidate_id', '')}: "
+                f"train={best.get('train_samples', '')}/{best.get('train_mean_reward_bps', '')}, "
+                f"test={best.get('test_samples', '')}/{best.get('test_mean_reward_bps', '')}, "
+                f"score={best.get('oos_score', '')}"
+            ),
+            main_gap=(
+                "OOS support is still paper-repeat only; live fills, stop behavior, and "
+                "leakage-safe feature timestamps are not proven"
+            ),
+            next_step=best.get(
+                "next_step",
+                "paper-check OOS-supported action preference with explicit fill and stop rules",
+            ),
+        )
+    return ExplorationRow(
+        lane="policy_action_preference_oos",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="action preferences have not been checked against repeat samples",
+        next_step="run action preference OOS check after action preference candidates",
     )
 
 
