@@ -1,0 +1,3 @@
+ticket_id,opened_at,checked_at,elapsed_minutes,checkpoint_status,opportunity,decision,asset,venue,entry_mark,current_mark,current_source,raw_return_bps,directional_return_bps,outcome,missing_evidence,next_step
+stablecoin-flow-solana-sol,2026-06-08T19:31:30+00:00,2026-06-08T19:31:30+00:00,0.01,pending,Solana/SOL,paper_long,SOL,OKX,67.550000000000,67.550000000000,okx_execution_context,,,pending,checkpoint has not matured,wait for the first checkpoint and refresh marks
+stablecoin-flow-polygon-pol,2026-06-08T19:31:30+00:00,2026-06-08T19:31:30+00:00,0.01,pending,Polygon/POL,paper_short,POL,OKX,0.080970000000,0.080970000000,okx_execution_context,,,pending,checkpoint has not matured,wait for the first checkpoint and refresh marks

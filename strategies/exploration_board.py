@@ -37,6 +37,8 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _research_backed_alpha_expansion_plan_row(root),
         _exchange_stablecoin_inflow_readiness_row(root),
         _stablecoin_flow_probe_candidates_row(root),
+        _stablecoin_flow_proxy_tickets_row(root),
+        _stablecoin_flow_proxy_outcomes_row(root),
         _options_volatility_survival_row(root),
         _fundamental_sentiment_cross_section_row(root),
         _multimodal_btc_eth_feature_alignment_row(root),
@@ -582,6 +584,60 @@ def _stablecoin_flow_probe_candidates_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="stablecoin-flow readiness has not been converted into data-probe and proxy-label candidates",
         next_step="run current stablecoin flow probe candidates after exchange inflow readiness",
+    )
+
+
+def _stablecoin_flow_proxy_tickets_row(root: Path) -> ExplorationRow:
+    path = root / "stablecoin_liquidity" / "current_stablecoin_flow_proxy_tickets.csv"
+    rows = _csv_rows(path)
+    best = rows[0] if rows else None
+    if best:
+        return ExplorationRow(
+            lane="stablecoin_flow_proxy_tickets",
+            status=best.get("decision", "stablecoin_flow_proxy_ticket"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"{best.get('side', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"checkpoints={best.get('checkpoints', '')}"
+            ),
+            main_gap=best.get("required_record", "chain-liquidity proxy label needs controls"),
+            next_step=best.get("next_step", "check the stablecoin proxy ticket"),
+        )
+    return ExplorationRow(
+        lane="stablecoin_flow_proxy_tickets",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="stablecoin proxy candidates have not been opened as paper labels",
+        next_step="open SOL/POL stablecoin proxy label tickets after probe candidates",
+    )
+
+
+def _stablecoin_flow_proxy_outcomes_row(root: Path) -> ExplorationRow:
+    path = root / "stablecoin_liquidity" / "current_stablecoin_flow_proxy_outcomes.csv"
+    rows = _csv_rows(path)
+    best = _best_paper_ticket_outcome(rows)
+    if best:
+        return ExplorationRow(
+            lane="stablecoin_flow_proxy_outcomes",
+            status=best.get("outcome", "stablecoin_flow_proxy_outcome"),
+            strongest_current_signal=(
+                f"{best.get('ticket_id', '')}: "
+                f"{best.get('asset', '')}, "
+                f"entry={best.get('entry_mark', '')}, "
+                f"current={best.get('current_mark', '')}, "
+                f"dir_bps={best.get('directional_return_bps', '')}"
+            ),
+            main_gap=best.get("missing_evidence", "stablecoin proxy outcome still needs controls"),
+            next_step=best.get("next_step", "refresh stablecoin proxy outcomes"),
+        )
+    return ExplorationRow(
+        lane="stablecoin_flow_proxy_outcomes",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="stablecoin proxy tickets have not been checked against current marks",
+        next_step="run stablecoin proxy outcomes after checkpoint maturation",
     )
 
 
