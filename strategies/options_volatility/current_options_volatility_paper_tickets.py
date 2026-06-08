@@ -184,6 +184,10 @@ def _structure_status_reason(
         if volume_usd < 250_000.0:
             return "short_put_spread", "too_thin", "put skew is rich but option volume is thin"
         return "short_put_spread", "paper_short_put_spread_candidate", "put skew and IV premium are rich versus recent realized vol"
+    if action == "cheap_vol_watch" and iv_premium_24h <= -20.0:
+        if volume_usd < 250_000.0:
+            return "long_vol_spread", "too_thin", "IV is cheap versus recent realized vol but option volume is thin"
+        return "long_vol_spread", "paper_long_vol_candidate", "IV is cheap versus recent realized vol; test capped-premium long-vol structure"
     if action == "term_structure_watch" and term_iv_spread_to_next >= 5.0 and iv_premium_24h >= 10.0:
         return "calendar_spread", "paper_calendar_spread_watch", "front IV premium and term spread are elevated"
     return "none", "context_only", "surface context exists but no paper structure is selected"
@@ -202,11 +206,13 @@ def _score(
     dte_penalty = 5.0 if days_to_expiry < 1.0 else 0.0
     status_bonus = {
         "paper_short_put_spread_candidate": 20.0,
+        "paper_long_vol_candidate": 16.0,
         "paper_calendar_spread_watch": 10.0,
         "too_thin": 2.0,
     }.get(status, 0.0)
+    premium_component = abs(iv_premium_24h) if status == "paper_long_vol_candidate" else iv_premium_24h
     return (
-        iv_premium_24h
+        premium_component
         + skew_iv
         + max(term_iv_spread_to_next, 0.0)
         + liquidity
