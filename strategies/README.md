@@ -69,6 +69,9 @@ Promote code to the library only after multiple strategies need the same shape.
 - `market_breadth/`
   - broad CoinGecko volume-price dislocation screen for reversal,
     continuation, and chase-risk candidates
+- `anomaly_stress/`
+  - cross-market anomaly screen across peg, lending, yield, volatility,
+    prediction-market, and execution-spread probes
 - `stablecoin_liquidity/`
   - DeFiLlama stablecoin supply, peg, supply-change, and chain migration
     snapshots

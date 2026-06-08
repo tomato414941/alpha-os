@@ -46,6 +46,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _news_social_row(root),
         _market_breadth_row(root),
         _prediction_markets_row(root),
+        _anomaly_stress_row(root),
         _protocol_activity_row(root),
         _institutional_flow_row(root),
         _candidate_validation_row(root),
@@ -1506,6 +1507,33 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
         strongest_current_signal=signal,
         main_gap="event probability is not modeled; this only ranks active public market structure",
         next_step="join top markets to external event models, order books, and adverse-selection checks",
+    )
+
+
+def _anomaly_stress_row(root: Path) -> ExplorationRow:
+    path = root / "anomaly_stress" / "current_cross_market_stress_anomaly.csv"
+    best = _best_numeric_row(path, key="score")
+    if best:
+        return ExplorationRow(
+            lane="anomaly_stress",
+            status=best.get("status", "cross_market_stress_anomaly"),
+            strongest_current_signal=(
+                f"{best.get('source_lane', '')}: {best.get('subject', '')}, "
+                f"side={best.get('side', '')}, score={best.get('score', '')}, "
+                f"severity={best.get('severity', '')}"
+            ),
+            main_gap=best.get(
+                "failure_mode",
+                "anomaly can be stale, untradable, or explained by risk rather than alpha",
+            ),
+            next_step=best.get("next_step", "run a specific falsification test for the top anomaly"),
+        )
+    return ExplorationRow(
+        lane="anomaly_stress",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="cross-market anomaly states are not joined across lanes",
+        next_step="run current cross-market stress anomaly screen",
     )
 
 

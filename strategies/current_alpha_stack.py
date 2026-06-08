@@ -27,6 +27,7 @@ def build_alpha_stack(root: Path = ROOT) -> tuple[AlphaStackRow, ...]:
         _mstr_btc_relative_value_stack(root),
         *_options_volatility_stacks(root),
         _prediction_market_event_model_stack(root),
+        _cross_market_stress_anomaly_stack(root),
         *_futures_basis_stacks(root),
         *_derivatives_positioning_stacks(root),
         *_cross_exchange_funding_stacks(root),
@@ -400,6 +401,44 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
             if news
             else "build an external event-probability model before any paper event-market action"
         ),
+    )
+
+
+def _cross_market_stress_anomaly_stack(root: Path) -> AlphaStackRow | None:
+    anomaly = _best_by_score(
+        root / "anomaly_stress" / "current_cross_market_stress_anomaly.csv",
+        score_key="score",
+        status_values={
+            "cross_market_peg_stress_anomaly",
+            "cross_market_lending_stress_anomaly",
+            "cross_market_yield_peg_anomaly",
+            "cross_market_volatility_mispricing_watch",
+            "cross_market_event_probability_anomaly",
+            "cross_market_execution_spread_anomaly",
+        },
+    )
+    if not anomaly:
+        return None
+    return AlphaStackRow(
+        opportunity="cross_market_stress_anomaly",
+        status=anomaly.get("status", "cross_market_stress_anomaly"),
+        side=f"{anomaly.get('side', '')}: {anomaly.get('subject', '')}",
+        priority_score=_priority_score(
+            anomaly.get("status", ""),
+            source_count=4,
+            raw_score=_float(anomaly.get("score")),
+        ),
+        sources=f"anomaly_stress + {anomaly.get('source_lane', '')}",
+        evidence=(
+            f"score={anomaly.get('score', '')}, "
+            f"severity={anomaly.get('severity', '')}, "
+            f"evidence={anomaly.get('evidence', '')}"
+        ),
+        conflict=anomaly.get(
+            "failure_mode",
+            "anomaly can be stale, untradable, or explained by risk rather than alpha",
+        ),
+        next_step=anomaly.get("next_step", "run a specific falsification test for the top anomaly"),
     )
 
 
@@ -1958,6 +1997,12 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "paper_outcome_weak_refresh": 70.0,
         "paper_outcome_active_watch": 84.0,
         "paper_outcome_edge_watch": 68.0,
+        "cross_market_peg_stress_anomaly": 86.0,
+        "cross_market_lending_stress_anomaly": 82.0,
+        "cross_market_yield_peg_anomaly": 74.0,
+        "cross_market_volatility_mispricing_watch": 76.0,
+        "cross_market_event_probability_anomaly": 78.0,
+        "cross_market_execution_spread_anomaly": 72.0,
         "paper_short_candidate": 72.0,
         "paper_long_candidate": 72.0,
         "paper_short_put_spread_candidate": 68.0,
