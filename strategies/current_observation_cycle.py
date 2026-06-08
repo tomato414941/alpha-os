@@ -267,6 +267,7 @@ DEFAULT_COMMANDS = (
     ("strategies.current_cost_adjusted_cluster_repeat_plan",),
     ("strategies.current_split_first_cluster_lane_plan",),
     ("strategies.current_split_first_lane_repeat_queue",),
+    ("strategies.current_split_first_lane_label_progress",),
     ("strategies.current_split_first_lane_repeat_tickets", "--preserve-opened-at"),
     (
         "strategies.current_promoted_ticket_repeat_outcomes",

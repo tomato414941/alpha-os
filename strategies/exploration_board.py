@@ -70,6 +70,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _cost_adjusted_cluster_repeat_plan_row(root),
         _split_first_cluster_lane_plan_row(root),
         _split_first_lane_repeat_queue_row(root),
+        _split_first_lane_label_progress_row(root),
         _split_first_lane_repeat_tickets_row(root),
         _split_first_lane_repeat_outcomes_row(root),
         _symbol_opportunity_map_row(root),
@@ -1729,6 +1730,30 @@ def _split_first_lane_repeat_queue_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="split-first lane plan has not been converted into queueable lane paper work",
         next_step="run current split first lane repeat queue after lane planning",
+    )
+
+
+def _split_first_lane_label_progress_row(root: Path) -> ExplorationRow:
+    path = root / "current_split_first_lane_label_progress.csv"
+    best = _best_numeric_row(path, key="priority")
+    if best:
+        return ExplorationRow(
+            lane="split_first_lane_label_progress",
+            status=best.get("progress_status", "split_first_lane_label_progress"),
+            strongest_current_signal=(
+                f"{best.get('cluster_id', '')}/{best.get('lane_opportunity', '')}: "
+                f"{best.get('asset', '')}, "
+                f"priority={best.get('priority', '')}"
+            ),
+            main_gap=best.get("required_record", "lane label work still needs a forward record"),
+            next_step=best.get("next_step", "record the top split-first lane label"),
+        )
+    return ExplorationRow(
+        lane="split_first_lane_label_progress",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="open lane-label rows are not tracked separately from repeat tickets",
+        next_step="run current split first lane label progress after the split-first queue",
     )
 
 
