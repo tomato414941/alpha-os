@@ -4,7 +4,7 @@ This joins Bitcoin ETF flow context to current BTC perp state. It is not a trade
 
 | asset | latest date | ETF action | latest BTC | 5d BTC | funding | OI notional | action | score |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- | ---: |
-| BTC | 2026-06-05 | btc_etf_outflow_context | -220.00000000 | -37984.00000000 | 0.10950000 | 1929259224.05563354 | etf_outflow_vs_long_perp_divergence_watch | 28.115853 |
+| BTC | 2026-06-05 | btc_etf_outflow_context | -220.00000000 | -37984.00000000 | 0.10950000 | 1919199226.06080008 | etf_outflow_vs_long_perp_divergence_watch | 28.040851 |
 
 ## Interpretation
 

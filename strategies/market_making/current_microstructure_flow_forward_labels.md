@@ -4,26 +4,26 @@ This labels book-plus-trade microstructure observations against Hyperliquid 15m 
 
 | asset | action | dir | pressure | book imb | trade imb | raw 15m | dir 15m | raw 1h | dir 1h | status |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| NEAR | aligned_pressure_watch | 1 | 0.8025 | 0.6523 | 0.9526 |  |  |  |  | pending_15m |
-| HYPE | aligned_pressure_watch | 1 | 0.7656 | 0.5313 | 1.0000 |  |  |  |  | pending_15m |
-| SOL | aligned_pressure_watch | 1 | 0.7038 | 0.4076 | 1.0000 |  |  |  |  | pending_15m |
-| SEI | aligned_pressure_watch | 1 | 0.7019 | 0.4038 | 1.0000 |  |  |  |  | pending_15m |
-| BTC | aligned_pressure_watch | 1 | 0.5821 | 0.1643 | 1.0000 |  |  |  |  | pending_15m |
-| ETH | aligned_pressure_watch | 1 | 0.5055 | 0.1090 | 0.9020 |  |  |  |  | pending_15m |
-| ADA | aligned_pressure_watch | 1 | 0.4817 | 0.0589 | 0.9045 |  |  |  |  | pending_15m |
-| ARB | aligned_pressure_watch | -1 | -0.4561 | -0.4803 | -0.4319 |  |  |  |  | pending_15m |
-| POL | aligned_pressure_watch | 1 | 0.4213 | 0.2801 | 0.5625 |  |  |  |  | pending_15m |
-| MON | book_trade_divergence_watch | 1 | 0.3612 | 0.7653 | -0.0429 |  |  |  |  | pending_15m |
-| MEGA | aligned_pressure_watch | -1 | -0.3196 | -0.2932 | -0.3459 |  |  |  |  | pending_15m |
-| OP | aligned_pressure_watch | -1 | -0.3140 | -0.0466 | -0.5814 |  |  |  |  | pending_15m |
-| STRK | book_trade_divergence_watch | -1 | -0.2869 | 0.4048 | -0.9787 |  |  |  |  | pending_15m |
-| CHIP | book_trade_divergence_watch | 1 | 0.2583 | 0.5580 | -0.0413 |  |  |  |  | pending_15m |
-| BERA | aligned_pressure_watch | 1 | 0.2569 | 0.3540 | 0.1598 |  |  |  |  | pending_15m |
-| XMR | book_trade_divergence_watch | -1 | -0.2398 | 0.0935 | -0.5731 |  |  |  |  | pending_15m |
-| STX | aligned_pressure_watch | 1 | 0.2287 | 0.2079 | 0.2495 |  |  |  |  | pending_15m |
-| SUI | book_trade_divergence_watch | -1 | -0.1921 | 0.3782 | -0.7623 |  |  |  |  | pending_15m |
-| BNB | book_trade_divergence_watch | 1 | 0.0991 | 0.2368 | -0.0385 |  |  |  |  | pending_15m |
-| APT | book_trade_divergence_watch | 1 | 0.0110 | 0.3716 | -0.3495 |  |  |  |  | pending_15m |
+| BTC | aligned_pressure_watch | 1 | 0.7027 | 0.4054 | 1.0000 |  |  |  |  | pending_15m |
+| NEAR | aligned_pressure_watch | -1 | -0.6307 | -0.4327 | -0.8287 |  |  |  |  | pending_15m |
+| SOL | aligned_pressure_watch | -1 | -0.5829 | -0.2867 | -0.8792 |  |  |  |  | pending_15m |
+| XMR | aligned_pressure_watch | -1 | -0.5430 | -0.1217 | -0.9644 |  |  |  |  | pending_15m |
+| POL | aligned_pressure_watch | 1 | 0.4933 | 0.2052 | 0.7813 |  |  |  |  | pending_15m |
+| SEI | book_trade_divergence_watch | -1 | -0.4716 | 0.0492 | -0.9924 |  |  |  |  | pending_15m |
+| BERA | wide_spread_watch | 1 | 0.4643 | -0.0425 | 0.9711 |  |  |  |  | pending_15m |
+| OP | wide_spread_watch | -1 | -0.4490 | -0.8891 | -0.0089 |  |  |  |  | pending_15m |
+| ADA | aligned_pressure_watch | -1 | -0.4082 | -0.0746 | -0.7418 |  |  |  |  | pending_15m |
+| APT | book_trade_divergence_watch | -1 | -0.3905 | 0.1994 | -0.9803 |  |  |  |  | pending_15m |
+| STRK | book_trade_divergence_watch | 1 | 0.3780 | -0.0010 | 0.7569 |  |  |  |  | pending_15m |
+| STX | aligned_pressure_watch | -1 | -0.3737 | -0.1819 | -0.5656 |  |  |  |  | pending_15m |
+| ETH | book_trade_divergence_watch | -1 | -0.3418 | 0.0707 | -0.7543 |  |  |  |  | pending_15m |
+| ARB | aligned_pressure_watch | 1 | 0.3364 | 0.5603 | 0.1124 |  |  |  |  | pending_15m |
+| MON | book_trade_divergence_watch | -1 | -0.3210 | 0.2624 | -0.9043 |  |  |  |  | pending_15m |
+| CHIP | aligned_pressure_watch | 1 | 0.3172 | 0.1502 | 0.4843 |  |  |  |  | pending_15m |
+| BNB | book_trade_divergence_watch | -1 | -0.3154 | 0.1655 | -0.7963 |  |  |  |  | pending_15m |
+| HYPE | book_trade_divergence_watch | -1 | -0.2905 | 0.2176 | -0.7986 |  |  |  |  | pending_15m |
+| SUI | book_trade_divergence_watch | -1 | -0.1076 | 0.2098 | -0.4250 |  |  |  |  | pending_15m |
+| MEGA | book_trade_divergence_watch | 1 | 0.0628 | -0.1220 | 0.2476 |  |  |  |  | pending_15m |
 
 ## Interpretation
 

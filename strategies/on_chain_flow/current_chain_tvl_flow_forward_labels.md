@@ -7,48 +7,48 @@ This labels tradable chain TVL flow candidates against subsequent token returns.
 
 | venue | chain | token | action | dir | week % | day % | raw 15m | dir 15m | raw 1h | dir 1h | status |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| HL | Mantle | MNT | chain_flow_reversal_watch | 1 | -0.3198 | 0.0025 |  |  |  |  | pending_15m |
-| HL | Cardano | ADA | chain_flow_reversal_watch | 1 | -0.2725 | 0.0274 |  |  |  |  | pending_15m |
-| OKX | Cardano | ADA | chain_flow_reversal_watch | 1 | -0.2725 | 0.0274 |  |  |  |  | pending_15m |
-| HL | Avalanche | AVAX | chain_flow_reversal_watch | 1 | -0.2056 | 0.0129 |  |  |  |  | pending_15m |
-| OKX | Avalanche | AVAX | chain_flow_reversal_watch | 1 | -0.2056 | 0.0129 |  |  |  |  | pending_15m |
-| HL | MegaETH | MEGA | chain_flow_reversal_watch | 1 | -0.1833 | 0.0269 |  |  |  |  | pending_15m |
-| OKX | MegaETH | MEGA | chain_flow_reversal_watch | 1 | -0.1833 | 0.0269 |  |  |  |  | pending_15m |
-| HL | Berachain | BERA | chain_flow_reversal_watch | 1 | -0.1675 | 0.0091 |  |  |  |  | pending_15m |
-| OKX | Berachain | BERA | chain_flow_reversal_watch | 1 | -0.1675 | 0.0091 |  |  |  |  | pending_15m |
-| HL | Stellar | XLM | chain_outflow_stress_watch | -1 | -0.1656 | -0.0359 |  |  |  |  | pending_15m |
-| OKX | Stellar | XLM | chain_outflow_stress_watch | -1 | -0.1656 | -0.0359 |  |  |  |  | pending_15m |
-| HL | Stacks | STX | chain_flow_reversal_watch | 1 | -0.1559 | 0.0260 |  |  |  |  | pending_15m |
-| OKX | Stacks | STX | chain_flow_reversal_watch | 1 | -0.1559 | 0.0260 |  |  |  |  | pending_15m |
-| HL | Sui | SUI | chain_flow_reversal_watch | 1 | -0.1507 | 0.0074 |  |  |  |  | pending_15m |
-| OKX | Sui | SUI | chain_flow_reversal_watch | 1 | -0.1507 | 0.0074 |  |  |  |  | pending_15m |
-| HL | Arbitrum | ARB | chain_flow_reversal_watch | 1 | -0.1406 | 0.0413 |  |  |  |  | pending_15m |
-| OKX | Arbitrum | ARB | chain_flow_reversal_watch | 1 | -0.1406 | 0.0413 |  |  |  |  | pending_15m |
-| HL | Bitcoin | BTC | chain_flow_reversal_watch | 1 | -0.1361 | 0.0385 |  |  |  |  | pending_15m |
-| OKX | Bitcoin | BTC | chain_flow_reversal_watch | 1 | -0.1361 | 0.0385 |  |  |  |  | pending_15m |
-| HL | Movement | MOVE | chain_flow_reversal_watch | 1 | -0.1262 | 0.0575 |  |  |  |  | pending_15m |
-| OKX | Movement | MOVE | chain_flow_reversal_watch | 1 | -0.1262 | 0.0575 |  |  |  |  | pending_15m |
-| HL | Sei | SEI | chain_flow_reversal_watch | 1 | -0.1163 | 0.0185 |  |  |  |  | pending_15m |
-| OKX | Sei | SEI | chain_flow_reversal_watch | 1 | -0.1163 | 0.0185 |  |  |  |  | pending_15m |
-| HL | Aptos | APT | chain_flow_reversal_watch | 1 | -0.1120 | 0.0186 |  |  |  |  | pending_15m |
-| OKX | Aptos | APT | chain_flow_reversal_watch | 1 | -0.1120 | 0.0186 |  |  |  |  | pending_15m |
-| HL | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1020 | 0.0643 |  |  |  |  | pending_15m |
-| OKX | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.1020 | 0.0643 |  |  |  |  | pending_15m |
-| HL | Ethereum | ETH | chain_flow_reversal_watch | 1 | -0.1006 | 0.0405 |  |  |  |  | pending_15m |
-| OKX | Ethereum | ETH | chain_flow_reversal_watch | 1 | -0.1006 | 0.0405 |  |  |  |  | pending_15m |
-| HL | Polygon | POL | chain_outflow_stress_watch | -1 | -0.0996 | -0.0087 |  |  |  |  | pending_15m |
-| OKX | Polygon | POL | chain_outflow_stress_watch | -1 | -0.0996 | -0.0087 |  |  |  |  | pending_15m |
-| HL | BSC | BNB | chain_flow_reversal_watch | 1 | -0.0969 | 0.0248 |  |  |  |  | pending_15m |
-| OKX | BSC | BNB | chain_flow_reversal_watch | 1 | -0.0969 | 0.0248 |  |  |  |  | pending_15m |
-| HL | Solana | SOL | chain_flow_reversal_watch | 1 | -0.0927 | 0.0387 |  |  |  |  | pending_15m |
-| OKX | Solana | SOL | chain_flow_reversal_watch | 1 | -0.0927 | 0.0387 |  |  |  |  | pending_15m |
-| HL | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.0866 | 0.0489 |  |  |  |  | pending_15m |
-| OKX | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.0866 | 0.0489 |  |  |  |  | pending_15m |
-| HL | Monad | MON | chain_flow_reversal_watch | 1 | -0.0859 | 0.0270 |  |  |  |  | pending_15m |
-| OKX | Monad | MON | chain_flow_reversal_watch | 1 | -0.0859 | 0.0270 |  |  |  |  | pending_15m |
-| HL | Near | NEAR | chain_flow_reversal_watch | 1 | -0.0685 | 0.1304 |  |  |  |  | pending_15m |
-| OKX | Near | NEAR | chain_flow_reversal_watch | 1 | -0.0685 | 0.1304 |  |  |  |  | pending_15m |
-| HL | TON | TON | chain_flow_reversal_watch | 1 | -0.0634 | 0.0123 |  |  |  |  | pending_15m |
-| OKX | TON | TON | chain_flow_reversal_watch | 1 | -0.0634 | 0.0123 |  |  |  |  | pending_15m |
-| HL | Starknet | STRK | chain_flow_reversal_watch | 1 | -0.0573 | 0.0100 |  |  |  |  | pending_15m |
-| OKX | Starknet | STRK | chain_flow_reversal_watch | 1 | -0.0573 | 0.0100 |  |  |  |  | pending_15m |
+| HL | Mantle | MNT | chain_flow_reversal_watch | 1 | -0.3131 | 0.0123 |  |  |  |  | pending_15m |
+| HL | Cardano | ADA | chain_flow_reversal_watch | 1 | -0.2664 | 0.0359 |  |  |  |  | pending_15m |
+| OKX | Cardano | ADA | chain_flow_reversal_watch | 1 | -0.2664 | 0.0359 |  |  |  |  | pending_15m |
+| HL | Avalanche | AVAX | chain_flow_reversal_watch | 1 | -0.1987 | 0.0216 |  |  |  |  | pending_15m |
+| OKX | Avalanche | AVAX | chain_flow_reversal_watch | 1 | -0.1987 | 0.0216 |  |  |  |  | pending_15m |
+| HL | MegaETH | MEGA | chain_flow_reversal_watch | 1 | -0.1794 | 0.0319 |  |  |  |  | pending_15m |
+| OKX | MegaETH | MEGA | chain_flow_reversal_watch | 1 | -0.1794 | 0.0319 |  |  |  |  | pending_15m |
+| HL | Berachain | BERA | chain_flow_reversal_watch | 1 | -0.1610 | 0.0169 |  |  |  |  | pending_15m |
+| OKX | Berachain | BERA | chain_flow_reversal_watch | 1 | -0.1610 | 0.0169 |  |  |  |  | pending_15m |
+| HL | Stellar | XLM | chain_outflow_stress_watch | -1 | -0.1572 | -0.0262 |  |  |  |  | pending_15m |
+| OKX | Stellar | XLM | chain_outflow_stress_watch | -1 | -0.1572 | -0.0262 |  |  |  |  | pending_15m |
+| HL | Stacks | STX | chain_flow_reversal_watch | 1 | -0.1520 | 0.0307 |  |  |  |  | pending_15m |
+| OKX | Stacks | STX | chain_flow_reversal_watch | 1 | -0.1520 | 0.0307 |  |  |  |  | pending_15m |
+| HL | Sui | SUI | chain_flow_reversal_watch | 1 | -0.1454 | 0.0137 |  |  |  |  | pending_15m |
+| OKX | Sui | SUI | chain_flow_reversal_watch | 1 | -0.1454 | 0.0137 |  |  |  |  | pending_15m |
+| HL | Arbitrum | ARB | chain_flow_reversal_watch | 1 | -0.1384 | 0.0440 |  |  |  |  | pending_15m |
+| OKX | Arbitrum | ARB | chain_flow_reversal_watch | 1 | -0.1384 | 0.0440 |  |  |  |  | pending_15m |
+| HL | Bitcoin | BTC | chain_flow_reversal_watch | 1 | -0.1293 | 0.0466 |  |  |  |  | pending_15m |
+| OKX | Bitcoin | BTC | chain_flow_reversal_watch | 1 | -0.1293 | 0.0466 |  |  |  |  | pending_15m |
+| HL | Movement | MOVE | chain_flow_reversal_watch | 1 | -0.1269 | 0.0567 |  |  |  |  | pending_15m |
+| OKX | Movement | MOVE | chain_flow_reversal_watch | 1 | -0.1269 | 0.0567 |  |  |  |  | pending_15m |
+| HL | Sei | SEI | chain_flow_reversal_watch | 1 | -0.1129 | 0.0224 |  |  |  |  | pending_15m |
+| OKX | Sei | SEI | chain_flow_reversal_watch | 1 | -0.1129 | 0.0224 |  |  |  |  | pending_15m |
+| HL | Aptos | APT | chain_flow_reversal_watch | 1 | -0.1104 | 0.0205 |  |  |  |  | pending_15m |
+| OKX | Aptos | APT | chain_flow_reversal_watch | 1 | -0.1104 | 0.0205 |  |  |  |  | pending_15m |
+| HL | Polygon | POL | chain_outflow_stress_watch | -1 | -0.0961 | -0.0049 |  |  |  |  | pending_15m |
+| OKX | Polygon | POL | chain_outflow_stress_watch | -1 | -0.0961 | -0.0049 |  |  |  |  | pending_15m |
+| HL | Ethereum | ETH | chain_flow_reversal_watch | 1 | -0.0942 | 0.0480 |  |  |  |  | pending_15m |
+| OKX | Ethereum | ETH | chain_flow_reversal_watch | 1 | -0.0942 | 0.0480 |  |  |  |  | pending_15m |
+| HL | BSC | BNB | chain_flow_reversal_watch | 1 | -0.0936 | 0.0285 |  |  |  |  | pending_15m |
+| OKX | BSC | BNB | chain_flow_reversal_watch | 1 | -0.0936 | 0.0285 |  |  |  |  | pending_15m |
+| HL | Solana | SOL | chain_flow_reversal_watch | 1 | -0.0858 | 0.0466 |  |  |  |  | pending_15m |
+| OKX | Solana | SOL | chain_flow_reversal_watch | 1 | -0.0858 | 0.0466 |  |  |  |  | pending_15m |
+| HL | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.0844 | 0.0514 |  |  |  |  | pending_15m |
+| OKX | OP Mainnet | OP | chain_flow_reversal_watch | 1 | -0.0844 | 0.0514 |  |  |  |  | pending_15m |
+| HL | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.0830 | 0.0869 |  |  |  |  | pending_15m |
+| OKX | Hyperliquid L1 | HYPE | chain_flow_reversal_watch | 1 | -0.0830 | 0.0869 |  |  |  |  | pending_15m |
+| HL | Monad | MON | chain_flow_reversal_watch | 1 | -0.0826 | 0.0307 |  |  |  |  | pending_15m |
+| OKX | Monad | MON | chain_flow_reversal_watch | 1 | -0.0826 | 0.0307 |  |  |  |  | pending_15m |
+| HL | Near | NEAR | chain_flow_reversal_watch | 1 | -0.0649 | 0.1347 |  |  |  |  | pending_15m |
+| OKX | Near | NEAR | chain_flow_reversal_watch | 1 | -0.0649 | 0.1347 |  |  |  |  | pending_15m |
+| HL | TON | TON | chain_flow_reversal_watch | 1 | -0.0613 | 0.0145 |  |  |  |  | pending_15m |
+| OKX | TON | TON | chain_flow_reversal_watch | 1 | -0.0613 | 0.0145 |  |  |  |  | pending_15m |
+| HL | Starknet | STRK | chain_flow_reversal_watch | 1 | -0.0571 | 0.0102 |  |  |  |  | pending_15m |
+| OKX | Starknet | STRK | chain_flow_reversal_watch | 1 | -0.0571 | 0.0102 |  |  |  |  | pending_15m |

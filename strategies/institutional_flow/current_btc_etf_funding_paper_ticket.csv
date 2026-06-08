@@ -1,3 +1,3 @@
 venue,instrument,side,annualized_funding,carry_side,volume_usd_24h,open_interest_usd,spread_or_impact,basis_or_premium,score,status,reason
-OKX,BTC-USDT-SWAP,short,-0.04578734,long_perp_receives_funding,9155704734.93597984,1813212307.09710574,0.000001588243,-0.000682460604,4.95337138,reject,short side does not receive funding
-Hyperliquid,BTC-USD perpetual,short,0.10950000,short_perp_receives_funding,2979459076.00841427,1929259224.05563354,0.000058349038,-0.000378292325,3.08274588,paper_venue_candidate,"short carry, liquidity, and visible friction are acceptable for paper watch"
+OKX,BTC-USDT-SWAP,short,-0.05241027,long_perp_receives_funding,9125792363.58493996,1814074264.64276600,0.000001582778,-0.000651788384,4.94677966,reject,short side does not receive funding
+Hyperliquid,BTC-USD perpetual,short,0.10950000,short_perp_receives_funding,3352209748.83969927,1919199226.06080008,0.000188101042,-0.000470035253,3.44242961,paper_venue_candidate,"short carry, liquidity, and visible friction are acceptable for paper watch"

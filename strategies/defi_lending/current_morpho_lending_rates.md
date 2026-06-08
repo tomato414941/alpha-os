@@ -4,31 +4,31 @@ This screens Morpho lending markets for borrow demand, utilization, and remainin
 
 | chain | loan | collateral | status | supply USD | borrow USD | liquidity USD | util | avg supply APY | avg borrow APY | score | reason |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| Ethereum | USR | BONDUSD | paper_borrow_liquidity_stress_watch | 7300007299 | 7300007299 | 0 | 1.0000 | 7.5614 | 7.5614 | 103.0000 | market is highly utilized with little remaining liquidity |
-| Ethereum | USDC | PAXG | paper_borrow_liquidity_stress_watch | 1106670202 | 1106670202 | 0 | 1.0000 | 2979.0101 | 2979.0101 | 102.0667 | market is highly utilized with little remaining liquidity |
-| Ethereum | USDC | sdeUSD | paper_borrow_liquidity_stress_watch | 651343936 | 651343936 | 0 | 1.0000 | 2978.5143 | 2978.5143 | 97.5134 | market is highly utilized with little remaining liquidity |
-| Ethereum | USDT | USDT | paper_borrow_liquidity_stress_watch | 73655320 | 73655320 | 0 | 1.0000 | 181.1659 | 181.1659 | 91.7366 | market is highly utilized with little remaining liquidity |
-| Ethereum | USDC | wstUSR | paper_borrow_liquidity_stress_watch | 21935338 | 21935337 | 1 | 1.0000 | 2205.7948 | 2205.7957 | 91.2194 | market is highly utilized with little remaining liquidity |
-| Base | USDC | HERMES | paper_borrow_liquidity_stress_watch | 21419860 | 21419806 | 54 | 1.0000 | 2358.3045 | 2358.3509 | 91.2142 | market is highly utilized with little remaining liquidity |
-| Base | USDC | HERMES | lending_context_watch | 19326800 | 19326800 | 0 | 1.0000 | 202.2361 | 202.2361 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326748 | 19326748 | 0 | 1.0000 | 202.2367 | 202.2367 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326716 | 19326716 | 0 | 1.0000 | 202.2371 | 202.2371 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326683 | 19326683 | 0 | 1.0000 | 202.2374 | 202.2374 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326657 | 19326657 | 0 | 1.0000 | 202.2377 | 202.2377 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326624 | 19326624 | 0 | 1.0000 | 202.2380 | 202.2380 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326598 | 19326598 | 0 | 1.0000 | 202.2383 | 202.2383 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326566 | 19326566 | 0 | 1.0000 | 202.2387 | 202.2387 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326533 | 19326533 | 0 | 1.0000 | 202.2390 | 202.2390 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326501 | 19326501 | 0 | 1.0000 | 202.2394 | 202.2394 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326475 | 19326475 | 0 | 1.0000 | 202.2397 | 202.2397 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326442 | 19326442 | 0 | 1.0000 | 202.2400 | 202.2400 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326410 | 19326410 | 0 | 1.0000 | 202.2404 | 202.2404 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326377 | 19326377 | 0 | 1.0000 | 202.2407 | 202.2407 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326351 | 19326351 | 0 | 1.0000 | 202.2410 | 202.2410 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326318 | 19326318 | 0 | 1.0000 | 202.2414 | 202.2414 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326292 | 19326292 | 0 | 1.0000 | 202.2417 | 202.2417 | 73.1933 | lending market context exists but is not yet actionable |
-| Base | USDC | HERMES | lending_context_watch | 19326260 | 19326260 | 0 | 1.0000 | 202.2420 | 202.2420 | 73.1933 | lending market context exists but is not yet actionable |
-| Ethereum | USDT | USDT | lending_context_watch | 12931023 | 12931023 | 0 | 1.0000 | 181.1991 | 181.1991 | 73.1293 | lending market context exists but is not yet actionable |
+| Ethereum | USR | BONDUSD | paper_borrow_liquidity_stress_watch | 7417967008 | 7417967008 | 0 | 1.0000 | 7.5580 | 7.5580 | 103.0000 | market is highly utilized with little remaining liquidity |
+| Ethereum | USDC | PAXG | paper_borrow_liquidity_stress_watch | 1109845736 | 1109845736 | 0 | 1.0000 | 2978.9101 | 2978.9101 | 102.0985 | market is highly utilized with little remaining liquidity |
+| Ethereum | USDC | sdeUSD | paper_borrow_liquidity_stress_watch | 653212896 | 653212896 | 0 | 1.0000 | 2978.3835 | 2978.3835 | 97.5321 | market is highly utilized with little remaining liquidity |
+| Ethereum | USDT | USDT | paper_borrow_liquidity_stress_watch | 73795283 | 73795283 | 0 | 1.0000 | 180.8872 | 180.8872 | 91.7380 | market is highly utilized with little remaining liquidity |
+| Ethereum | USDC | wstUSR | paper_borrow_liquidity_stress_watch | 21996144 | 21996143 | 1 | 1.0000 | 2201.6670 | 2201.6679 | 91.2200 | market is highly utilized with little remaining liquidity |
+| Base | USDC | HERMES | paper_borrow_liquidity_stress_watch | 21480456 | 21480402 | 54 | 1.0000 | 2354.2596 | 2354.3058 | 91.2148 | market is highly utilized with little remaining liquidity |
+| Base | USDC | HERMES | lending_context_watch | 19365723 | 19365723 | 0 | 1.0000 | 201.9237 | 201.9237 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365671 | 19365671 | 0 | 1.0000 | 201.9243 | 201.9243 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365638 | 19365638 | 0 | 1.0000 | 201.9247 | 201.9247 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365606 | 19365606 | 0 | 1.0000 | 201.9250 | 201.9250 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365580 | 19365580 | 0 | 1.0000 | 201.9253 | 201.9253 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365547 | 19365547 | 0 | 1.0000 | 201.9257 | 201.9257 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365521 | 19365521 | 0 | 1.0000 | 201.9259 | 201.9259 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365488 | 19365488 | 0 | 1.0000 | 201.9263 | 201.9263 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365456 | 19365456 | 0 | 1.0000 | 201.9266 | 201.9266 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365423 | 19365423 | 0 | 1.0000 | 201.9270 | 201.9270 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365397 | 19365397 | 0 | 1.0000 | 201.9273 | 201.9273 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365364 | 19365364 | 0 | 1.0000 | 201.9276 | 201.9276 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365332 | 19365332 | 0 | 1.0000 | 201.9280 | 201.9280 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365299 | 19365299 | 0 | 1.0000 | 201.9283 | 201.9283 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365273 | 19365273 | 0 | 1.0000 | 201.9286 | 201.9286 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365240 | 19365240 | 0 | 1.0000 | 201.9290 | 201.9290 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365214 | 19365214 | 0 | 1.0000 | 201.9293 | 201.9293 | 73.1937 | lending market context exists but is not yet actionable |
+| Base | USDC | HERMES | lending_context_watch | 19365182 | 19365182 | 0 | 1.0000 | 201.9296 | 201.9296 | 73.1937 | lending market context exists but is not yet actionable |
+| Ethereum | USDT | USDT | lending_context_watch | 12955596 | 12955596 | 0 | 1.0000 | 180.9204 | 180.9204 | 73.1296 | lending market context exists but is not yet actionable |
 
 ## Interpretation
 

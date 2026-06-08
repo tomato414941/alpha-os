@@ -26,6 +26,7 @@ This labels stored volume-price dislocation observations. Positive directional r
 | 2026-06-07T22:55:00+00:00 | SUI | volume_reversal_candidate | 1 | 46.1065 | 0.00064799 | -0.00126952 | -0.00223489 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | UNI | volume_reversal_candidate | 1 | 37.9328 | 0.00031287 | 0.00015643 | -0.01662104 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | JTO | breakout_continuation_watch | 1 | 59.8226 | 0.00030844 | -0.01920455 | 0.01267857 |  | hyperliquid | labeled_12h_pending_24h |
+| 2026-06-07T22:55:00+00:00 | AAVE | volume_reversal_candidate | 1 | 51.7467 | -0.00014164 | -0.00420208 | 0.00084986 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | DOT | volume_reversal_candidate | 1 | 38.2349 | -0.00065930 | 0.00006181 | -0.00019573 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | FIL | volume_reversal_candidate | 1 | 42.0123 | -0.00149054 | 0.00054437 | 0.00473086 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | LTC | volume_reversal_candidate | 1 | 41.7664 | -0.00163513 | -0.00429806 | 0.00460173 |  | hyperliquid | labeled_12h_pending_24h |
@@ -36,13 +37,12 @@ This labels stored volume-price dislocation observations. Positive directional r
 | 2026-06-07T22:55:00+00:00 | DYDX | volume_reversal_candidate | 1 | 39.4870 | -0.00427085 | -0.01460357 | -0.02149204 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | WIF | volume_reversal_candidate | 1 | 41.1913 | -0.00429863 | 0.00012643 | 0.02067134 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | SEI | volume_reversal_candidate | 1 | 50.4308 | -0.00435686 | -0.00764467 | 0.00693870 |  | hyperliquid | labeled_12h_pending_24h |
+| 2026-06-07T22:55:00+00:00 | APT | volume_reversal_candidate | 1 | 45.7623 | -0.00477042 | -0.00566488 | 0.00059630 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | ZEC | volume_reversal_candidate | 1 | 58.9356 | -0.00511957 | -0.01362943 | -0.02669003 |  | hyperliquid | labeled_12h_pending_24h |
+| 2026-06-07T22:55:00+00:00 | ALGO | volume_reversal_candidate | 1 | 41.8332 | -0.00565092 | -0.00987055 | -0.00378495 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | ETHFI | volume_reversal_candidate | 1 | 36.6077 | -0.00648875 | -0.00229602 | 0.00891788 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | ADA | volume_reversal_candidate | 1 | 50.5194 | -0.00659008 | -0.00646917 | -0.00163241 |  | hyperliquid | labeled_12h_pending_24h |
-| 2026-06-07T22:55:00+00:00 | APT | volume_reversal_candidate | 1 | 45.7623 | -0.00691325 | -0.01805838 | -0.01332914 |  | coingecko | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | EIGEN | volume_reversal_candidate | 1 | 41.5203 | -0.00720621 | 0.03935698 | 0.01441242 |  | hyperliquid | labeled_12h_pending_24h |
-| 2026-06-07T22:55:00+00:00 | AAVE | volume_reversal_candidate | 1 | 51.7467 | -0.01030637 | -0.01740661 | -0.01465175 |  | coingecko | labeled_12h_pending_24h |
-| 2026-06-07T22:55:00+00:00 | ALGO | volume_reversal_candidate | 1 | 41.8332 | -0.01130151 | -0.01903308 | -0.02129915 |  | coingecko | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | WLD | chase_risk | -1 | 49.2176 | -0.01685918 | -0.02182776 | 0.00989468 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | LDO | volume_reversal_candidate | 1 | 37.2890 | 0.00000000 | -0.00652342 | -0.00320643 |  | hyperliquid | labeled_12h_pending_24h |
 | 2026-06-07T22:55:00+00:00 | UB | volume_reversal_candidate | 1 | 51.8906 |  |  |  |  | unavailable | pending_1h |

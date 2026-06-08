@@ -1,2 +1,2 @@
 asset,status,side,latest_date,latest_flow_btc,rolling_5d_flow_btc,annualized_funding,open_interest_notional,day_notional_volume,historical_trades,historical_total_return,historical_hit_rate_5d,historical_max_drawdown,reason
-BTC,active_paper_watch,short_btc_perp,2026-06-05,-220.00000000,-37984.00000000,0.10950000,1929259224.05563354,2979459076.00841427,21,0.78885853,0.61904762,-0.07880819,large rolling ETF outflow and positive perp funding align with historical short BTC candidate
+BTC,active_paper_watch,short_btc_perp,2026-06-05,-220.00000000,-37984.00000000,0.10950000,1919199226.06080008,3352209748.83969927,21,0.78885853,0.61904762,-0.07880819,large rolling ETF outflow and positive perp funding align with historical short BTC candidate

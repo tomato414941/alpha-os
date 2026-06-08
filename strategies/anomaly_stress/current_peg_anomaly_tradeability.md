@@ -4,11 +4,11 @@ This separates a peg anomaly from a currently routeable trade candidate. A missi
 
 | symbol | status | side | score | peg deviation | pool matches | best pool | pool reserve USD | pool vol 24h | yield conflicts | reason |
 | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |
-| USDY | peg_anomaly_mechanics_watch | paper_mechanics_check | 73.4305 | 0.128610 | 0 |  | 0 | 0 | 7 | peg anomaly also appears in yield-risk rows, so the mechanism matters before any trade |
-| reUSD | peg_anomaly_mechanics_watch | paper_mechanics_check | 63.0674 | 0.081349 | 0 |  | 0 | 0 | 1 | peg anomaly also appears in yield-risk rows, so the mechanism matters before any trade |
-| USYC | peg_anomaly_mechanics_watch | paper_mechanics_check | 61.3602 | 0.127203 | 0 |  | 0 | 0 | 0 | large-supply peg anomaly needs issuer, redemption, and venue mechanics before execution |
-| apxUSD | peg_anomaly_mechanics_watch | paper_mechanics_check | 61.2946 | -0.045892 | 0 |  | 0 | 0 | 1 | peg anomaly also appears in yield-risk rows, so the mechanism matters before any trade |
-| pmUSD | peg_anomaly_stale_or_unrouted | no_trade_until_route | 35.7374 | -0.286870 | 0 |  | 0 | 0 | 0 | material peg anomaly lacks a current route/depth confirmation in the joined public snapshots |
-| FRAX | peg_anomaly_stale_or_unrouted | no_trade_until_route | 30.1244 | -0.006221 | 0 |  | 0 | 0 | 0 | material peg anomaly lacks a current route/depth confirmation in the joined public snapshots |
-| DOLA | peg_anomaly_stale_or_unrouted | no_trade_until_route | 30.1239 | -0.006197 | 0 |  | 0 | 0 | 0 | material peg anomaly lacks a current route/depth confirmation in the joined public snapshots |
-| USDf | peg_anomaly_deprioritize | none | 20.0000 | -0.002271 | 0 |  | 0 | 0 | 0 | peg deviation is not material after route screening |
+| USDY | peg_anomaly_mechanics_watch | paper_mechanics_check | 73.6230 | 0.132460 | 0 |  | 0 | 0 | 7 | peg anomaly also appears in yield-risk rows, so the mechanism matters before any trade |
+| USYC | peg_anomaly_mechanics_watch | paper_mechanics_check | 69.3748 | 0.127497 | 0 |  | 0 | 0 | 2 | peg anomaly also appears in yield-risk rows, so the mechanism matters before any trade |
+| USDai | peg_anomaly_mechanics_watch | paper_mechanics_check | 67.4298 | 0.008595 | 0 |  | 0 | 0 | 4 | peg anomaly also appears in yield-risk rows, so the mechanism matters before any trade |
+| reUSD | peg_anomaly_mechanics_watch | paper_mechanics_check | 63.0752 | 0.081505 | 0 |  | 0 | 0 | 1 | peg anomaly also appears in yield-risk rows, so the mechanism matters before any trade |
+| apxUSD | peg_anomaly_mechanics_watch | paper_mechanics_check | 61.8002 | -0.056003 | 0 |  | 0 | 0 | 1 | peg anomaly also appears in yield-risk rows, so the mechanism matters before any trade |
+| pmUSD | peg_anomaly_stale_or_unrouted | no_trade_until_route | 36.3262 | -0.316312 | 0 |  | 0 | 0 | 0 | material peg anomaly lacks a current route/depth confirmation in the joined public snapshots |
+| satUSD | peg_anomaly_stale_or_unrouted | no_trade_until_route | 30.1708 | -0.008542 | 0 |  | 0 | 0 | 0 | material peg anomaly lacks a current route/depth confirmation in the joined public snapshots |
+| FRAX | peg_anomaly_stale_or_unrouted | no_trade_until_route | 30.1128 | -0.005640 | 0 |  | 0 | 0 | 0 | material peg anomaly lacks a current route/depth confirmation in the joined public snapshots |

@@ -4,7 +4,9 @@ This converts rough prediction-market probability gaps into paper tickets with e
 
 | question | side | ask | estimated payout | edge after ask | max loss | ask depth 5c | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1100 | 0.3600 | 0.2500 | 0.1100 | 116205.19 | 82.1200 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1100 | 0.4400 | 0.3300 | 0.1100 | 222484.91 | 92.1200 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| US x Iran permanent peace deal by June 30, 2026? | buy_yes | 0.1800 | 0.2600 | 0.0800 | 0.1800 | 80467.13 | 66.5600 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
+| Israel closes its airspace by June 15? | buy_yes | 0.1600 | 0.2500 | 0.0900 | 0.1600 | 6167.91 | 51.8879 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
 
 ## Caveat
 

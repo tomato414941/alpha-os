@@ -1,198 +1,198 @@
 timestamp,asset,long_venue,short_venue,annualized_spread,hl_involved,hl_max_leverage,hl_open_interest,hl_day_notional_volume,hl_mark_oracle_abs_diff,hl_impact_spread,notes
-2026-06-08T12:30:55.950633+00:00,ME,BinPerp,HlPerp,3.23432340,True,3.0000,3112085.00000000,277992.55992900,0.00382714,0.00480461,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,MOVE,BinPerp,HlPerp,1.83116938,True,3.0000,35934046.00000000,1060808.97227500,0.00833729,0.00369231,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,STABLE,BinPerp,BybitPerp,1.37737860,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,UMA,BybitPerp,BinPerp,1.18435200,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,BIO,BybitPerp,HlPerp,0.90924770,True,3.0000,59656890.00000000,748004.33281000,0.00162953,0.00249908,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,MEME,BybitPerp,BinPerp,0.65559840,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,MET,BybitPerp,BinPerp,0.62060220,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,IMX,BinPerp,HlPerp,0.58615350,True,5.0000,16123891.20000000,1057974.67527600,0.00084388,0.00330683,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,BNT,BybitPerp,BinPerp,0.57346245,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,COMP,BybitPerp,HlPerp,0.57188477,True,5.0000,50139.44000000,173305.42425000,0.00194518,0.00307620,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,MAV,BybitPerp,BinPerp,0.49329750,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,WIF,BybitPerp,BinPerp,0.48935550,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,NEAR,BybitPerp,HlPerp,0.48046410,True,10.0000,37446421.79999999,74319187.46098004,0.00041540,0.00091887,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,JTO,HlPerp,BybitPerp,0.47731488,True,5.0000,4651928.00000000,6776095.39616000,0.00138756,0.00132043,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,2Z,BybitPerp,BinPerp,0.47614980,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,MANTA,BybitPerp,BinPerp,0.44976030,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,TIA,BybitPerp,HlPerp,0.44592780,True,5.0000,6230182.00000000,1029285.90934600,0.00151844,0.00192355,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,TRUMP,BybitPerp,HlPerp,0.43942350,True,10.0000,3422703.00000000,1751602.82108000,0.00124926,0.00083393,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,GMX,BybitPerp,BinPerp,0.43530630,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,APE,BybitPerp,HlPerp,0.41234415,True,5.0000,7246855.20000000,1433835.95355100,0.00077821,0.00233608,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,JUP,HlPerp,BinPerp,0.40341114,True,10.0000,21577322.00000000,1492966.64945000,0.00212500,0.00157209,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ZK,HlPerp,BybitPerp,0.39730279,True,5.0000,76233188.00000000,501159.59574000,0.00206476,0.00188076,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,IP,HlPerp,BybitPerp,0.38997418,True,3.0000,7489757.60000000,567501.24832700,0.00122839,0.00132425,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,kFLOKI,BybitPerp,HlPerp,0.37439933,True,5.0000,31598604.00000000,150246.48625800,0.00108086,0.00148273,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,SEI,BybitPerp,HlPerp,0.36938423,True,5.0000,47412398.00000000,756878.80181600,0.00135729,0.00103923,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,VIRTUAL,BybitPerp,HlPerp,0.35928264,True,5.0000,9781098.60000000,1758616.37540100,0.00127725,0.00102305,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,MORPHO,BybitPerp,BinPerp,0.34987440,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,HMSTR,BybitPerp,HlPerp,0.32416380,True,3.0000,8964938212.00000000,334731.55143100,0.00584795,0.01176471,wide impact spread
-2026-06-08T12:30:55.950633+00:00,SNX,BinPerp,HlPerp,0.32360535,True,3.0000,2926962.00000000,328708.48379000,0.00120313,0.00252890,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,AXS,BybitPerp,HlPerp,0.31606080,True,5.0000,302751.20000000,137572.18628000,0.00143006,0.00243645,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,INJ,BybitPerp,HlPerp,0.30307410,True,5.0000,930361.60000000,3814357.11057000,0.00133263,0.00154385,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,IOTA,BybitPerp,HlPerp,0.29136855,True,3.0000,5044738.00000000,71392.98774800,0.00197938,0.00504132,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,NEO,BybitPerp,HlPerp,0.28652865,True,5.0000,122701.68000000,125526.95383900,0.00122644,0.00172735,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ONDO,BybitPerp,HlPerp,0.28594830,True,10.0000,27184838.00000000,13549234.96880000,0.00115537,0.00200358,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ATOM,BybitPerp,HlPerp,0.28327650,True,5.0000,1460783.06000000,284923.59851800,0.00154506,0.00223573,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,BERA,BybitPerp,HlPerp,0.26709240,True,5.0000,5517048.20000000,482846.03316500,0.00123911,0.00174351,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,AIXBT,HlPerp,BinPerp,0.26440658,True,3.0000,12126370.00000000,332647.19244200,0.00202338,0.00171156,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,GMT,BybitPerp,HlPerp,0.25238655,True,3.0000,22783274.00000000,86534.29890800,0.00136476,0.00323021,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,POPCAT,HlPerp,BybitPerp,0.24921149,True,3.0000,27909582.00000000,364661.49563400,0.00184463,0.00206049,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,AAVE,BinPerp,HlPerp,0.24720720,True,10.0000,687092.26000000,4849906.32883000,0.00093436,0.00088036,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,LAYER,BinPerp,HlPerp,0.24446970,True,3.0000,9517222.00000000,216521.67918400,0.00171545,0.00215602,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,WLFI,BybitPerp,BinPerp,0.24287100,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,JELLY,HlPerp,BinPerp,0.23255610,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,NXPC,BybitPerp,HlPerp,0.23216190,True,3.0000,2231216.00000000,267726.49420000,0.00186889,0.00382068,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,HYPER,HlPerp,BinPerp,0.22155617,True,3.0000,1868290.00000000,244577.87231700,0.00210168,0.00229051,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,AVNT,HlPerp,BybitPerp,0.21835702,True,5.0000,6207544.00000000,462133.96935200,0.00137795,0.00194184,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ALGO,BinPerp,BybitPerp,0.21596685,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,NIL,BybitPerp,BinPerp,0.21304320,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,ZORA,BybitPerp,HlPerp,0.20708640,True,3.0000,68671924.00000000,122054.36768900,0.00236267,0.00367299,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,SAND,BybitPerp,HlPerp,0.20517015,True,5.0000,8235162.00000000,246749.48709900,0.00121419,0.00119635,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,OP,BinPerp,HlPerp,0.20330865,True,5.0000,31903756.60000000,815331.27790200,0.00080751,0.00212100,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,STG,BinPerp,BybitPerp,0.19799790,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,AERO,BinPerp,HlPerp,0.19752311,True,3.0000,14934310.00000000,690098.14521000,0.00167736,0.00247481,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,LDO,BybitPerp,HlPerp,0.19367265,True,5.0000,17765946.40000000,575049.09637700,0.00165138,0.00102847,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ADA,HlPerp,BybitPerp,0.18865799,True,10.0000,114699396.00000000,8881965.91618000,0.00065888,0.00047339,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ICP,BinPerp,BybitPerp,0.18786915,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,0G,BybitPerp,BinPerp,0.17252820,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,CHIP,BinPerp,HlPerp,0.17250630,True,3.0000,86743104.00000000,498060.11055600,0.00078101,0.00100053,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ZEC,BybitPerp,BinPerp,0.17218875,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,kSHIB,HlPerp,BinPerp,0.16609310,True,10.0000,383149178.00000000,848133.55398800,0.00105042,0.00084087,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,SUSHI,BinPerp,HlPerp,0.16606770,True,3.0000,1139336.40000000,165325.70626300,0.00175850,0.00246624,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ALT,BybitPerp,BinPerp,0.16425000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,WLD,BinPerp,HlPerp,0.16188173,True,10.0000,91015256.40000001,75701407.68866904,0.00161900,0.00103757,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,EIGEN,BinPerp,HlPerp,0.15415410,True,5.0000,21840417.28000000,1156757.52475200,0.00054348,0.00326442,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,RSR,BybitPerp,BinPerp,0.15062820,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,W,BinPerp,BybitPerp,0.14780310,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,TON,BinPerp,HlPerp,0.14570070,True,10.0000,28105079.20000000,21981859.39406001,0.00092070,0.00098465,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,XPL,BybitPerp,HlPerp,0.14370780,True,10.0000,208011226.00000000,8382500.89239200,0.00099715,0.00136842,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,STRK,HlPerp,BinPerp,0.14111396,True,5.0000,81643395.80000000,581616.83047800,0.00144509,0.00173661,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,FIL,BinPerp,HlPerp,0.13302060,True,5.0000,3777454.80000000,520000.48986800,0.00125552,0.00186067,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ETC,BybitPerp,BinPerp,0.13041450,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,DYDX,BybitPerp,BinPerp,0.12549795,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,PROVE,BinPerp,BybitPerp,0.12104130,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,LTC,BybitPerp,HlPerp,0.12067995,True,10.0000,238998.60000000,3674595.52654000,0.00081141,0.00048021,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,AR,BinPerp,HlPerp,0.12014340,True,5.0000,610597.66000000,998367.14709400,0.00091650,0.00249682,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,MINA,BinPerp,HlPerp,0.11876370,True,3.0000,9253974.00000000,134402.09000900,0.00199085,0.00192515,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,CRV,BinPerp,HlPerp,0.11855565,True,10.0000,29551170.60000000,2413444.40572700,0.00064356,0.00094101,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ETH,BinPerp,HlPerp,0.11751102,True,25.0000,676981.33760000,1011927269.16747069,0.00053514,0.00005948,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,STX,BinPerp,HlPerp,0.11617950,True,5.0000,3467840.40000000,191852.45291000,0.00105625,0.00147999,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,RENDER,BinPerp,HlPerp,0.11563200,True,5.0000,1102063.40000000,1143063.30743000,0.00107143,0.00169845,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,XAI,BybitPerp,BinPerp,0.11372670,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,BLAST,HlPerp,BybitPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,CATI,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,CHILLGUY,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,CYBER,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,ILV,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,LISTA,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,MAVIA,HlPerp,BybitPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,MEW,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,OGN,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,ORBS,HlPerp,BybitPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,PIXEL,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,PROMPT,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,SCR,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,TST,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,USTC,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,ZEREBRO,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
-2026-06-08T12:30:55.950633+00:00,MON,BinPerp,HlPerp,0.10516380,True,5.0000,1220055866.00000000,3655920.77084900,0.00090806,0.00213491,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,MEGA,BinPerp,HlPerp,0.10455323,True,3.0000,152236938.00000000,2308832.81100600,0.00138463,0.00142648,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ZEN,BybitPerp,BinPerp,0.09489270,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,kLUNC,BinPerp,BybitPerp,0.09374295,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,SOL,BinPerp,HlPerp,0.09263656,True,20.0000,3699328.22000000,290801015.32929009,0.00060047,0.00002253,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,BABY,BinPerp,HlPerp,0.09198000,True,3.0000,29905034.00000000,1033903.95637200,0.00126622,0.00196526,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,IO,BinPerp,HlPerp,0.09141060,True,3.0000,3519761.00000000,593410.11076800,0.00180115,0.00166029,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,LINK,BybitPerp,HlPerp,0.09044700,True,10.0000,4044058.40000000,4153748.09885000,0.00046506,0.00049043,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ENS,BinPerp,HlPerp,0.08807085,True,5.0000,296658.48000000,151717.34813600,0.00114583,0.00323287,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,FET,BinPerp,HlPerp,0.08781900,True,5.0000,31843478.00000000,2338698.02972000,0.00009381,0.00135569,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,DOT,BybitPerp,BinPerp,0.08423835,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,APT,BinPerp,BybitPerp,0.08412885,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,TRX,HlPerp,BybitPerp,0.08030555,True,10.0000,47381298.00000000,1735124.61830000,0.00100766,0.00033930,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,PNUT,BinPerp,HlPerp,0.07956270,True,3.0000,5480664.60000000,277300.82226100,0.00118120,0.00402462,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,SUI,BinPerp,HlPerp,0.07859910,True,10.0000,46602889.79999999,42545926.77307600,0.00011862,0.00040838,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,POL,BybitPerp,HlPerp,0.07741475,True,5.0000,26396196.00000000,553287.86418100,0.00122994,0.00104644,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,TURBO,BinPerp,HlPerp,0.07654050,True,3.0000,252546564.00000000,81832.23828000,0.00113507,0.00227015,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,PAXG,BinPerp,HlPerp,0.07629960,True,10.0000,5086.23000000,6659336.79290000,0.00025444,0.00029939,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,kPEPE,HlPerp,BybitPerp,0.07571969,True,10.0000,3759325768.00000000,2710345.19783600,0.00106308,0.00070922,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,XLM,BybitPerp,HlPerp,0.06891361,True,5.0000,50336808.00000000,3448812.88317000,0.00093920,0.00102399,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,DOGE,BinPerp,HlPerp,0.06801045,True,10.0000,270789306.00000000,10882481.64329500,0.00063554,0.00011560,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,HBAR,BinPerp,HlPerp,0.05921760,True,5.0000,45175628.00000000,561997.67408300,0.00076792,0.00106108,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,MNT,BybitPerp,HlPerp,0.05876865,True,5.0000,5353355.20000000,231718.43796000,0.00074251,0.00115959,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,PENGU,BinPerp,HlPerp,0.05867010,True,5.0000,543217988.00000000,2564180.47563400,0.00072317,0.00072359,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ARB,HlPerp,BybitPerp,0.05072128,True,10.0000,46601503.80000000,2177693.13870000,0.00071934,0.00119918,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,AVAX,BybitPerp,HlPerp,0.04681738,True,10.0000,3801146.92000000,7892649.58149600,0.00097309,0.00061964,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,BNB,BinPerp,HlPerp,0.04667678,True,10.0000,60892.44400000,8943436.32527000,0.00056573,0.00031799,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,GALA,BinPerp,HlPerp,0.04213560,True,3.0000,107043280.00000000,106543.81564900,0.00112782,0.00188182,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,S,HlPerp,BybitPerp,0.03956104,True,5.0000,17374834.00000000,210513.81179800,0.00191577,0.00145580,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,XRP,BinPerp,HlPerp,0.03694486,True,20.0000,67981832.00000000,33582846.15010001,0.00077787,0.00010031,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,TAO,BybitPerp,HlPerp,0.03621559,True,5.0000,102900.40400000,7605716.41770000,0.00112819,0.00070580,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,BTC,HlPerp,BybitPerp,0.03303703,True,40.0000,30701.60848000,3225420543.28725958,0.00052196,0.00008858,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,SAGA,HlPerp,BinPerp,0.03240850,True,3.0000,9276062.40000000,146008.74734000,0.00144509,0.00216920,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,MOODENG,BinPerp,HlPerp,0.02614860,True,3.0000,9294574.00000000,203167.40680100,0.00105496,0.00144233,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,SKY,BybitPerp,BinPerp,0.01051200,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,PUMP,HlPerp,BinPerp,0.00339362,True,10.0000,14122136742.00000000,6291407.21655600,0.00125313,0.00125392,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ACE,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,ANIME,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,APEX,HlPerp,HlPerp,0.00000000,True,3.0000,4756878.00000000,79671.69480000,0.00058083,0.00553762,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,ARK,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,ASTER,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,AZTEC,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,BANANA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,BCH,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,BIGTIME,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,BLUR,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,BOME,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,BRETT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,BSV,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,CAKE,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,CC,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,CELO,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,CFX,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,DASH,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,DOOD,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,DYM,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,ENA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,ETHFI,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,FARTCOIN,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,FOGO,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,GAS,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,GOAT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,GRASS,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,GRIFFAIN,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,HEMI,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,INIT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,KAITO,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,KAS,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,LINEA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,LIT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,MELANIA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,MERL,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,NOT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,ORDI,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,PENDLE,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,PEOPLE,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,POLYX,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,PYTH,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,RESOLV,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,REZ,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,RUNE,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,SKR,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,SOPH,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,SPX,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,STBL,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,SUPER,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,SYRUP,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,TNSR,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,TRB,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,UNI,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,USUAL,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,VINE,HlPerp,HlPerp,0.00000000,True,3.0000,36289974.00000000,53326.91779900,0.00137678,0.00587102,Hyperliquid context available
-2026-06-08T12:30:55.950633+00:00,VVV,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,WCT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,XMR,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,YGG,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,ZETA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,ZRO,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,kBONK,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
-2026-06-08T12:30:55.950633+00:00,kNEIRO,HlPerp,HlPerp,0.00000000,True,3.0000,1683085.80000000,280564.92409400,0.00137426,0.00152882,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,LAYER,HlPerp,BinPerp,3.90603056,True,3.0000,9625324.00000000,280966.71771500,0.00753247,0.00417527,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,BIO,BybitPerp,HlPerp,2.58779160,True,3.0000,69242674.00000000,1380612.24806600,0.00294118,0.00179934,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,MOVE,BinPerp,BybitPerp,2.15725950,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,STABLE,BybitPerp,BinPerp,1.26577620,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,UMA,BybitPerp,BinPerp,1.22077170,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,PROVE,HlPerp,BybitPerp,1.16587278,True,3.0000,1641826.00000000,491182.91467000,0.00211305,0.00168370,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ZEC,BybitPerp,HlPerp,1.15918890,True,10.0000,476442.98000000,350549960.22799999,0.00139709,0.00031585,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,HYPER,HlPerp,BinPerp,0.93174864,True,3.0000,1851468.00000000,233943.86892700,0.00194962,0.00172670,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ME,BinPerp,HlPerp,0.88511303,True,3.0000,3290418.40000000,297072.74646300,0.00112179,0.00128370,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,S,HlPerp,BybitPerp,0.86677572,True,5.0000,17735700.00000000,195710.87757300,0.00248098,0.00159156,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,BABY,HlPerp,BybitPerp,0.81214924,True,3.0000,29704402.00000000,1050245.11138200,0.00193243,0.00181080,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,USTC,BybitPerp,BinPerp,0.78914460,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,HMSTR,BybitPerp,HlPerp,0.77650830,True,3.0000,7625934186.00000000,592896.33475900,0.00000000,0.00602410,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,MANTA,BybitPerp,BinPerp,0.73141620,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ZK,BybitPerp,BinPerp,0.72828450,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,TURBO,HlPerp,BinPerp,0.68820750,True,3.0000,251265388.00000000,81054.41692400,0.00113122,0.00226501,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,WCT,BybitPerp,HlPerp,0.67808970,True,3.0000,4065814.00000000,128461.43585800,0.00257709,0.00636352,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,AERO,BybitPerp,HlPerp,0.61628615,True,3.0000,14995268.00000000,650033.50690000,0.00162933,0.00217306,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,GMT,BybitPerp,HlPerp,0.61191885,True,3.0000,22605358.00000000,84985.64899400,0.00173246,0.00347007,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,BNT,BybitPerp,BinPerp,0.59503395,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,JUP,HlPerp,BybitPerp,0.57317030,True,10.0000,22005532.00000000,1726597.98410000,0.00184900,0.00133980,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,COMP,BybitPerp,HlPerp,0.56585220,True,5.0000,50207.50000000,174053.19811000,0.00245470,0.00421454,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,MINA,HlPerp,BybitPerp,0.53712115,True,3.0000,9328866.00000000,135391.24184900,0.00201586,0.00224648,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,VIRTUAL,BybitPerp,HlPerp,0.51373896,True,5.0000,9848981.80000000,1876814.80166600,0.00114962,0.00096452,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,kNEIRO,HlPerp,BybitPerp,0.49006856,True,3.0000,1730178.60000000,310785.49613800,0.00195195,0.00225802,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,GMX,BybitPerp,BinPerp,0.48128535,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,PYTH,HlPerp,BinPerp,0.46692990,True,5.0000,19193540.00000000,604766.67241400,0.00130841,0.00190250,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,INJ,HlPerp,BinPerp,0.45755101,True,5.0000,921694.40000000,4090479.48292000,0.00152051,0.00114919,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,EIGEN,BybitPerp,HlPerp,0.43902930,True,5.0000,21508252.68000000,1177770.00351700,0.00160944,0.00376142,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ALT,HlPerp,BinPerp,0.40604702,True,3.0000,38335112.00000000,180703.21333100,0.00155360,0.00172861,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ZORA,BybitPerp,HlPerp,0.39960930,True,3.0000,69808844.00000000,128832.81536500,0.00187025,0.00304307,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,WLD,BinPerp,HlPerp,0.39367440,True,10.0000,91778421.99999999,74709864.35030401,0.00064056,0.00076491,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,AIXBT,HlPerp,BinPerp,0.38281813,True,3.0000,12043058.00000000,307026.28287200,0.00258986,0.00170076,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,IOTA,BybitPerp,HlPerp,0.37606680,True,3.0000,5031500.00000000,74327.74290800,0.00278415,0.00579032,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,MEGA,BybitPerp,HlPerp,0.35938338,True,3.0000,150563862.00000000,2484779.45385800,0.00100572,0.00146101,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,IO,HlPerp,BybitPerp,0.35264519,True,3.0000,3500497.20000000,535402.61799400,0.00137184,0.00166221,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,APE,BybitPerp,HlPerp,0.34609665,True,5.0000,7145126.60000000,1478254.99692200,0.00139535,0.00201801,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ADA,HlPerp,BybitPerp,0.34324921,True,10.0000,114061888.00000000,9978821.18874000,0.00100681,0.00041502,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ALGO,BinPerp,HlPerp,0.33780750,True,5.0000,19368332.00000000,658475.20616600,0.00177824,0.00183452,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,2Z,HlPerp,BybitPerp,0.32911670,True,3.0000,10563092.00000000,387514.78492300,0.00180471,0.00109229,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,HEMI,BinPerp,HlPerp,0.32418307,True,3.0000,286736036.00000000,83383.56137900,0.00232558,0.00446030,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,kFLOKI,BinPerp,HlPerp,0.32353965,True,5.0000,31551048.00000000,146687.96706200,0.00136000,0.00116121,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,CHILLGUY,BybitPerp,BinPerp,0.32289360,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,SEI,BybitPerp,HlPerp,0.31068435,True,5.0000,47492146.00000000,752076.11515700,0.00141013,0.00129253,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ICP,BinPerp,HlPerp,0.30889381,True,5.0000,700004.00000000,1077449.77692000,0.00112641,0.00093124,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,MAV,BybitPerp,BinPerp,0.30512175,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,STX,HlPerp,BybitPerp,0.29607574,True,5.0000,3452294.00000000,189875.11632900,0.00131441,0.00147345,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,AXS,BybitPerp,HlPerp,0.29486160,True,5.0000,301856.40000000,132673.49835300,0.00141066,0.00232322,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,NEAR,BybitPerp,HlPerp,0.29018595,True,10.0000,37496194.00000000,75422939.18352002,0.00013774,0.00070743,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,NEO,BybitPerp,HlPerp,0.28614540,True,5.0000,122037.84000000,122536.89063700,0.00189189,0.00361092,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,TAO,BybitPerp,HlPerp,0.27295810,True,5.0000,104144.07200000,7765494.06182000,0.00078486,0.00075304,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ZETA,BybitPerp,BinPerp,0.26945760,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ATOM,HlPerp,BybitPerp,0.25728470,True,5.0000,1467953.08000000,294867.76509300,0.00203160,0.00226168,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,NXPC,HlPerp,BybitPerp,0.25028897,True,3.0000,2253930.00000000,293343.31738000,0.00161054,0.00309173,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,W,BinPerp,BybitPerp,0.23752740,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,POPCAT,BybitPerp,HlPerp,0.22206600,True,3.0000,28164262.00000000,366212.92792600,0.00169054,0.00178681,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,CHIP,BinPerp,BybitPerp,0.22000740,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,SAND,HlPerp,BybitPerp,0.21867719,True,5.0000,8178830.00000000,227269.41901400,0.00160468,0.00155059,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ETC,HlPerp,BinPerp,0.21429544,True,5.0000,185385.94000000,177349.59247500,0.00135050,0.00160308,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,IMX,BinPerp,HlPerp,0.21203580,True,5.0000,16182007.20000000,1012440.19886300,0.00244158,0.00356369,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,SUSHI,BybitPerp,HlPerp,0.19703430,True,3.0000,1229249.60000000,175566.33139200,0.00233236,0.00274565,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,BERA,BybitPerp,HlPerp,0.19582980,True,5.0000,5487588.20000000,550578.76579800,0.00203275,0.00252630,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,JELLY,HlPerp,BinPerp,0.19475670,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,XLM,BinPerp,HlPerp,0.19236960,True,5.0000,50701338.00000000,3346995.55915000,0.00103765,0.00090518,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,FET,BinPerp,HlPerp,0.18909555,True,5.0000,32109064.00000000,2151680.23759000,0.00051270,0.00120283,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,SNX,BinPerp,HlPerp,0.18876705,True,3.0000,2916738.80000000,325776.08455000,0.00186286,0.00416981,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,STRK,HlPerp,BinPerp,0.18630330,True,5.0000,82027531.20000000,647382.25714700,0.00113636,0.00142167,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,NIL,BybitPerp,HlPerp,0.18358770,True,3.0000,22421174.00000000,586388.41432000,0.00218432,0.00375940,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,WIF,BybitPerp,HlPerp,0.18264600,True,5.0000,17436616.00000000,1600661.21176000,0.00116031,0.00094141,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,POL,BybitPerp,HlPerp,0.17762126,True,5.0000,26316800.00000000,604059.53576600,0.00092638,0.00136017,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,AVAX,BinPerp,HlPerp,0.17505765,True,10.0000,3779774.20000000,7775165.92724200,0.00059950,0.00036572,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,kLUNC,HlPerp,BybitPerp,0.16936672,True,3.0000,11827180.00000000,687446.04166200,0.00172998,0.00182998,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,APT,HlPerp,BybitPerp,0.16325048,True,10.0000,6688062.34000000,2365815.11090600,0.00102790,0.00073519,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,AAVE,BinPerp,HlPerp,0.16192772,True,10.0000,686364.46000000,5130683.74707000,0.00097305,0.00058440,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,LINK,BybitPerp,HlPerp,0.15849030,True,10.0000,3985341.80000000,5142961.56507000,0.00027245,0.00052395,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,SOL,BinPerp,HlPerp,0.15812895,True,20.0000,3766833.76000000,282774595.47504985,0.00023734,0.00014093,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ETH,BinPerp,HlPerp,0.15245685,True,25.0000,680605.66240000,1022686864.31341970,0.00047228,0.00009450,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ZEREBRO,HlPerp,BinPerp,0.14622630,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,kPEPE,BinPerp,BybitPerp,0.13455360,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,PNUT,BinPerp,HlPerp,0.13018674,True,3.0000,5264161.00000000,288253.66172200,0.00210576,0.00328176,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,XRP,BinPerp,HlPerp,0.12921000,True,20.0000,67286980.00000000,37586356.05629998,0.00051042,0.00015493,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,LDO,BybitPerp,HlPerp,0.12336270,True,5.0000,17785756.80000000,604442.09095300,0.00073180,0.00102504,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,LTC,BybitPerp,HlPerp,0.11963970,True,10.0000,238212.30000000,3520093.83608000,0.00092230,0.00058840,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,AVNT,BinPerp,HlPerp,0.11874180,True,5.0000,6267928.00000000,469956.58851200,0.00135988,0.00203209,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,AR,BinPerp,HlPerp,0.11863230,True,5.0000,651078.22000000,977663.86650000,0.00015175,0.00293300,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,kSHIB,HlPerp,BinPerp,0.11711156,True,10.0000,383057388.00000000,870198.97527200,0.00104428,0.00062722,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ARB,BinPerp,BybitPerp,0.11471220,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,STG,BinPerp,BybitPerp,0.11216085,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,BLAST,HlPerp,BybitPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,BNB,BinPerp,HlPerp,0.10950000,True,10.0000,60951.88600000,8523168.06390999,0.00059602,0.00034295,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,CATI,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,CYBER,HlPerp,BybitPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,ILV,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,LISTA,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,MAVIA,HlPerp,BybitPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,MEW,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,OGN,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,ORBS,HlPerp,BybitPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,PIXEL,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,PROMPT,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,SCR,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,TST,HlPerp,BinPerp,0.10950000,True,,,,,,Hyperliquid involved but market context not found
+2026-06-08T15:01:21.791749+00:00,CRV,BinPerp,HlPerp,0.10390455,True,10.0000,29224145.80000000,2250736.16296300,0.00049665,0.00069548,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,BTC,BinPerp,HlPerp,0.10370745,True,40.0000,30104.10804000,3340626718.71562672,0.00042174,0.00001563,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,TIA,BinPerp,HlPerp,0.10356510,True,5.0000,6233588.60000000,1026455.28085100,0.00123648,0.00136147,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,INIT,BybitPerp,BinPerp,0.09922890,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,DOT,BybitPerp,BinPerp,0.09657900,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,JTO,BinPerp,HlPerp,0.09399480,True,5.0000,5141126.00000000,6496525.58969000,0.00119614,0.00183547,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,HBAR,BinPerp,HlPerp,0.09310785,True,5.0000,45050958.00000000,574176.28590700,0.00074793,0.00130362,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,BLUR,HlPerp,BinPerp,0.09261335,True,3.0000,29231774.00000000,154796.23074700,0.00167973,0.00269149,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,PENDLE,BinPerp,HlPerp,0.08072340,True,5.0000,5482852.00000000,1178467.17250000,0.00061891,0.00196085,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,RENDER,BinPerp,BybitPerp,0.07647480,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,RSR,BybitPerp,BinPerp,0.07431765,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,PENGU,BinPerp,HlPerp,0.07334310,True,5.0000,546519672.00000000,2535166.86688900,0.00072140,0.00043309,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,TRUMP,HlPerp,BybitPerp,0.07191259,True,10.0000,3401806.40000000,1789526.00420000,0.00117751,0.00088412,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ENS,BinPerp,HlPerp,0.06135285,True,5.0000,295995.24000000,150328.30239300,0.00072432,0.00312830,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,SUI,BinPerp,HlPerp,0.06065205,True,10.0000,45722998.20000000,37300521.44109499,0.00002607,0.00048225,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,PAXG,BinPerp,HlPerp,0.05612970,True,10.0000,4878.74800000,8470343.51890000,0.00006933,0.00016176,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,OP,BinPerp,BybitPerp,0.05389590,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,DOGE,BinPerp,BybitPerp,0.05321700,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,kBONK,BinPerp,HlPerp,0.04945020,True,10.0000,947514222.00000000,1356544.45387500,0.00066681,0.00066711,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,DYDX,BybitPerp,BinPerp,0.04941735,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,GALA,BinPerp,HlPerp,0.04916550,True,3.0000,106477220.00000000,107203.29509500,0.00186706,0.00224383,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,XAI,BybitPerp,BinPerp,0.04789530,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ZEN,BybitPerp,BinPerp,0.04106250,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,MOODENG,BinPerp,BybitPerp,0.03685770,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,TRX,BybitPerp,HlPerp,0.03301513,True,10.0000,47436562.00000000,1823359.71093000,0.00079608,0.00022676,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,TON,BinPerp,HlPerp,0.02422140,True,10.0000,28317725.60000000,22400784.31082001,0.00046235,0.00080930,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,FARTCOIN,HlPerp,BinPerp,0.02293806,True,10.0000,146235465.19999999,6220884.88113500,0.00083900,0.00109170,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,MON,BinPerp,HlPerp,0.01900920,True,5.0000,1227781094.00000000,3779133.97468800,0.00058283,0.00143530,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,KAITO,HlPerp,BinPerp,0.01893824,True,5.0000,1923028.00000000,196121.55516000,0.00139597,0.00156857,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,CAKE,BinPerp,HlPerp,0.00742410,True,3.0000,571765.80000000,360414.51105000,0.00113507,0.00127249,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,CELO,BybitPerp,BinPerp,0.00419385,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,MNT,BybitPerp,HlPerp,0.00325215,True,5.0000,5350093.20000000,229789.59076300,0.00072910,0.00103960,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,0G,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ACE,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ANIME,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,APEX,HlPerp,HlPerp,0.00000000,True,3.0000,4754402.00000000,76592.19670000,0.00193573,0.00417809,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,ARK,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ASTER,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,AZTEC,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,BANANA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,BCH,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,BIGTIME,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,BOME,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,BRETT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,BSV,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,CC,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,CFX,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,DASH,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,DOOD,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,DYM,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ENA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ETHFI,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,FIL,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,FOGO,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,GAS,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,GOAT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,GRASS,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,GRIFFAIN,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,IP,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,KAS,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,LINEA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,LIT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,MELANIA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,MEME,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,MERL,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,MET,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,MORPHO,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,NOT,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ONDO,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ORDI,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,PEOPLE,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,POLYX,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,PUMP,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,RESOLV,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,REZ,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,RUNE,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,SAGA,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,SKR,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,SKY,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,SOPH,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,SPX,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,STBL,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,SUPER,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,SYRUP,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,TNSR,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,TRB,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,UNI,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,USUAL,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,VINE,HlPerp,HlPerp,0.00000000,True,3.0000,36217764.00000000,50198.01872300,0.00208560,0.00563176,Hyperliquid context available
+2026-06-08T15:01:21.791749+00:00,VVV,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,WLFI,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,XMR,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,XPL,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,YGG,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
+2026-06-08T15:01:21.791749+00:00,ZRO,BinPerp,BinPerp,0.00000000,False,,,,,,Hyperliquid not involved; external venue feasibility still unknown
