@@ -251,22 +251,40 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
     if not ticket:
         return None
     if paper_ticket:
+        source_quality = _row_by_market_id(
+            root / "prediction_markets" / "current_event_source_quality.csv",
+            paper_ticket.get("market_id", ""),
+        )
+        source_count = 5 if source_quality else 4
+        raw_score = _float(paper_ticket.get("score")) + _float(source_quality.get("quality_score") if source_quality else "")
+        quality_evidence = ""
+        if source_quality:
+            quality_evidence = (
+                f", source_quality={source_quality.get('status', '')}, "
+                f"sources={source_quality.get('source_count_72h', '')}, "
+                f"recent_articles={source_quality.get('article_count_24h', '')}"
+            )
         return AlphaStackRow(
             opportunity="prediction_market_event_model",
             status=paper_ticket.get("status", "paper_event_probability_ticket"),
             side=f"{paper_ticket.get('suggested_side', '')}: {paper_ticket.get('question', '')}",
             priority_score=_priority_score(
                 paper_ticket.get("status", ""),
-                source_count=4,
-                raw_score=_float(paper_ticket.get("score")),
+                source_count=source_count,
+                raw_score=raw_score,
             ),
-            sources="prediction_markets + external_news + probability_gap + clob_depth",
+            sources=(
+                "prediction_markets + external_news + probability_gap + clob_depth"
+                if not source_quality
+                else "prediction_markets + external_news + probability_gap + clob_depth + source_quality"
+            ),
             evidence=(
                 f"ask={paper_ticket.get('entry_ask', '')}, "
                 f"estimated_payout={paper_ticket.get('estimated_payout_probability', '')}, "
                 f"edge_after_ask={paper_ticket.get('edge_after_ask', '')}, "
                 f"max_loss={paper_ticket.get('max_loss_per_share', '')}, "
                 f"ask_depth_5c={paper_ticket.get('ask_depth_to_5c', '')}"
+                f"{quality_evidence}"
             ),
             conflict="paper ticket still depends on rough headline probability, source timing, fill quality, fees, and adverse-selection behavior",
             next_step="paper-check source freshness, duplicate headlines, queue/fill assumptions, and outcome movement before any live action",

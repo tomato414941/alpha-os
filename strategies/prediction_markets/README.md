@@ -14,6 +14,7 @@ uv run python -m strategies.prediction_markets.current_polymarket_clob_depth
 uv run python -m strategies.prediction_markets.current_event_news_pressure
 uv run python -m strategies.prediction_markets.current_event_probability_gap
 uv run python -m strategies.prediction_markets.current_event_probability_paper_tickets
+uv run python -m strategies.prediction_markets.current_event_source_quality
 ```
 
 ## Current Status

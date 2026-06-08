@@ -1354,6 +1354,17 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
     paper_ticket_path = root / "prediction_markets" / "current_event_probability_paper_tickets.csv"
     best_paper_ticket = _best_prediction_market_probability_paper_ticket(paper_ticket_path)
     if best_paper_ticket:
+        source_quality = _best_prediction_market_source_quality(
+            root / "prediction_markets" / "current_event_source_quality.csv",
+            best_paper_ticket.get("market_id", ""),
+        )
+        quality_suffix = ""
+        if source_quality:
+            quality_suffix = (
+                f", source_quality={source_quality.get('status', '')}, "
+                f"sources={source_quality.get('source_count_72h', '')}, "
+                f"recent_articles={source_quality.get('article_count_24h', '')}"
+            )
         return ExplorationRow(
             lane="prediction_markets",
             status=best_paper_ticket.get("status", "paper_event_probability_ticket"),
@@ -1362,6 +1373,7 @@ def _prediction_markets_row(root: Path) -> ExplorationRow:
                 f"ask={best_paper_ticket.get('entry_ask', '')}, "
                 f"edge_after_ask={best_paper_ticket.get('edge_after_ask', '')}, "
                 f"ask_depth_5c={best_paper_ticket.get('ask_depth_to_5c', '')}"
+                f"{quality_suffix}"
             ),
             main_gap="paper ticket still uses a rough headline probability and has no fill, fee, queue, or adverse-selection proof",
             next_step="paper-check source freshness, duplicate headlines, queue/fill assumptions, and outcome movement before any live action",
@@ -1525,6 +1537,16 @@ def _best_prediction_market_probability_paper_ticket(path: Path) -> dict[str, st
     if not rows:
         return None
     return max(rows, key=lambda row: float(row.get("score") or "0"))
+
+
+def _best_prediction_market_source_quality(path: Path, market_id: str) -> dict[str, str] | None:
+    if not path.exists() or not market_id:
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(row for row in csv.DictReader(handle) if row.get("market_id") == market_id)
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("quality_score") or "0"))
 
 
 def _best_macro_regime_ticket(path: Path) -> dict[str, str] | None:
