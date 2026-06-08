@@ -34,19 +34,30 @@ class PaperTicket:
 def build_paper_tickets(
     *,
     plan_path: Path = ROOT / "current_paper_probe_plan.csv",
+    existing_tickets_path: Path | None = None,
     hyperliquid_snapshot_path: Path = ROOT / "perp_market_map" / "current_hyperliquid_snapshot.csv",
     hl_context_path: Path = ROOT / "candidate_validation" / "current_followup_execution_context.csv",
     okx_context_path: Path = ROOT / "candidate_validation" / "current_followup_okx_execution_context.csv",
+    intraday_live_gate_path: Path = ROOT / "p0_parallel" / "binance_derivatives_intraday_live_execution_gate.csv",
     top: int = 20,
 ) -> tuple[PaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
+    existing_opened_at = _existing_opened_at(existing_tickets_path)
     marks = _load_marks(
         hyperliquid_snapshot_path=hyperliquid_snapshot_path,
         hl_context_path=hl_context_path,
         okx_context_path=okx_context_path,
+        intraday_live_gate_path=intraday_live_gate_path,
     )
     rows = tuple(_read_rows(plan_path))[:top]
-    return tuple(_build_ticket(opened_at=opened_at, row=row, marks=marks) for row in rows)
+    return tuple(
+        _build_ticket(
+            opened_at=existing_opened_at.get(_ticket_id(row), opened_at),
+            row=row,
+            marks=marks,
+        )
+        for row in rows
+    )
 
 
 def write_paper_tickets_csv(rows: tuple[PaperTicket, ...], *, output_path: Path) -> Path:
@@ -141,6 +152,8 @@ def _build_ticket(*, opened_at: str, row: dict[str, str], marks: dict[tuple[str,
     asset = row.get("asset", "")
     venue = row.get("venue", "")
     entry_mark, entry_source = _entry_mark(asset=asset, venue=venue, marks=marks)
+    if not entry_mark:
+        entry_mark, entry_source = _fallback_entry_mark(row)
     checkpoints = _checkpoints(row.get("observation_horizon", ""))
     return PaperTicket(
         ticket_id=_ticket_id(row),
@@ -183,6 +196,7 @@ def _load_marks(
     hyperliquid_snapshot_path: Path,
     hl_context_path: Path,
     okx_context_path: Path,
+    intraday_live_gate_path: Path = ROOT / "p0_parallel" / "binance_derivatives_intraday_live_execution_gate.csv",
 ) -> dict[tuple[str, str], tuple[str, str]]:
     marks: dict[tuple[str, str], tuple[str, str]] = {}
     for row in _read_rows(hyperliquid_snapshot_path):
@@ -200,7 +214,29 @@ def _load_marks(
         mark = row.get("last_price", "")
         if asset and mark:
             marks[("OKX", asset)] = (mark, "okx_execution_context")
+    for row in _read_rows(intraday_live_gate_path):
+        symbol = row.get("symbol", "").upper()
+        mark = row.get("mid_price", "")
+        if symbol and mark:
+            marks[("", symbol)] = (mark, "intraday_live_execution_gate")
     return marks
+
+
+def _fallback_entry_mark(row: dict[str, str]) -> tuple[str, str]:
+    if row.get("probe_type") == "event_probability_probe":
+        ask = _extract_evidence_value(row.get("evidence", ""), "ask")
+        if ask:
+            return ask, "event_probability_plan_ask"
+    return "", ""
+
+
+def _extract_evidence_value(evidence: str, key: str) -> str:
+    prefix = f"{key}="
+    for part in evidence.split(","):
+        value = part.strip()
+        if value.startswith(prefix):
+            return value.removeprefix(prefix)
+    return ""
 
 
 def _checkpoints(horizon: str) -> str:
@@ -241,6 +277,16 @@ def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
         return tuple(csv.DictReader(handle))
 
 
+def _existing_opened_at(path: Path | None) -> dict[str, str]:
+    if path is None:
+        return {}
+    return {
+        row.get("ticket_id", ""): row.get("opened_at", "")
+        for row in _read_rows(path)
+        if row.get("ticket_id") and row.get("opened_at")
+    }
+
+
 def _escape(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
 
@@ -251,9 +297,18 @@ def main() -> None:
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_paper_tickets.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_paper_tickets.md")
     parser.add_argument("--top", type=int, default=20)
+    parser.add_argument(
+        "--preserve-opened-at",
+        action="store_true",
+        help="Keep existing ticket opened_at values when ticket ids already exist.",
+    )
     args = parser.parse_args()
 
-    rows = build_paper_tickets(plan_path=args.plan_path, top=args.top)
+    rows = build_paper_tickets(
+        plan_path=args.plan_path,
+        existing_tickets_path=args.output_path if args.preserve_opened_at else None,
+        top=args.top,
+    )
     write_paper_tickets_csv(rows, output_path=args.output_path)
     write_paper_tickets_md(rows, output_path=args.md_output_path)
     for row in rows[:10]:

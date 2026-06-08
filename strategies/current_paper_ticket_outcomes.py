@@ -39,6 +39,9 @@ def build_paper_ticket_outcomes(
     hyperliquid_snapshot_path: Path = ROOT / "perp_market_map" / "current_hyperliquid_snapshot.csv",
     hl_context_path: Path = ROOT / "candidate_validation" / "current_followup_execution_context.csv",
     okx_context_path: Path = ROOT / "candidate_validation" / "current_followup_okx_execution_context.csv",
+    event_probability_tickets_path: Path = ROOT
+    / "prediction_markets"
+    / "current_event_probability_paper_tickets.csv",
 ) -> tuple[PaperTicketOutcome, ...]:
     checked_at = datetime.now(UTC)
     marks = _load_marks(
@@ -46,8 +49,9 @@ def build_paper_ticket_outcomes(
         hl_context_path=hl_context_path,
         okx_context_path=okx_context_path,
     )
+    event_marks = _load_event_probability_marks(event_probability_tickets_path)
     return tuple(
-        _build_outcome(checked_at=checked_at, row=row, marks=marks)
+        _build_outcome(checked_at=checked_at, row=row, marks=marks, event_marks=event_marks)
         for row in _read_rows(tickets_path)
     )
 
@@ -145,15 +149,12 @@ def _build_outcome(
     checked_at: datetime,
     row: dict[str, str],
     marks: dict[tuple[str, str], tuple[str, str]],
+    event_marks: dict[str, tuple[str, str]],
 ) -> PaperTicketOutcome:
     opened_at = _parse_time(row.get("opened_at", ""))
     elapsed_minutes = (checked_at - opened_at).total_seconds() / 60.0 if opened_at else 0.0
     checkpoint_status = _checkpoint_status(row.get("checkpoints", ""), elapsed_minutes)
-    current_mark, current_source = _entry_mark(
-        asset=row.get("asset", ""),
-        venue=row.get("venue", ""),
-        marks=marks,
-    )
+    current_mark, current_source = _current_mark(row=row, marks=marks, event_marks=event_marks)
     raw_bps, dir_bps, outcome, missing = _mark_outcome(
         entry_mark=row.get("entry_mark", ""),
         current_mark=current_mark,
@@ -189,6 +190,34 @@ def _entry_mark(*, asset: str, venue: str, marks: dict[tuple[str, str], tuple[st
     return "", ""
 
 
+def _current_mark(
+    *,
+    row: dict[str, str],
+    marks: dict[tuple[str, str], tuple[str, str]],
+    event_marks: dict[str, tuple[str, str]],
+) -> tuple[str, str]:
+    if row.get("asset") == "EVENT":
+        event_key = _event_key(row.get("side", ""))
+        if event_key in event_marks:
+            return event_marks[event_key]
+    return _entry_mark(asset=row.get("asset", ""), venue=row.get("venue", ""), marks=marks)
+
+
+def _load_event_probability_marks(path: Path) -> dict[str, tuple[str, str]]:
+    marks: dict[str, tuple[str, str]] = {}
+    for row in _read_rows(path):
+        question = row.get("question", "")
+        side = row.get("suggested_side", "")
+        ask = row.get("entry_ask", "")
+        if question and side and ask:
+            marks[f"{side}: {question}"] = (ask, "event_probability_current_ask")
+    return marks
+
+
+def _event_key(side: str) -> str:
+    return side.strip()
+
+
 def _mark_outcome(
     *,
     entry_mark: str,
@@ -209,7 +238,12 @@ def _mark_outcome(
         directional_bps = -raw_bps
     else:
         directional_bps = raw_bps
-    outcome = "paper_mark_win" if directional_bps > 0.0 else "paper_mark_loss"
+    if directional_bps > 0.0:
+        outcome = "paper_mark_win"
+    elif directional_bps < 0.0:
+        outcome = "paper_mark_loss"
+    else:
+        outcome = "paper_mark_flat"
     return f"{raw_bps:.8f}", f"{directional_bps:.8f}", outcome, "fill, funding, stop, and adverse excursion still missing"
 
 
@@ -242,6 +276,8 @@ def _next_step(*, checkpoint_status: str, outcome: str) -> str:
         return "record fill, funding, stop, and adverse-excursion assumptions before promotion"
     if outcome == "paper_mark_loss":
         return "keep or reject based on repeated labels and failure regime"
+    if outcome == "paper_mark_flat":
+        return "keep observing until the ticket has a non-flat mark move or stronger quote evidence"
     return "fill missing current mark before judging the ticket"
 
 
