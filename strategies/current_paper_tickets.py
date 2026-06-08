@@ -43,8 +43,8 @@ def build_paper_tickets(
     top: int = 50,
 ) -> tuple[PaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
-    existing_opened_at = _existing_opened_at(existing_tickets_path)
     existing_tickets = {ticket.ticket_id: ticket for ticket in _existing_tickets(existing_tickets_path)}
+    existing_by_identity = {_ticket_identity_key(ticket): ticket for ticket in existing_tickets.values()}
     marks = _load_marks(
         hyperliquid_snapshot_path=hyperliquid_snapshot_path,
         hl_context_path=hl_context_path,
@@ -52,35 +52,49 @@ def build_paper_tickets(
         intraday_live_gate_path=intraday_live_gate_path,
     )
     rows = tuple(_read_rows(plan_path))[:top]
-    return tuple(
+    generated = tuple(
         _ticket_for_plan_row(
             row=row,
             opened_at=opened_at,
-            existing_opened_at=existing_opened_at,
             existing_tickets=existing_tickets,
+            existing_by_identity=existing_by_identity,
             marks=marks,
         )
         for row in rows
     )
+    generated_identities = {_ticket_identity_key(ticket) for ticket in generated}
+    generated_ticket_ids = {ticket.ticket_id for ticket in generated}
+    backlog = tuple(
+        ticket
+        for ticket in existing_tickets.values()
+        if _ticket_identity_key(ticket) not in generated_identities
+        and ticket.ticket_id not in generated_ticket_ids
+        and ticket.decision != "paper_observe"
+    )
+    return generated + backlog
 
 
 def _ticket_for_plan_row(
     *,
     row: dict[str, str],
     opened_at: str,
-    existing_opened_at: dict[str, str],
     existing_tickets: dict[str, PaperTicket],
+    existing_by_identity: dict[tuple[str, str, str, str, str], PaperTicket],
     marks: dict[tuple[str, str], tuple[str, str]],
 ) -> PaperTicket:
     ticket_id = _ticket_id(row)
-    existing = existing_tickets.get(ticket_id)
+    existing = existing_by_identity.get(_plan_identity_key(row))
+    if existing is None:
+        by_id = existing_tickets.get(ticket_id)
+        if by_id is not None and _ticket_identity_matches_plan(by_id, row):
+            existing = by_id
     full_match = existing is not None and _ticket_matches_plan(existing, row)
     identity_match = existing is not None and _ticket_identity_matches_plan(existing, row)
     if full_match and row.get("probe_type") != "event_crypto_hedge_probe":
         assert existing is not None
-        return existing
+        return replace(existing, ticket_id=ticket_id, rank=int(float(row.get("rank") or 0)))
     ticket = _build_ticket(
-        opened_at=existing_opened_at.get(ticket_id, opened_at) if identity_match else opened_at,
+        opened_at=existing.opened_at if existing is not None and identity_match else opened_at,
         row=row,
         marks=marks,
     )
@@ -92,6 +106,20 @@ def _ticket_for_plan_row(
             entry_source=existing.entry_source or ticket.entry_source,
         )
     return ticket
+
+
+def _ticket_identity_key(ticket: PaperTicket) -> tuple[str, str, str, str, str]:
+    return (ticket.opportunity, ticket.probe_type, ticket.asset, ticket.status, ticket.side)
+
+
+def _plan_identity_key(row: dict[str, str]) -> tuple[str, str, str, str, str]:
+    return (
+        row.get("opportunity", ""),
+        row.get("probe_type", ""),
+        row.get("asset", ""),
+        row.get("status", ""),
+        row.get("side", ""),
+    )
 
 
 def write_paper_tickets_csv(rows: tuple[PaperTicket, ...], *, output_path: Path) -> Path:
@@ -353,16 +381,6 @@ def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
         return ()
     with path.open(newline="", encoding="utf-8") as handle:
         return tuple(csv.DictReader(handle))
-
-
-def _existing_opened_at(path: Path | None) -> dict[str, str]:
-    if path is None:
-        return {}
-    return {
-        row.get("ticket_id", ""): row.get("opened_at", "")
-        for row in _read_rows(path)
-        if row.get("ticket_id") and row.get("opened_at")
-    }
 
 
 def _existing_tickets(path: Path | None) -> tuple[PaperTicket, ...]:

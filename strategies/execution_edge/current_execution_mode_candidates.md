@@ -4,11 +4,9 @@ This turns paper-ticket fill-risk checks into execution-mode candidates. It is n
 
 | ticket | asset | mode | action | score | current net | mode net | spread | usage | suggested size | reason |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| paper-01-hype-policy-expansion | HYPE | maker_or_low_fee_small | compare_taker_vs_low_fee | 554.0983 | 514.0210 | 520.0983 | 0.1546 | 0.0010 | 100 | low-fee or maker-like execution may improve the already surviving paper edge |
 | paper-05-hype-volume-dislocation | HYPE | maker_or_low_fee_small | compare_taker_vs_low_fee | 554.0983 | 514.0210 | 520.0983 | 0.1546 | 0.0026 | 250 | low-fee or maker-like execution may improve the already surviving paper edge |
 | paper-17-hype-policy-expansion | HYPE | maker_or_low_fee_small | compare_taker_vs_low_fee | 554.0983 | 514.0210 | 520.0983 | 0.1546 | 0.0010 | 100 | low-fee or maker-like execution may improve the already surviving paper edge |
 | paper-29-hype-policy-expansion | HYPE | maker_or_low_fee_small | compare_taker_vs_low_fee | 554.0983 | 514.0210 | 520.0983 | 0.1546 | 0.0010 | 100 | low-fee or maker-like execution may improve the already surviving paper edge |
-| paper-01-hype-policy-expansion | HYPE | taker_small | repeat_taker_probe | 550.0210 | 514.0210 | 514.0210 | 0.1546 | 0.0010 | 100 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | paper-05-hype-volume-dislocation | HYPE | taker_small | repeat_taker_probe | 550.0210 | 514.0210 | 514.0210 | 0.1546 | 0.0026 | 250 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | paper-17-hype-policy-expansion | HYPE | taker_small | repeat_taker_probe | 550.0210 | 514.0210 | 514.0210 | 0.1546 | 0.0010 | 100 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | paper-29-hype-policy-expansion | HYPE | taker_small | repeat_taker_probe | 550.0210 | 514.0210 | 514.0210 | 0.1546 | 0.0010 | 100 | paper edge survives rough taker spread, fee, funding, and depth checks |
@@ -22,10 +20,12 @@ This turns paper-ticket fill-risk checks into execution-mode candidates. It is n
 | paper-09-fartcoin-volume-dislocation | FARTCOIN | maker_or_low_fee_small | compare_taker_vs_low_fee | 229.5267 | 189.2173 | 197.3683 | 4.3020 | 0.0130 | 250 | low-fee or maker-like execution may improve the already surviving paper edge |
 | paper-09-fartcoin-volume-dislocation | FARTCOIN | taker_small | repeat_taker_probe | 223.3757 | 189.2173 | 189.2173 | 4.3020 | 0.0130 | 250 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | paper-11-pump-volume-dislocation | PUMP | maker_or_low_fee_small | compare_taker_vs_low_fee | 199.9816 | 162.7074 | 171.7074 | 6.2952 | 0.0108 | 250 | low-fee or maker-like execution may improve the already surviving paper edge |
-| paper-23-zec-wallet-entity-flow | ZEC | maker_or_low_fee_small | compare_taker_vs_low_fee | 197.9813 | 161.0635 | 167.1824 | 0.2378 | 0.0000 |  | low-fee or maker-like execution may improve the already surviving paper edge |
+| paper-44-zec-attention-event | ZEC | maker_or_low_fee_small | compare_taker_vs_low_fee | 197.9813 | 161.0635 | 167.1824 | 0.2378 | 0.0000 |  | low-fee or maker-like execution may improve the already surviving paper edge |
 | paper-46-zec-sector-rotation | ZEC | maker_or_low_fee_small | compare_taker_vs_low_fee | 197.9813 | 161.0635 | 167.1824 | 0.2378 | 0.0000 |  | low-fee or maker-like execution may improve the already surviving paper edge |
-| paper-23-zec-wallet-entity-flow | ZEC | taker_small | repeat_taker_probe | 193.8624 | 161.0635 | 161.0635 | 0.2378 | 0.0000 |  | paper edge survives rough taker spread, fee, funding, and depth checks |
+| paper-23-zec-wallet-entity-flow | ZEC | maker_or_low_fee_small | compare_taker_vs_low_fee | 197.9813 | 161.0635 | 167.1824 | 0.2378 | 0.0000 |  | low-fee or maker-like execution may improve the already surviving paper edge |
+| paper-44-zec-attention-event | ZEC | taker_small | repeat_taker_probe | 193.8624 | 161.0635 | 161.0635 | 0.2378 | 0.0000 |  | paper edge survives rough taker spread, fee, funding, and depth checks |
 | paper-46-zec-sector-rotation | ZEC | taker_small | repeat_taker_probe | 193.8624 | 161.0635 | 161.0635 | 0.2378 | 0.0000 |  | paper edge survives rough taker spread, fee, funding, and depth checks |
+| paper-23-zec-wallet-entity-flow | ZEC | taker_small | repeat_taker_probe | 193.8624 | 161.0635 | 161.0635 | 0.2378 | 0.0000 |  | paper edge survives rough taker spread, fee, funding, and depth checks |
 | paper-11-pump-volume-dislocation | PUMP | taker_small | repeat_taker_probe | 192.9816 | 162.7074 | 162.7074 | 6.2952 | 0.0108 | 250 | paper edge survives rough taker spread, fee, funding, and depth checks |
 | lane-near-near-microstructure-flow-paper-probe | NEAR | maker_or_low_fee_small | compare_taker_vs_low_fee | 185.4809 | 148.6992 | 155.6153 | 1.8321 | 0.0033 | 100.00 | low-fee or maker-like execution may improve the already surviving paper edge |
 | lane-near-near-microstructure-flow-probe | NEAR | maker_or_low_fee_small | compare_taker_vs_low_fee | 185.4809 | 148.6992 | 155.6153 | 1.8321 | 0.0033 | 100 | low-fee or maker-like execution may improve the already surviving paper edge |
