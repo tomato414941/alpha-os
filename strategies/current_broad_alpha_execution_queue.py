@@ -251,6 +251,11 @@ def _stablecoin_flow_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ..
 
 def _protocol_fee_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
     path = root / "protocol_fundamentals/current_protocol_fee_actionability.csv"
+    risk_path = root / "protocol_fundamentals/current_protocol_fee_repeat_risk_check.csv"
+    risks = {
+        (row.get("token_symbol", ""), row.get("protocol", "")): row
+        for row in _read_rows(risk_path)
+    }
     selected = tuple(
         row
         for row in _read_rows(path)
@@ -263,15 +268,15 @@ def _protocol_fee_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
             lane="protocol_fee_growth_lag",
             subject=f"{row.get('token_symbol', '')}/{row.get('protocol', '')}",
             side=row.get("side", ""),
-            action=row.get("action", ""),
-            status=row.get("status", ""),
-            score=_fmt(row.get("score")),
-            size_or_risk=f"venues={row.get('venue_count', '')}; depth10={row.get('depth_10bps', '')}; spread={row.get('spread_bps', '')}",
-            evidence=f"fee_growth_7d={row.get('fee_growth_7d', '')}; price_change_7d={row.get('price_change_7d', '')}",
+            action=_protocol_fee_action(row=row, risk=risks.get((row.get("token_symbol", ""), row.get("protocol", "")), {})),
+            status=_protocol_fee_status(row=row, risk=risks.get((row.get("token_symbol", ""), row.get("protocol", "")), {})),
+            score=_protocol_fee_score(row=row, risk=risks.get((row.get("token_symbol", ""), row.get("protocol", "")), {})),
+            size_or_risk=_protocol_fee_size_or_risk(row=row, risk=risks.get((row.get("token_symbol", ""), row.get("protocol", "")), {})),
+            evidence=_protocol_fee_evidence(row=row, risk=risks.get((row.get("token_symbol", ""), row.get("protocol", "")), {})),
             checkpoints="4h,12h,24h",
-            source_path=_relative(path),
+            source_path=_relative(risk_path if risks.get((row.get("token_symbol", ""), row.get("protocol", ""))) else path),
             required_record="fresh forward labels, funding, spread, depth, and stale-ticket rejection",
-            next_step=row.get("next_step", ""),
+            next_step=_protocol_fee_next_step(row=row, risk=risks.get((row.get("token_symbol", ""), row.get("protocol", "")), {})),
         )
         for row in selected
     )
@@ -541,6 +546,53 @@ def _token_unlock_next_step(*, row: dict[str, str], outcome: dict[str, str]) -> 
     return row.get("next_step", "")
 
 
+def _protocol_fee_action(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return risk.get("risk_action", "")
+    return row.get("action", "")
+
+
+def _protocol_fee_status(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return f"{row.get('status', '')}:{risk.get('risk_action', '')}"
+    return row.get("status", "")
+
+
+def _protocol_fee_score(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return _fmt(risk.get("net_mean_directional_4h_bps"))
+    return _fmt(row.get("score"))
+
+
+def _protocol_fee_size_or_risk(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return (
+            f"notional={risk.get('paper_notional_usd', '')}; "
+            f"depth10={risk.get('depth_10bps', '')}; "
+            f"usage={risk.get('visible_depth_usage', '')}; "
+            f"cost={risk.get('round_trip_cost_bps', '')}"
+        )
+    return f"venues={row.get('venue_count', '')}; depth10={row.get('depth_10bps', '')}; spread={row.get('spread_bps', '')}"
+
+
+def _protocol_fee_evidence(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return (
+            f"fee_growth_7d={row.get('fee_growth_7d', '')}; "
+            f"mean4h_bps={risk.get('mean_directional_4h_bps', '')}; "
+            f"net4h_bps={risk.get('net_mean_directional_4h_bps', '')}; "
+            f"labels={risk.get('wins_4h', '')}/{risk.get('labeled_4h', '')}; "
+            f"reason={risk.get('reason', '')}"
+        )
+    return f"fee_growth_7d={row.get('fee_growth_7d', '')}; price_change_7d={row.get('price_change_7d', '')}"
+
+
+def _protocol_fee_next_step(*, row: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return risk.get("next_step", "")
+    return row.get("next_step", "")
+
+
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
     if not path.exists():
         return ()
@@ -560,10 +612,12 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "token_unlock_event_window": 5.0,
     }.get(row.lane, 0.0)
     action_bonus = {
+        "cost_adjusted_repeat_probe": 80.0,
         "repeat_paper_probe": 70.0,
         "paper_check_pure_probability": 35.0,
         "event_window_label_opened": 12.0,
         "refresh_execution_gate": 10.0,
+        "refresh_before_repeat": 5.0,
         "wait_for_forward_label": 0.0,
         "collateral_review_required": -50.0,
         "exit_liquidity_watch": -50.0,

@@ -59,6 +59,7 @@ DEFAULT_COMMANDS = (
     ("strategies.protocol_fundamentals.current_protocol_fee_execution_context",),
     ("strategies.protocol_fundamentals.current_protocol_fee_price_lag_history",),
     ("strategies.protocol_fundamentals.current_protocol_fee_price_lag_labels",),
+    ("strategies.protocol_fundamentals.current_protocol_fee_repeat_risk_check",),
     ("strategies.protocol_fundamentals.current_protocol_fee_paper_tickets",),
     ("strategies.protocol_activity.current_coingecko_protocol_activity",),
     ("strategies.protocol_activity.current_protocol_activity_market_join",),
