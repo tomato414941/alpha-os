@@ -123,6 +123,21 @@ def _build_gap_row(*, ticket: dict[str, str], news: dict[str, str]) -> EventProb
     text = f"{question} {news.get('top_titles', '')}".lower()
     market_yes_probability = _float(ticket.get("midpoint"))
     evidence = _evidence_for_question(question, text)
+    if not evidence:
+        return EventProbabilityGapRow(
+            market_id=ticket.get("market_id", ""),
+            question=question,
+            category=ticket.get("category", ""),
+            market_yes_probability=market_yes_probability,
+            estimated_yes_probability=market_yes_probability,
+            probability_gap=0.0,
+            suggested_side="none",
+            confidence_score=0.0,
+            score=0.0,
+            status="unsupported_probability_model",
+            evidence_terms="",
+            reason="no supported event-probability model for this question",
+        )
     estimated_yes_probability = _estimated_yes_probability(question, evidence)
     probability_gap = estimated_yes_probability - market_yes_probability
     suggested_side = "buy_yes" if probability_gap > 0 else "buy_no"

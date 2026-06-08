@@ -233,6 +233,11 @@ def _options_volatility_next_step(ticket: dict[str, str]) -> str:
 
 
 def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
+    paper_refresh = _best_by_score(
+        root / "prediction_markets" / "current_event_probability_paper_outcome_refresh.csv",
+        score_key="score",
+        status_values={"paper_outcome_survived_refresh", "paper_outcome_weak_refresh"},
+    )
     paper_outcome = _best_by_score(
         root / "prediction_markets" / "current_event_probability_paper_outcome.csv",
         score_key="score",
@@ -253,8 +258,31 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
         score_key="score",
         status_values={"paper_event_model_candidate", "paper_event_model_watch"},
     )
-    if not ticket:
+    if not any((paper_refresh, paper_outcome, paper_ticket, gap, ticket)):
         return None
+    if paper_refresh:
+        return AlphaStackRow(
+            opportunity="prediction_market_event_model",
+            status=paper_refresh.get("status", "paper_outcome_survived_refresh"),
+            side=f"{paper_refresh.get('suggested_side', '')}: {paper_refresh.get('question', '')}",
+            priority_score=_priority_score(
+                paper_refresh.get("status", ""),
+                source_count=6,
+                raw_score=_float(paper_refresh.get("score")),
+            ),
+            sources="prediction_markets + external_news + probability_gap + clob_depth + source_quality + refresh",
+            evidence=(
+                f"entry_ask={paper_refresh.get('previous_entry_ask', '')}, "
+                f"bid={paper_refresh.get('current_bid', '')}, "
+                f"ask={paper_refresh.get('current_ask', '')}, "
+                f"bid_pnl={paper_refresh.get('mark_to_bid_pnl', '')}, "
+                f"edge_now={paper_refresh.get('current_edge_after_ask', '')}, "
+                f"edge_change={paper_refresh.get('edge_change', '')}, "
+                f"source_quality={paper_refresh.get('source_quality_status', '')}"
+            ),
+            conflict="survived refresh still uses public quotes and a rough headline probability; fill, queue, fees, resolution risk, and adverse selection remain unresolved",
+            next_step="repeat the refresh and only promote if edge survives another quote/news update with executable depth",
+        )
     if paper_outcome:
         return AlphaStackRow(
             opportunity="prediction_market_event_model",
@@ -338,6 +366,8 @@ def _prediction_market_event_model_stack(root: Path) -> AlphaStackRow | None:
             conflict="headline-derived probability is rough and uncalibrated; needs source verification, timing checks, costs, and adverse-selection analysis",
             next_step="paper-check the probability gap with source-level verification, stale-news filtering, and CLOB execution assumptions",
         )
+    if not ticket:
+        return None
     news = _row_by_market_id(
         root / "prediction_markets" / "current_event_news_pressure.csv",
         ticket.get("market_id", ""),
@@ -1924,6 +1954,8 @@ def _priority_score(status: str, *, source_count: int, raw_score: float) -> floa
         "probability_gap_watch": 62.0,
         "paper_event_probability_ticket": 82.0,
         "event_probability_watch": 65.0,
+        "paper_outcome_survived_refresh": 88.0,
+        "paper_outcome_weak_refresh": 70.0,
         "paper_outcome_active_watch": 84.0,
         "paper_outcome_edge_watch": 68.0,
         "paper_short_candidate": 72.0,

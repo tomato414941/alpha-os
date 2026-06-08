@@ -4,8 +4,9 @@ This marks event-probability paper tickets against the current prediction-market
 
 | question | side | entry ask | bid | ask | bid pnl | mid pnl | edge after ask | source quality | score | status |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |
-| Israel closes its airspace by June 15? | buy_no | 0.4500 | 0.4200 | 0.4500 | -0.0300 | -0.0150 | 0.3000 | source_quality_pass | 54.8832 | paper_outcome_active_watch |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_yes | 0.5500 | 0.5400 | 0.5500 | -0.0100 | -0.0050 | 0.1100 | source_quality_pass | 39.5251 | paper_outcome_edge_watch |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_yes | 0.3000 | 0.2900 | 0.3000 | -0.0100 | -0.0050 | 0.3600 | source_quality_pass | 65.7500 | paper_outcome_active_watch |
+| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | buy_no | 0.3000 | 0.2940 | 0.3000 | -0.0060 | -0.0030 | 0.2800 | source_quality_fail | 42.8500 | paper_outcome_source_quality_watch |
+| Strait of Hormuz traffic returns to normal by July 31? | buy_no | 0.7300 | 0.7100 | 0.7300 | -0.0200 | -0.0100 | 0.0900 | source_quality_pass | 38.5000 | paper_outcome_edge_watch |
 
 ## Caveat
 

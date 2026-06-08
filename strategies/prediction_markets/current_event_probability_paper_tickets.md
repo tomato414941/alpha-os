@@ -4,8 +4,9 @@ This converts rough prediction-market probability gaps into paper tickets with e
 
 | question | side | ask | estimated payout | edge after ask | max loss | ask depth 5c | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Israel closes its airspace by June 15? | buy_no | 0.4500 | 0.7500 | 0.3000 | 0.4500 | 10633.16 | 83.0332 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_yes | 0.5500 | 0.6600 | 0.1100 | 0.5500 | 13775.11 | 48.7751 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_yes | 0.3000 | 0.6600 | 0.3600 | 0.3000 | 23798.94 | 84.4000 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Strait of Hormuz traffic returns to normal by July 31? | buy_no | 0.7300 | 0.8200 | 0.0900 | 0.7300 | 86925.59 | 63.1600 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
+| Will Roberto Sánchez Palomino win the 2026 Peruvian presidential election? | buy_no | 0.3000 | 0.5800 | 0.2800 | 0.3000 | 38626.81 | 59.6000 | event_probability_watch | rough probability edge exists but needs stronger confidence or depth |
 
 ## Caveat
 

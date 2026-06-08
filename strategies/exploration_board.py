@@ -1351,6 +1351,24 @@ def _best_token_unlock_paper_ticket(path: Path) -> dict[str, str] | None:
 
 
 def _prediction_markets_row(root: Path) -> ExplorationRow:
+    refresh_path = root / "prediction_markets" / "current_event_probability_paper_outcome_refresh.csv"
+    best_refresh = _best_prediction_market_probability_refresh(refresh_path)
+    if best_refresh:
+        return ExplorationRow(
+            lane="prediction_markets",
+            status=best_refresh.get("status", "paper_outcome_survived_refresh"),
+            strongest_current_signal=(
+                f"{best_refresh.get('suggested_side', '')}: {best_refresh.get('question', '')}, "
+                f"entry_ask={best_refresh.get('previous_entry_ask', '')}, "
+                f"bid={best_refresh.get('current_bid', '')}, "
+                f"ask={best_refresh.get('current_ask', '')}, "
+                f"bid_pnl={best_refresh.get('mark_to_bid_pnl', '')}, "
+                f"edge_now={best_refresh.get('current_edge_after_ask', '')}, "
+                f"edge_change={best_refresh.get('edge_change', '')}"
+            ),
+            main_gap="survived refresh still lacks actual fill, queue position, fees, resolution-risk handling, and adverse-selection proof",
+            next_step="repeat the refresh and only promote if edge survives another quote/news update with executable depth",
+        )
     paper_outcome_path = root / "prediction_markets" / "current_event_probability_paper_outcome.csv"
     best_paper_outcome = _best_prediction_market_probability_paper_outcome(paper_outcome_path)
     if best_paper_outcome:
@@ -1564,6 +1582,20 @@ def _best_prediction_market_probability_paper_outcome(path: Path) -> dict[str, s
             row
             for row in csv.DictReader(handle)
             if row.get("status") in {"paper_outcome_active_watch", "paper_outcome_edge_watch"}
+        )
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("score") or "0"))
+
+
+def _best_prediction_market_probability_refresh(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = tuple(
+            row
+            for row in csv.DictReader(handle)
+            if row.get("status") in {"paper_outcome_survived_refresh", "paper_outcome_weak_refresh"}
         )
     if not rows:
         return None
