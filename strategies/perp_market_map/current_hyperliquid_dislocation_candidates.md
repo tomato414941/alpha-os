@@ -4,36 +4,36 @@ This broadens the perp market map beyond carry reversion. It combines 24h return
 
 | asset | status | side | score | ret24 | funding ann | mark/oracle | premium | OI/vol | impact | reason |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| STABLE | paper_extreme_funding_carry_candidate | long_perp | 34.4008 | 0.0149 | -5.3480 | -0.006387 | -0.005033 | 2.3702 | 0.002458 | extreme funding may pay carry or precede crowded unwind |
-| ZEC | paper_crowded_momentum_continuation_candidate | long_perp | 33.5846 | 0.2361 | -0.6068 | -0.001249 | -0.000951 | 0.4372 | 0.000549 | large 24h move with meaningful OI/volume; test continuation |
-| JTO | paper_crowded_momentum_continuation_candidate | long_perp | 32.2477 | 0.2345 | -0.6647 | -0.002211 | -0.001302 | 0.3109 | 0.001410 | large 24h move with meaningful OI/volume; test continuation |
-| ZEC | paper_crowded_momentum_reversal_candidate | short_perp | 28.5469 | 0.2361 | -0.6068 | -0.001249 | -0.000951 | 0.4372 | 0.000549 | large 24h move with meaningful OI/volume; test snapback |
-| JTO | paper_crowded_momentum_reversal_candidate | short_perp | 27.4106 | 0.2345 | -0.6647 | -0.002211 | -0.001302 | 0.3109 | 0.001410 | large 24h move with meaningful OI/volume; test snapback |
-| DASH | paper_crowded_momentum_continuation_candidate | long_perp | 23.0133 | 0.1650 | 0.1095 | -0.000806 | 0.000000 | 0.3456 | 0.001839 | large 24h move with meaningful OI/volume; test continuation |
-| STBL | paper_crowded_momentum_continuation_candidate | long_perp | 22.1650 | 0.1109 | 0.1095 | 0.001548 | 0.000000 | 6.9869 | 0.003962 | large 24h move with meaningful OI/volume; test continuation |
-| EIGEN | paper_crowded_momentum_continuation_candidate | long_perp | 21.5085 | 0.1263 | 0.1095 | -0.000555 | 0.000000 | 3.7956 | 0.002219 | large 24h move with meaningful OI/volume; test continuation |
-| WLD | paper_crowded_momentum_continuation_candidate | long_perp | 20.4668 | 0.1338 | 0.1095 | -0.000362 | -0.000064 | 0.5598 | 0.000789 | large 24h move with meaningful OI/volume; test continuation |
-| DASH | paper_crowded_momentum_reversal_candidate | short_perp | 19.5613 | 0.1650 | 0.1095 | -0.000806 | 0.000000 | 0.3456 | 0.001839 | large 24h move with meaningful OI/volume; test snapback |
-| TAO | paper_crowded_momentum_continuation_candidate | long_perp | 19.2983 | 0.1084 | 0.0966 | -0.000702 | -0.000609 | 2.8912 | 0.000581 | large 24h move with meaningful OI/volume; test continuation |
-| PURR | paper_crowded_momentum_continuation_candidate | long_perp | 19.2512 | 0.0766 | 2.1230 | 0.004168 | 0.000000 | 9.1176 | 0.012025 | large 24h move with meaningful OI/volume; test continuation |
-| MANTA | paper_crowded_momentum_continuation_candidate | short_perp | 19.1774 | -0.1133 | 0.1095 | -0.000262 | 0.000000 | 2.9609 | 0.001570 | large 24h move with meaningful OI/volume; test continuation |
-| LINK | paper_crowded_momentum_continuation_candidate | long_perp | 18.9077 | 0.0734 | 0.1095 | -0.000532 | -0.000539 | 6.7845 | 0.000508 | large 24h move with meaningful OI/volume; test continuation |
-| STBL | paper_crowded_momentum_reversal_candidate | short_perp | 18.8402 | 0.1109 | 0.1095 | 0.001548 | 0.000000 | 6.9869 | 0.003962 | large 24h move with meaningful OI/volume; test snapback |
-| LDO | paper_crowded_momentum_continuation_candidate | long_perp | 18.3376 | 0.0662 | -0.0172 | -0.001102 | -0.000588 | 7.7749 | 0.001177 | large 24h move with meaningful OI/volume; test continuation |
-| EIGEN | paper_crowded_momentum_reversal_candidate | short_perp | 18.2823 | 0.1263 | 0.1095 | -0.000555 | 0.000000 | 3.7956 | 0.002219 | large 24h move with meaningful OI/volume; test snapback |
-| PENGU | paper_crowded_momentum_continuation_candidate | long_perp | 17.9852 | 0.1132 | 0.0667 | -0.000717 | -0.000430 | 1.2473 | 0.000574 | large 24h move with meaningful OI/volume; test continuation |
-| PURR | paper_extreme_funding_carry_candidate | short_perp | 17.9077 | 0.0766 | 2.1230 | 0.004168 | 0.000000 | 9.1176 | 0.012025 | extreme funding may pay carry or precede crowded unwind |
-| AERO | paper_crowded_momentum_continuation_candidate | long_perp | 17.7286 | 0.0581 | -0.2791 | -0.002351 | -0.001566 | 9.8354 | 0.001513 | large 24h move with meaningful OI/volume; test continuation |
-| MEGA | paper_crowded_momentum_continuation_candidate | long_perp | 17.6576 | 0.0879 | 0.1095 | -0.001390 | -0.000643 | 4.2168 | 0.001330 | large 24h move with meaningful OI/volume; test continuation |
-| FARTCOIN | paper_crowded_momentum_continuation_candidate | long_perp | 17.4347 | 0.0935 | 0.1095 | -0.000522 | -0.000087 | 2.9918 | 0.001045 | large 24h move with meaningful OI/volume; test continuation |
-| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 17.3968 | 0.1338 | 0.1095 | -0.000362 | -0.000064 | 0.5598 | 0.000789 | large 24h move with meaningful OI/volume; test snapback |
-| NEAR | paper_crowded_momentum_continuation_candidate | long_perp | 17.1705 | 0.1021 | 0.1095 | -0.000342 | 0.000000 | 1.1918 | 0.001086 | large 24h move with meaningful OI/volume; test continuation |
-| ZEN | paper_crowded_momentum_continuation_candidate | long_perp | 16.4691 | 0.1059 | -0.3825 | -0.001534 | -0.001074 | 0.9758 | 0.001449 | large 24h move with meaningful OI/volume; test continuation |
-| BIO | paper_crowded_momentum_continuation_candidate | long_perp | 16.4648 | 0.0914 | 0.1095 | -0.001592 | -0.000885 | 2.9716 | 0.001702 | large 24h move with meaningful OI/volume; test continuation |
-| TAO | paper_crowded_momentum_reversal_candidate | short_perp | 16.4036 | 0.1084 | 0.0966 | -0.000702 | -0.000609 | 2.8912 | 0.000581 | large 24h move with meaningful OI/volume; test snapback |
-| PURR | paper_crowded_momentum_reversal_candidate | short_perp | 16.3635 | 0.0766 | 2.1230 | 0.004168 | 0.000000 | 9.1176 | 0.012025 | large 24h move with meaningful OI/volume; test snapback |
-| PUMP | paper_crowded_momentum_continuation_candidate | long_perp | 16.3602 | 0.0725 | -0.0392 | -0.001311 | -0.000656 | 4.6061 | 0.001313 | large 24h move with meaningful OI/volume; test continuation |
-| MANTA | paper_crowded_momentum_reversal_candidate | long_perp | 16.3008 | -0.1133 | 0.1095 | -0.000262 | 0.000000 | 2.9609 | 0.001570 | large 24h move with meaningful OI/volume; test snapback |
+| JTO | paper_crowded_momentum_continuation_candidate | long_perp | 31.7857 | 0.2335 | -0.4591 | -0.001619 | -0.001686 | 0.3093 | 0.001979 | large 24h move with meaningful OI/volume; test continuation |
+| ZEC | paper_crowded_momentum_continuation_candidate | long_perp | 29.9571 | 0.2076 | -0.4371 | -0.001005 | -0.000877 | 0.4301 | 0.000675 | large 24h move with meaningful OI/volume; test continuation |
+| STABLE | paper_extreme_funding_carry_candidate | long_perp | 28.5189 | -0.0030 | -4.4108 | -0.006303 | -0.004683 | 2.5161 | 0.003646 | extreme funding may pay carry or precede crowded unwind |
+| JTO | paper_crowded_momentum_reversal_candidate | short_perp | 27.0179 | 0.2335 | -0.4591 | -0.001619 | -0.001686 | 0.3093 | 0.001979 | large 24h move with meaningful OI/volume; test snapback |
+| ZEC | paper_crowded_momentum_reversal_candidate | short_perp | 25.4635 | 0.2076 | -0.4371 | -0.001005 | -0.000877 | 0.4301 | 0.000675 | large 24h move with meaningful OI/volume; test snapback |
+| WLD | paper_crowded_momentum_continuation_candidate | long_perp | 23.7677 | 0.1621 | 0.1095 | -0.000021 | -0.004786 | 0.5705 | 0.001234 | large 24h move with meaningful OI/volume; test continuation |
+| STBL | paper_crowded_momentum_continuation_candidate | long_perp | 20.9109 | 0.0984 | 0.1095 | 0.000918 | 0.000000 | 6.9327 | 0.002790 | large 24h move with meaningful OI/volume; test continuation |
+| EIGEN | paper_crowded_momentum_continuation_candidate | long_perp | 20.4156 | 0.1161 | 0.1095 | -0.000556 | 0.000000 | 3.7858 | 0.001669 | large 24h move with meaningful OI/volume; test continuation |
+| WLD | paper_crowded_momentum_reversal_candidate | short_perp | 20.2026 | 0.1621 | 0.1095 | -0.000021 | -0.004786 | 0.5705 | 0.001234 | large 24h move with meaningful OI/volume; test snapback |
+| DASH | paper_crowded_momentum_continuation_candidate | long_perp | 19.2233 | 0.1330 | 0.1095 | -0.000271 | 0.000000 | 0.3491 | 0.001616 | large 24h move with meaningful OI/volume; test continuation |
+| MANTA | paper_crowded_momentum_continuation_candidate | short_perp | 18.9496 | -0.1138 | 0.1095 | 0.000000 | 0.000000 | 2.8958 | 0.002495 | large 24h move with meaningful OI/volume; test continuation |
+| TAO | paper_crowded_momentum_continuation_candidate | long_perp | 18.9470 | 0.1064 | 0.1095 | -0.000607 | -0.000770 | 2.8905 | 0.001047 | large 24h move with meaningful OI/volume; test continuation |
+| LINK | paper_crowded_momentum_continuation_candidate | long_perp | 18.7842 | 0.0706 | 0.1095 | -0.000442 | -0.000646 | 7.0026 | 0.000533 | large 24h move with meaningful OI/volume; test continuation |
+| STBL | paper_crowded_momentum_reversal_candidate | short_perp | 17.7742 | 0.0984 | 0.1095 | 0.000918 | 0.000000 | 6.9327 | 0.002790 | large 24h move with meaningful OI/volume; test snapback |
+| AERO | paper_crowded_momentum_continuation_candidate | long_perp | 17.7245 | 0.0563 | -0.6154 | -0.001693 | -0.001274 | 9.1989 | 0.002060 | large 24h move with meaningful OI/volume; test continuation |
+| NEAR | paper_crowded_momentum_continuation_candidate | long_perp | 17.7121 | 0.1062 | 0.1095 | 0.000146 | 0.000000 | 1.1941 | 0.000881 | large 24h move with meaningful OI/volume; test continuation |
+| PENGU | paper_crowded_momentum_continuation_candidate | long_perp | 17.6555 | 0.1104 | 0.1095 | -0.000716 | -0.001002 | 1.2004 | 0.000573 | large 24h move with meaningful OI/volume; test continuation |
+| LDO | paper_crowded_momentum_continuation_candidate | long_perp | 17.6199 | 0.0592 | 0.1095 | -0.000919 | -0.001103 | 7.7712 | 0.001031 | large 24h move with meaningful OI/volume; test continuation |
+| DYDX | paper_crowded_momentum_continuation_candidate | long_perp | 17.4000 | 0.0820 | 0.1095 | 0.000414 | 0.000000 | 5.1976 | 0.002830 | large 24h move with meaningful OI/volume; test continuation |
+| EIGEN | paper_crowded_momentum_reversal_candidate | short_perp | 17.3533 | 0.1161 | 0.1095 | -0.000556 | 0.000000 | 3.7858 | 0.001669 | large 24h move with meaningful OI/volume; test snapback |
+| MEGA | paper_crowded_momentum_continuation_candidate | long_perp | 17.3438 | 0.0855 | -0.1078 | -0.000930 | -0.000496 | 4.2916 | 0.001737 | large 24h move with meaningful OI/volume; test continuation |
+| FARTCOIN | paper_crowded_momentum_continuation_candidate | long_perp | 16.9453 | 0.0899 | 0.1095 | 0.000173 | 0.000000 | 2.9706 | 0.001214 | large 24h move with meaningful OI/volume; test continuation |
+| PURR | paper_crowded_momentum_continuation_candidate | long_perp | 16.8726 | 0.0773 | 0.1095 | 0.003046 | 0.000000 | 9.1395 | 0.013826 | large 24h move with meaningful OI/volume; test continuation |
+| PUMP | paper_crowded_momentum_continuation_candidate | long_perp | 16.3460 | 0.0708 | -0.1691 | -0.000654 | -0.001309 | 4.6691 | 0.001311 | large 24h move with meaningful OI/volume; test continuation |
+| DASH | paper_crowded_momentum_reversal_candidate | short_perp | 16.3398 | 0.1330 | 0.1095 | -0.000271 | 0.000000 | 0.3491 | 0.001616 | large 24h move with meaningful OI/volume; test snapback |
+| MANTA | paper_crowded_momentum_reversal_candidate | long_perp | 16.1072 | -0.1138 | 0.1095 | 0.000000 | 0.000000 | 2.8958 | 0.002495 | large 24h move with meaningful OI/volume; test snapback |
+| TAO | paper_crowded_momentum_reversal_candidate | short_perp | 16.1050 | 0.1064 | 0.1095 | -0.000607 | -0.000770 | 2.8905 | 0.001047 | large 24h move with meaningful OI/volume; test snapback |
+| LINK | paper_crowded_momentum_reversal_candidate | short_perp | 15.9666 | 0.0706 | 0.1095 | -0.000442 | -0.000646 | 7.0026 | 0.000533 | large 24h move with meaningful OI/volume; test snapback |
+| BIO | paper_crowded_momentum_continuation_candidate | long_perp | 15.8075 | 0.0864 | 0.0156 | -0.000886 | -0.000390 | 2.9675 | 0.001526 | large 24h move with meaningful OI/volume; test continuation |
+| ATOM | paper_crowded_momentum_continuation_candidate | long_perp | 15.3958 | 0.0545 | 0.1095 | -0.001399 | -0.000291 | 6.4514 | 0.001984 | large 24h move with meaningful OI/volume; test continuation |
 
 ## Interpretation
 
