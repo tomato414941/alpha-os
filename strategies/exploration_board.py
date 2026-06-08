@@ -21,6 +21,7 @@ class ExplorationRow:
 def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
     return (
         _alpha_stack_row(root),
+        _alpha_frontier_row(root),
         _paper_probe_plan_row(root),
         _paper_tickets_row(root),
         _paper_ticket_outcomes_row(root),
@@ -105,6 +106,38 @@ def _alpha_stack_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="current paper candidates are not joined across lanes",
         next_step="run current alpha stack to identify cross-lane candidate priorities",
+    )
+
+
+def _alpha_frontier_row(root: Path) -> ExplorationRow:
+    path = root / "current_alpha_frontier.csv"
+    best = _best_numeric_row(path, key="frontier_score")
+    missing = _first_matching_row(path, key="current_status", value="missing_concrete_probe")
+    if best:
+        missing_lane = missing.get("lane", "") if missing else ""
+        missing_step = missing.get("next_probe", "") if missing else ""
+        return ExplorationRow(
+            lane="alpha_frontier",
+            status=best.get("current_status", "frontier_review"),
+            strongest_current_signal=(
+                f"{best.get('lane', '')}: "
+                f"active={best.get('active_candidates', '')}, "
+                f"best={best.get('best_opportunity', '')}, "
+                f"frontier={best.get('frontier_score', '')}"
+            ),
+            main_gap=(
+                f"missing concrete probe: {missing_lane}"
+                if missing_lane
+                else best.get("missing_work", "frontier lane still needs concrete probe evidence")
+            ),
+            next_step=missing_step or best.get("next_probe", "use frontier review to widen alpha discovery"),
+        )
+    return ExplorationRow(
+        lane="alpha_frontier",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="broad alpha-source coverage is not summarized",
+        next_step="run current alpha frontier after the alpha stack",
     )
 
 
@@ -3526,6 +3559,13 @@ def _csv_rows(path: Path) -> tuple[dict[str, str], ...]:
         return ()
     with path.open(newline="", encoding="utf-8") as handle:
         return tuple(csv.DictReader(handle))
+
+
+def _first_matching_row(path: Path, *, key: str, value: str) -> dict[str, str] | None:
+    for row in _csv_rows(path):
+        if row.get(key) == value:
+            return row
+    return None
 
 
 def _best_paper_ticket_outcome(rows: tuple[dict[str, str], ...]) -> dict[str, str] | None:
