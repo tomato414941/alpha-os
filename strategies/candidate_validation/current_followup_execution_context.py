@@ -35,8 +35,10 @@ def build_followup_execution_context_rows(
     *,
     queue_path: Path = ROOT / "current_followup_queue.csv",
     top: int = 30,
+    broad_fill_risk_path: Path = ROOT.parent / "current_broad_alpha_paper_fill_risk_check.csv",
 ) -> tuple[FollowupExecutionContextRow, ...]:
     queue_rows = tuple(row for row in _read_rows(queue_path) if row.get("asset") != "*")[:top]
+    queue_rows = _append_missing_broad_context_rows(queue_rows, broad_fill_risk_path)
     market_by_asset = _fetch_hyperliquid_market_contexts()
     observed_at = datetime.now(UTC).isoformat()
     rows = tuple(
@@ -289,6 +291,28 @@ def _sort_key(row: FollowupExecutionContextRow) -> tuple[int, float, float]:
     )
 
 
+def _append_missing_broad_context_rows(
+    queue_rows: tuple[dict[str, str], ...],
+    broad_fill_risk_path: Path,
+) -> tuple[dict[str, str], ...]:
+    seen_assets = {row.get("asset", "") for row in queue_rows}
+    extra_rows: list[dict[str, str]] = []
+    for row in _read_rows(broad_fill_risk_path):
+        asset = row.get("asset", "")
+        if row.get("risk_action") != "missing_execution_context" or not asset or asset in seen_assets:
+            continue
+        extra_rows.append(
+            {
+                "priority": row.get("directional_return_bps", ""),
+                "asset": asset,
+                "source": "broad_alpha_paper",
+                "followup_type": "missing_execution_context_backfill",
+            }
+        )
+        seen_assets.add(asset)
+    return (*queue_rows, *extra_rows)
+
+
 def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
     if not path.exists():
         return ()
@@ -322,10 +346,19 @@ def main() -> None:
         type=Path,
         default=ROOT / "current_followup_execution_context.md",
     )
+    parser.add_argument(
+        "--broad-fill-risk-path",
+        type=Path,
+        default=ROOT.parent / "current_broad_alpha_paper_fill_risk_check.csv",
+    )
     parser.add_argument("--top", type=int, default=30)
     args = parser.parse_args()
 
-    rows = build_followup_execution_context_rows(queue_path=args.queue_path, top=args.top)
+    rows = build_followup_execution_context_rows(
+        queue_path=args.queue_path,
+        top=args.top,
+        broad_fill_risk_path=args.broad_fill_risk_path,
+    )
     write_followup_execution_context_csv(rows, output_path=args.output_path)
     write_followup_execution_context_md(rows, output_path=args.md_output_path, top=args.top)
     for row in rows[: args.top]:
