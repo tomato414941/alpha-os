@@ -29,6 +29,7 @@ def build_exploration_rows(root: Path = ROOT) -> tuple[ExplorationRow, ...]:
         _crowded_positioning_survival_row(root),
         _alpha_method_frontier_row(root),
         _research_backed_alpha_expansion_plan_row(root),
+        _exchange_stablecoin_inflow_readiness_row(root),
         _fundamental_sentiment_cross_section_row(root),
         _multimodal_btc_eth_feature_alignment_row(root),
         _sentiment_contagion_negative_control_row(root),
@@ -354,6 +355,32 @@ def _research_backed_alpha_expansion_plan_row(root: Path) -> ExplorationRow:
         strongest_current_signal="not run yet",
         main_gap="external research directions have not been mapped to current alpha-os coverage",
         next_step="run current research backed alpha expansion plan after method frontier",
+    )
+
+
+def _exchange_stablecoin_inflow_readiness_row(root: Path) -> ExplorationRow:
+    path = root / "stablecoin_liquidity" / "current_exchange_stablecoin_inflow_readiness.csv"
+    best = _best_numeric_row(path, key="readiness_score")
+    if best:
+        return ExplorationRow(
+            lane="exchange_stablecoin_inflow_readiness",
+            status=best.get("status", "exchange_stablecoin_inflow_readiness"),
+            strongest_current_signal=(
+                f"{best.get('subject', '')}: "
+                f"{best.get('alpha_kind', '')}, "
+                f"score={best.get('readiness_score', '')}, "
+                f"flow={best.get('flow_direction', '')}, "
+                f"week={best.get('week_change_usd', '')}"
+            ),
+            main_gap=best.get("missing_data", "direct exchange stablecoin inflow still needs tagged deposits"),
+            next_step=best.get("next_probe", "separate direct exchange inflow from chain liquidity proxy"),
+        )
+    return ExplorationRow(
+        lane="exchange_stablecoin_inflow_readiness",
+        status="not_run",
+        strongest_current_signal="not run yet",
+        main_gap="direct exchange stablecoin inflow is not separated from chain stablecoin migration",
+        next_step="run current exchange stablecoin inflow readiness after stablecoin exchange inflow proxy",
     )
 
 

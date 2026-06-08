@@ -32,6 +32,7 @@ DEFAULT_COMMANDS = (
     ("strategies.stablecoin_liquidity.current_chain_stablecoin_migration",),
     ("strategies.stablecoin_liquidity.current_chain_stablecoin_migration_forward_labels",),
     ("strategies.stablecoin_liquidity.current_stablecoin_exchange_inflow_proxy",),
+    ("strategies.stablecoin_liquidity.current_exchange_stablecoin_inflow_readiness",),
     ("strategies.defi_yield.current_yield_screen",),
     ("strategies.defi_yield.current_yield_quality_screen",),
     ("strategies.defi_yield.current_yield_peg_risk_join",),
