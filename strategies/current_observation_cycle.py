@@ -13,7 +13,7 @@ DEFAULT_COMMANDS = (
     ("strategies.current_paper_ticket_fill_risk_check",),
     ("strategies.current_promoted_ticket_repeat_tickets", "--preserve-opened-at"),
     ("strategies.current_promoted_ticket_repeat_outcomes",),
-    ("strategies.current_symbol_lane_paper_tickets", "--preserve-opened-at"),
+    ("strategies.current_symbol_lane_paper_tickets", "--preserve-opened-at", "--top-symbols", "5"),
     ("strategies.current_symbol_lane_paper_outcomes",),
     ("strategies.current_symbol_opportunity_map",),
     ("strategies.current_symbol_cluster_conflicts",),

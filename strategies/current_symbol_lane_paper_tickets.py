@@ -35,11 +35,12 @@ def build_symbol_lane_paper_tickets(
     *,
     lane_review_path: Path = ROOT / "current_symbol_lane_split_review.csv",
     existing_tickets_path: Path | None = None,
-    top_symbols: int = 1,
+    top_symbols: int = 5,
     top_lanes_per_symbol: int = 8,
 ) -> tuple[SymbolLanePaperTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
     existing_opened_at = _existing_opened_at(existing_tickets_path)
+    existing_tickets = {ticket.ticket_id: ticket for ticket in _existing_tickets(existing_tickets_path)}
     marks = _load_marks(
         hyperliquid_snapshot_path=ROOT / "perp_market_map" / "current_hyperliquid_snapshot.csv",
         hl_context_path=ROOT / "candidate_validation" / "current_followup_execution_context.csv",
@@ -53,6 +54,9 @@ def build_symbol_lane_paper_tickets(
     tickets = []
     for row in rows:
         ticket_id = _ticket_id(row)
+        if ticket_id in existing_tickets:
+            tickets.append(existing_tickets[ticket_id])
+            continue
         symbol = row.get("symbol", "")
         entry_mark, entry_source = _entry_mark(symbol=symbol, marks=marks)
         tickets.append(
@@ -76,7 +80,7 @@ def build_symbol_lane_paper_tickets(
     known_ticket_ids = {ticket.ticket_id for ticket in tickets}
     tickets.extend(
         ticket
-        for ticket in _existing_tickets(existing_tickets_path)
+        for ticket in existing_tickets.values()
         if ticket.ticket_id not in known_ticket_ids
     )
     return tuple(tickets)
@@ -141,7 +145,7 @@ def write_symbol_lane_paper_tickets_md(
     with output_path.open("w", encoding="utf-8") as handle:
         handle.write("# Current Symbol Lane Paper Tickets\n\n")
         handle.write(
-            "These tickets open separate paper observations for the top symbol's lanes. "
+        "These tickets open separate paper observations for the top symbols' lanes. "
             "They deliberately do not collapse conflicting hypotheses into one trade.\n\n"
         )
         handle.write(
@@ -300,7 +304,7 @@ def main() -> None:
     parser.add_argument("--lane-review-path", type=Path, default=ROOT / "current_symbol_lane_split_review.csv")
     parser.add_argument("--output-path", type=Path, default=ROOT / "current_symbol_lane_paper_tickets.csv")
     parser.add_argument("--md-output-path", type=Path, default=ROOT / "current_symbol_lane_paper_tickets.md")
-    parser.add_argument("--top-symbols", type=int, default=1)
+    parser.add_argument("--top-symbols", type=int, default=5)
     parser.add_argument("--top-lanes-per-symbol", type=int, default=8)
     parser.add_argument("--preserve-opened-at", action="store_true")
     args = parser.parse_args()

@@ -35,6 +35,7 @@ def build_promoted_repeat_tickets(
 ) -> tuple[PromotedRepeatTicket, ...]:
     opened_at = datetime.now(UTC).isoformat(timespec="seconds")
     existing_opened_at = _existing_opened_at(existing_tickets_path)
+    existing_tickets = {row.ticket_id: row for row in _existing_tickets(existing_tickets_path)}
     outcomes = {row.get("ticket_id", ""): row for row in _read_rows(outcomes_path)}
     rows = []
     for row in _read_rows(fill_risk_path):
@@ -42,6 +43,9 @@ def build_promoted_repeat_tickets(
             continue
         previous_id = row.get("ticket_id", "")
         repeat_id = f"repeat-{previous_id}"
+        if repeat_id in existing_tickets:
+            rows.append(existing_tickets[repeat_id])
+            continue
         outcome = outcomes.get(previous_id, {})
         rows.append(
             PromotedRepeatTicket(
@@ -63,7 +67,7 @@ def build_promoted_repeat_tickets(
     known_ticket_ids = {row.ticket_id for row in rows}
     rows.extend(
         row
-        for row in _existing_tickets(existing_tickets_path)
+        for row in existing_tickets.values()
         if row.ticket_id not in known_ticket_ids
     )
     return tuple(rows)
