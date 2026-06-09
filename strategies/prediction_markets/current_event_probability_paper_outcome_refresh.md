@@ -6,7 +6,7 @@ This re-marks prior event-probability paper outcomes after refreshing Polymarket
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |
 | US x Iran permanent peace deal by June 15, 2026? | buy_yes | 0.0600 | 0.0500 | 0.0600 | -0.0100 | 0.1800 | 0.0000 | source_quality_pass | 47.0000 | paper_outcome_survived_refresh |
 | Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.0900 | 0.1000 | -0.0100 | 0.1800 | 0.0000 | source_quality_pass | 47.0000 | paper_outcome_survived_refresh |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_no | 0.1200 | 0.1100 | 0.1200 | -0.0100 | 0.1400 | 0.0000 | source_quality_pass | 43.0000 | paper_outcome_survived_refresh |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_no | 0.1200 | 0.1300 | 0.1400 | 0.0100 | 0.1200 | -0.0200 | source_quality_pass | 43.0000 | paper_outcome_survived_refresh |
 | Israel closes its airspace by June 15? | buy_yes | 0.1300 | 0.1200 | 0.1300 | -0.0100 | 0.1200 | 0.0000 | source_quality_pass | 41.0000 | paper_outcome_survived_refresh |
 
 ## Caveat
