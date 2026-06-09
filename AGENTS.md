@@ -1,14 +1,9 @@
 # AGENTS.md
 
-## Code Organization
+Do not modify this file unless the user explicitly asks to change `AGENTS.md`.
 
-Prefer a modular monolith with vertical slices and AI-readable boundaries.
-Place new code near the workflow it serves instead of creating broad abstract
-layers by default.
-
-Do not introduce manifest DSLs or large layered architecture unless there is a
-clear concrete need. Split shared directories only after multiple concrete
-implementations need a shared home.
+Alpha work must prioritize finding many real candidates over building tracking
+or research infrastructure.
 
 ## Repository Safety
 
