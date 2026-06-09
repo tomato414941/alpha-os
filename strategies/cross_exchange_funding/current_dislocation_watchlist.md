@@ -4,31 +4,31 @@ This is a current-state watchlist, not a backtest and not a trade instruction. I
 
 | source | action | asset | long | short | annualized edge | net 8h | net 24h | liquidity | friction | reason |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| hl_single_venue | current_funding_monitor | LAYER | HlPerp | cash_or_spot_proxy | 14.105704 |  |  | 1985439.02 | 0.003076 | long_perp_receives_funding |
-| okx_hl_current | paper_24h_monitor | HMSTR | HlPerp | OkxSwap | 3.098332 | -0.003712 | 0.001947 | 15122.03 | 0.006541 | wide Hyperliquid impact spread |
-| predicted_cross_venue | current_funding_monitor | STABLE | BybitPerp | HlPerp | 2.660825 |  |  | 474374.61 | 0.001062 | Hyperliquid context available |
-| hl_single_venue | current_funding_monitor | STABLE | HlPerp | cash_or_spot_proxy | 2.019238 |  |  | 454701.25 | 0.002890 | long_perp_receives_funding |
-| hl_single_venue | current_funding_monitor | ZEC | HlPerp | cash_or_spot_proxy | 1.809971 |  |  | 317968556.90 | 0.000692 | long_perp_receives_funding |
-| okx_hl_current | paper_24h_monitor | LAYER | OkxSwap | HlPerp | 1.312367 | -0.002123 | 0.000274 | 21275.87 | 0.003321 | OKX and Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | AZTEC | BybitPerp | HlPerp | 1.303422 |  |  | 294717.58 | 0.002776 | Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | GMX | BybitPerp | HlPerp | 1.286581 |  |  | 184829.60 | 0.002228 | Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | BRETT | BybitPerp | HlPerp | 1.268703 |  |  | 182738.90 | 0.003038 | Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | SUSHI | BybitPerp | HlPerp | 1.156725 |  |  | 171366.92 | 0.001780 | Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | WCT | BybitPerp | HlPerp | 1.152553 |  |  | 129445.52 | 0.001624 | Hyperliquid context available |
-| hl_single_venue | current_funding_monitor | S | HlPerp | cash_or_spot_proxy | 1.129738 |  |  | 167997.90 | 0.000931 | long_perp_receives_funding |
-| predicted_cross_venue | current_funding_monitor | S | HlPerp | BinPerp | 1.051128 |  |  | 186503.65 | 0.000737 | Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | SAGA | HlPerp | BinPerp | 1.036319 |  |  | 164530.44 | 0.002283 | Hyperliquid context available |
-| hl_single_venue | current_funding_monitor | AERO | HlPerp | cash_or_spot_proxy | 1.025410 |  |  | 708499.22 | 0.000715 | long_perp_receives_funding |
-| predicted_cross_venue | current_funding_monitor | kBONK | BybitPerp | HlPerp | 0.958738 |  |  | 795165.62 | 0.000911 | Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | NEO | BybitPerp | HlPerp | 0.917139 |  |  | 101774.75 | 0.002028 | Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | NIL | BinPerp | HlPerp | 0.819848 |  |  | 582005.98 | 0.003109 | Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | MOVE | HlPerp | BybitPerp | 0.806334 |  |  | 1586265.36 | 0.002629 | Hyperliquid context available |
-| predicted_cross_venue | current_funding_monitor | MNT | BybitPerp | HlPerp | 0.771066 |  |  | 246213.11 | 0.000822 | Hyperliquid context available |
-| hl_single_venue | current_funding_monitor | NIL | HlPerp | cash_or_spot_proxy | 0.756048 |  |  | 601077.89 | 0.002581 | long_perp_receives_funding |
-| predicted_cross_venue | current_funding_monitor | APE | BybitPerp | HlPerp | 0.741238 |  |  | 1447689.16 | 0.001758 | Hyperliquid context available |
-| hl_single_venue | current_funding_monitor | kNEIRO | HlPerp | cash_or_spot_proxy | 0.708234 |  |  | 437035.03 | 0.001739 | long_perp_receives_funding |
-| hl_single_venue | current_funding_monitor | VIRTUAL | HlPerp | cash_or_spot_proxy | 0.634270 |  |  | 1439071.91 | 0.000770 | long_perp_receives_funding |
-| predicted_cross_venue | current_funding_monitor | LAYER | BinPerp | HlPerp | 0.617926 |  |  | 2127587.06 | 0.002665 | mark/oracle dislocation |
+| hl_single_venue | current_funding_monitor | LAYER | HlPerp | cash_or_spot_proxy | 11.492001 |  |  | 2161247.32 | 0.002910 | long_perp_receives_funding |
+| hl_single_venue | current_funding_monitor | STABLE | HlPerp | cash_or_spot_proxy | 3.064576 |  |  | 458322.95 | 0.001560 | long_perp_receives_funding |
+| predicted_cross_venue | current_funding_monitor | STABLE | BybitPerp | HlPerp | 2.449270 |  |  | 462419.48 | 0.000799 | Hyperliquid context available |
+| hl_single_venue | current_funding_monitor | ZEC | HlPerp | cash_or_spot_proxy | 1.994637 |  |  | 311760975.33 | 0.000885 | long_perp_receives_funding |
+| predicted_cross_venue | current_funding_monitor | ENA | BybitPerp | HlPerp | 1.166290 |  |  | 9816165.22 | 0.001080 | Hyperliquid context available |
+| hl_single_venue | current_funding_monitor | MOVE | HlPerp | cash_or_spot_proxy | 1.157716 |  |  | 1619576.49 | 0.002616 | long_perp_receives_funding |
+| predicted_cross_venue | current_funding_monitor | ME | BybitPerp | HlPerp | 1.122689 |  |  | 374987.60 | 0.004682 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | NIL | BybitPerp | HlPerp | 1.080019 |  |  | 543977.66 | 0.002432 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | AERO | BybitPerp | HlPerp | 1.063992 |  |  | 669215.39 | 0.002588 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | ALT | BybitPerp | HlPerp | 1.051419 |  |  | 182689.28 | 0.002819 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | GMX | BybitPerp | HlPerp | 0.945751 |  |  | 182426.00 | 0.003714 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | ZEC | HlPerp | BinPerp | 0.888240 |  |  | 312727052.28 | 0.000407 | Hyperliquid context available |
+| hl_single_venue | current_funding_monitor | AERO | HlPerp | cash_or_spot_proxy | 0.882164 |  |  | 667977.65 | 0.002865 | long_perp_receives_funding |
+| predicted_cross_venue | current_funding_monitor | AXS | BybitPerp | HlPerp | 0.842033 |  |  | 124976.61 | 0.003044 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | BABY | BybitPerp | HlPerp | 0.841218 |  |  | 831478.47 | 0.002021 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | kBONK | BybitPerp | HlPerp | 0.827492 |  |  | 759151.94 | 0.000925 | Hyperliquid context available |
+| hl_single_venue | current_funding_monitor | S | HlPerp | cash_or_spot_proxy | 0.799606 |  |  | 200362.70 | 0.001973 | long_perp_receives_funding |
+| hl_single_venue | current_funding_monitor | AVNT | HlPerp | cash_or_spot_proxy | 0.788001 |  |  | 481290.66 | 0.002365 | long_perp_receives_funding |
+| predicted_cross_venue | current_funding_monitor | AZTEC | BybitPerp | HlPerp | 0.787020 |  |  | 309530.51 | 0.003315 | Hyperliquid context available |
+| hl_single_venue | current_funding_monitor | BABY | HlPerp | cash_or_spot_proxy | 0.744652 |  |  | 829876.17 | 0.002283 | long_perp_receives_funding |
+| predicted_cross_venue | current_funding_monitor | kFLOKI | BybitPerp | HlPerp | 0.719349 |  |  | 114058.59 | 0.000923 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | PENGU | BybitPerp | HlPerp | 0.714553 |  |  | 1607882.20 | 0.000457 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | NEO | BybitPerp | HlPerp | 0.652073 |  |  | 104946.84 | 0.004179 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | POL | BybitPerp | HlPerp | 0.634277 |  |  | 458924.43 | 0.001732 | Hyperliquid context available |
+| predicted_cross_venue | current_funding_monitor | VVV | BybitPerp | HlPerp | 0.623606 |  |  | 18728324.64 | 0.002198 | Hyperliquid context available |
 
 ## Interpretation
 

@@ -4,31 +4,31 @@ This repeats the current dislocation watchlist over a short window. It is a pers
 
 | source | action | asset | long | short | obs | mean edge | min edge | mean net 8h | mean net 24h | positive net24 | liquidity | friction |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| okx_hl_current | paper_24h_monitor | MON | OkxSwap | HlPerp | 4 | 1.098472 | 1.097628 | -0.000981 | 0.001026 | 1.000000 | 41030.88 | 0.001984 |
-| okx_hl_current | paper_24h_monitor | JTO | HlPerp | OkxSwap | 4 | 0.552843 | 0.550433 | -0.000807 | 0.000203 | 1.000000 | 70776.92 | 0.001312 |
-| hl_single_venue | current_funding_monitor | STABLE | HlPerp | cash_or_spot_proxy | 4 | 3.999175 | 3.985868 |  |  |  | 880975.74 | 0.002812 |
-| predicted_cross_venue | current_funding_monitor | MON | BinPerp | HlPerp | 4 | 0.933788 | 0.932561 |  |  |  | 4103083.26 | 0.001412 |
-| hl_single_venue | current_funding_monitor | XMR | cash_or_spot_proxy | HlPerp | 4 | 0.849258 | 0.848172 |  |  |  | 8941229.92 | 0.000891 |
-| predicted_cross_venue | current_funding_monitor | BABY | HlPerp | BybitPerp | 4 | 0.809907 | 0.806489 |  |  |  | 859013.27 | 0.002770 |
-| predicted_cross_venue | current_funding_monitor | ZEC | BinPerp | HlPerp | 4 | 0.782647 | 0.779542 |  |  |  | 508467465.70 | 0.000534 |
-| hl_single_venue | current_funding_monitor | AERO | HlPerp | cash_or_spot_proxy | 4 | 0.762218 | 0.758157 |  |  |  | 564945.92 | 0.001628 |
-| predicted_cross_venue | current_funding_monitor | ZK | HlPerp | BinPerp | 4 | 0.752900 | 0.750569 |  |  |  | 323821.52 | 0.002230 |
-| predicted_cross_venue | current_funding_monitor | RENDER | BybitPerp | HlPerp | 4 | 0.750434 | 0.742088 |  |  |  | 944444.94 | 0.001461 |
-| predicted_cross_venue | current_funding_monitor | XMR | BinPerp | HlPerp | 4 | 0.739946 | 0.738031 |  |  |  | 8939952.03 | 0.000828 |
-| predicted_cross_venue | current_funding_monitor | TAO | BybitPerp | HlPerp | 4 | 0.710466 | 0.697116 |  |  |  | 8352958.51 | 0.000562 |
-| hl_single_venue | current_funding_monitor | BABY | HlPerp | cash_or_spot_proxy | 4 | 0.700630 | 0.695505 |  |  |  | 859085.84 | 0.002680 |
-| predicted_cross_venue | current_funding_monitor | MERL | HlPerp | BinPerp | 4 | 0.658941 | 0.648540 |  |  |  | 184118.54 | 0.003519 |
-| predicted_cross_venue | current_funding_monitor | LDO | BybitPerp | HlPerp | 4 | 0.656543 | 0.655872 |  |  |  | 605340.87 | 0.000843 |
-| hl_single_venue | current_funding_monitor | ZK | HlPerp | cash_or_spot_proxy | 4 | 0.649609 | 0.647786 |  |  |  | 323821.52 | 0.002326 |
-| predicted_cross_venue | current_funding_monitor | APE | BybitPerp | HlPerp | 4 | 0.629866 | 0.575565 |  |  |  | 360002.71 | 0.001953 |
-| predicted_cross_venue | current_funding_monitor | AERO | HlPerp | BinPerp | 4 | 0.601512 | 0.594055 |  |  |  | 564943.41 | 0.001631 |
-| predicted_cross_venue | current_funding_monitor | TRUMP | HlPerp | BybitPerp | 4 | 0.590782 | 0.576694 |  |  |  | 1305264.56 | 0.000749 |
-| predicted_cross_venue | current_funding_monitor | AIXBT | HlPerp | BinPerp | 4 | 0.582082 | 0.580304 |  |  |  | 367705.32 | 0.002074 |
-| predicted_cross_venue | current_funding_monitor | SAGA | HlPerp | BybitPerp | 4 | 0.578211 | 0.573330 |  |  |  | 165885.71 | 0.002034 |
-| predicted_cross_venue | current_funding_monitor | JTO | HlPerp | BybitPerp | 4 | 0.576580 | 0.571410 |  |  |  | 9472061.65 | 0.001137 |
-| predicted_cross_venue | current_funding_monitor | NEO | BinPerp | HlPerp | 4 | 0.545458 | 0.544149 |  |  |  | 109122.48 | 0.001818 |
-| hl_single_venue | current_funding_monitor | TRUMP | HlPerp | cash_or_spot_proxy | 4 | 0.543745 | 0.540001 |  |  |  | 1305277.05 | 0.000729 |
-| hl_single_venue | current_funding_monitor | MERL | HlPerp | cash_or_spot_proxy | 3 | 0.533128 | 0.526211 |  |  |  | 184231.77 | 0.003570 |
+| hl_single_venue | current_funding_monitor | LAYER | HlPerp | cash_or_spot_proxy | 3 | 11.358028 | 11.347884 |  |  |  | 2165013.10 | 0.002736 |
+| hl_single_venue | current_funding_monitor | STABLE | HlPerp | cash_or_spot_proxy | 3 | 3.178984 | 3.167197 |  |  |  | 461685.32 | 0.001127 |
+| predicted_cross_venue | current_funding_monitor | STABLE | BybitPerp | HlPerp | 3 | 2.397066 | 2.369280 |  |  |  | 461685.32 | 0.000902 |
+| hl_single_venue | current_funding_monitor | ZEC | HlPerp | cash_or_spot_proxy | 3 | 1.938589 | 1.935999 |  |  |  | 312699009.98 | 0.000434 |
+| hl_single_venue | current_funding_monitor | MOVE | HlPerp | cash_or_spot_proxy | 3 | 1.247863 | 1.237061 |  |  |  | 1622247.39 | 0.002650 |
+| predicted_cross_venue | current_funding_monitor | ENA | BybitPerp | HlPerp | 3 | 1.074602 | 1.027324 |  |  |  | 9681698.45 | 0.000914 |
+| predicted_cross_venue | current_funding_monitor | AERO | BybitPerp | HlPerp | 3 | 1.012245 | 0.986243 |  |  |  | 669215.39 | 0.002689 |
+| predicted_cross_venue | current_funding_monitor | NIL | BybitPerp | HlPerp | 3 | 0.988718 | 0.942608 |  |  |  | 543933.01 | 0.003359 |
+| predicted_cross_venue | current_funding_monitor | ALT | BybitPerp | HlPerp | 3 | 0.938605 | 0.882198 |  |  |  | 182670.72 | 0.003932 |
+| hl_single_venue | current_funding_monitor | AERO | HlPerp | cash_or_spot_proxy | 3 | 0.904338 | 0.903682 |  |  |  | 669215.39 | 0.002654 |
+| predicted_cross_venue | current_funding_monitor | ZEC | HlPerp | BinPerp | 3 | 0.897278 | 0.888914 |  |  |  | 312691542.75 | 0.000457 |
+| predicted_cross_venue | current_funding_monitor | GMX | BybitPerp | HlPerp | 3 | 0.886892 | 0.857462 |  |  |  | 182426.00 | 0.003857 |
+| predicted_cross_venue | current_funding_monitor | BABY | BybitPerp | HlPerp | 3 | 0.834877 | 0.830749 |  |  |  | 831387.13 | 0.002922 |
+| hl_single_venue | current_funding_monitor | AVNT | HlPerp | cash_or_spot_proxy | 3 | 0.833503 | 0.832578 |  |  |  | 482897.35 | 0.001770 |
+| predicted_cross_venue | current_funding_monitor | kBONK | BybitPerp | HlPerp | 3 | 0.797708 | 0.782815 |  |  |  | 759116.38 | 0.000924 |
+| predicted_cross_venue | current_funding_monitor | AXS | BybitPerp | HlPerp | 3 | 0.787392 | 0.760385 |  |  |  | 124942.88 | 0.003332 |
+| hl_single_venue | current_funding_monitor | BABY | HlPerp | cash_or_spot_proxy | 3 | 0.752886 | 0.748637 |  |  |  | 831436.04 | 0.002518 |
+| hl_single_venue | current_funding_monitor | S | HlPerp | cash_or_spot_proxy | 3 | 0.740869 | 0.738353 |  |  |  | 205843.15 | 0.002178 |
+| predicted_cross_venue | current_funding_monitor | AZTEC | BybitPerp | HlPerp | 3 | 0.668556 | 0.609324 |  |  |  | 309425.82 | 0.003663 |
+| predicted_cross_venue | current_funding_monitor | kFLOKI | BybitPerp | HlPerp | 3 | 0.664534 | 0.637126 |  |  |  | 114058.59 | 0.001147 |
+| predicted_cross_venue | current_funding_monitor | SAGA | HlPerp | BybitPerp | 3 | 0.651868 | 0.651775 |  |  |  | 182494.01 | 0.002863 |
+| predicted_cross_venue | current_funding_monitor | LAYER | BinPerp | HlPerp | 3 | 0.631916 | 0.619498 |  |  |  | 2164536.83 | 0.002754 |
+| hl_single_venue | current_funding_monitor | IO | HlPerp | cash_or_spot_proxy | 2 | 0.604158 | 0.603989 |  |  |  | 780317.10 | 0.002183 |
+| okx_hl_current | paper_24h_monitor | LAYER | OkxSwap | HlPerp | 1 | 1.025298 | 1.025298 | -0.001863 | 0.000009 | 1.000000 | 21642.49 | 0.002800 |
+| predicted_cross_venue | current_funding_monitor | ME | BybitPerp | HlPerp | 1 | 0.903594 | 0.903594 |  |  |  | 364832.05 | 0.004685 |
 
 ## Interpretation
 
