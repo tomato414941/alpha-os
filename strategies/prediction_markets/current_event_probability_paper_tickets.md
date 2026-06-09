@@ -4,10 +4,10 @@ This converts rough prediction-market probability gaps into paper tickets with e
 
 | question | side | ask | estimated payout | edge after ask | max loss | ask depth 5c | score | status | reason |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| US x Iran permanent peace deal by June 15, 2026? | buy_yes | 0.0600 | 0.2400 | 0.1800 | 0.0600 | 290869.76 | 75.5200 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
-| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.2800 | 0.1800 | 0.1000 | 167837.82 | 73.2000 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
-| Israel closes its airspace by June 15? | buy_yes | 0.1300 | 0.2500 | 0.1200 | 0.1300 | 21244.15 | 64.9600 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
-| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_no | 0.1400 | 0.2600 | 0.1200 | 0.1400 | 107154.99 | 56.4800 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| US x Iran permanent peace deal by June 15, 2026? | buy_yes | 0.0600 | 0.2400 | 0.1800 | 0.0600 | 328022.40 | 75.5200 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Strait of Hormuz traffic returns to normal by end of June? | buy_yes | 0.1000 | 0.2800 | 0.1800 | 0.1000 | 156711.11 | 73.2000 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Israel closes its airspace by June 15? | buy_yes | 0.1300 | 0.2500 | 0.1200 | 0.1300 | 17353.75 | 62.3138 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
+| Will Keiko Fujimori win the 2026 Peruvian presidential election? | buy_no | 0.1400 | 0.2600 | 0.1200 | 0.1400 | 312840.55 | 57.6800 | paper_event_probability_ticket | rough probability edge remains after crossing the current ask |
 
 ## Caveat
 
