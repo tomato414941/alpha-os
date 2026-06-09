@@ -33,6 +33,7 @@ def build_broad_alpha_execution_queue(*, root: Path = ROOT) -> tuple[BroadAlphaE
     rows.extend(_l2_imbalance_queue(root))
     rows.extend(_market_breadth_queue(root))
     rows.extend(_options_volatility_queue(root))
+    rows.extend(_funding_dislocation_queue(root))
     rows.extend(_stablecoin_flow_queue(root))
     rows.extend(_protocol_fee_queue(root))
     rows.extend(_token_unlock_queue(root))
@@ -306,6 +307,67 @@ def _options_volatility_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem,
             next_step=row.get("next_step", ""),
         )
         for row in selected
+    )
+
+
+def _funding_dislocation_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
+    path = root / "cross_exchange_funding/current_dislocation_watchlist.csv"
+    selected = tuple(
+        row
+        for row in _read_rows(path)
+        if row.get("action") in {"paper_8h_monitor", "paper_24h_monitor", "current_funding_monitor"}
+    )[:12]
+    return tuple(
+        BroadAlphaExecutionQueueItem(
+            queue_id=(
+                f"funding-dislocation-{_slug(row.get('asset', ''))}-"
+                f"{_slug(row.get('long_venue', ''))}-{_slug(row.get('short_venue', ''))}"
+            ),
+            lane="cross_exchange_funding_dislocation",
+            subject=row.get("asset", ""),
+            side=f"long {row.get('long_venue', '')} / short {row.get('short_venue', '')}",
+            action=row.get("action", ""),
+            status=row.get("source", ""),
+            score=_funding_score(row),
+            size_or_risk=(
+                f"liquidity={row.get('liquidity_proxy', '')}; "
+                f"friction={row.get('friction_proxy', '')}; "
+                f"net8h={row.get('net_8h_proxy', '')}; "
+                f"net24h={row.get('net_24h_proxy', '')}"
+            ),
+            evidence=(
+                f"annualized_edge={row.get('annualized_edge', '')}; "
+                f"reason={row.get('reason', '')}"
+            ),
+            checkpoints="8h,24h,fee_tier,margin",
+            source_path=_relative(path),
+            required_record=(
+                "venue availability, fee tier, borrow/collateral, margin, fill, funding timestamp, "
+                "and net carry after hedge slippage"
+            ),
+            next_step=_funding_next_step(row),
+        )
+        for row in selected
+    )
+
+
+def _funding_score(row: dict[str, str]) -> str:
+    if row.get("net_24h_proxy"):
+        return _fmt(str(_float(row.get("net_24h_proxy")) * 10000.0))
+    if row.get("net_8h_proxy"):
+        return _fmt(str(_float(row.get("net_8h_proxy")) * 10000.0))
+    return _fmt(row.get("annualized_edge"))
+
+
+def _funding_next_step(row: dict[str, str]) -> str:
+    if row.get("action") in {"paper_8h_monitor", "paper_24h_monitor"}:
+        return (
+            f"paper-check {row.get('asset', '')} funding carry with explicit venue fees, "
+            "funding timestamp, margin, and hedge fill assumptions"
+        )
+    return (
+        f"watch {row.get('asset', '')} funding dislocation until a hedgeable net-carry "
+        "paper monitor survives fees and capacity"
     )
 
 
@@ -843,6 +905,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "l2_imbalance_microstructure": 25.0,
         "market_breadth_dislocation": 22.0,
         "options_volatility": 20.0,
+        "cross_exchange_funding_dislocation": 18.0,
         "defi_lending_yield": 15.0,
         "stablecoin_chain_liquidity_proxy": 10.0,
         "protocol_fee_growth_lag": 8.0,
@@ -854,6 +917,8 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "repeat_paper_probe": 70.0,
         "paper_execution_probe_opened": 65.0,
         "paper_execution_probe": 45.0,
+        "paper_8h_monitor": 45.0,
+        "paper_24h_monitor": 45.0,
         "paper_check_pure_probability": 35.0,
         "cost_adjusted_event_window_probe": 30.0,
         "thin_event_window_support": 5.0,
@@ -861,6 +926,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "refresh_execution_gate": 10.0,
         "refresh_before_repeat": -40.0,
         "wait_for_forward_label": 0.0,
+        "current_funding_monitor": -20.0,
         "event_window_label_not_supported": -80.0,
         "cost_adjusted_event_window_failed": -120.0,
         "collateral_review_required": -50.0,
