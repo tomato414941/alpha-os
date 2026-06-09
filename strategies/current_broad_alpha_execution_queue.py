@@ -173,7 +173,9 @@ def _l2_imbalance_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
 def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
     path = root / "market_breadth/current_volume_price_dislocation_execution_gate.csv"
     ticket_path = root / "market_breadth/current_volume_price_dislocation_tickets.csv"
+    outcome_path = root / "market_breadth/current_volume_price_dislocation_outcomes.csv"
     tickets = {row.get("symbol", ""): row for row in _read_rows(ticket_path)}
+    outcomes = {row.get("symbol", ""): row for row in _read_rows(outcome_path)}
     selected = tuple(
         row
         for row in _read_rows(path)
@@ -186,12 +188,20 @@ def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...
             lane="market_breadth_dislocation",
             subject=f"{row.get('symbol', '')}/{row.get('name', '')}",
             side=row.get("side", ""),
-            action="paper_execution_probe_opened" if tickets.get(row.get("symbol", "")) else row.get("action", ""),
+            action=_market_breadth_action(
+                row=row,
+                ticket=tickets.get(row.get("symbol", ""), {}),
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+            ),
             status=_market_breadth_status(
                 row=row,
                 ticket=tickets.get(row.get("symbol", ""), {}),
+                outcome=outcomes.get(row.get("symbol", ""), {}),
             ),
-            score=_fmt(row.get("conservative_net_4h_bps")),
+            score=_market_breadth_score(
+                row=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+            ),
             size_or_risk=_market_breadth_size_or_risk(
                 row=row,
                 ticket=tickets.get(row.get("symbol", ""), {}),
@@ -203,21 +213,57 @@ def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...
                 f"reason={row.get('reason', '')}"
             ),
             checkpoints="15m,1h,4h,repeat",
-            source_path=_relative(ticket_path if tickets.get(row.get("symbol", "")) else path),
+            source_path=_relative(
+                outcome_path
+                if outcomes.get(row.get("symbol", ""))
+                else ticket_path
+                if tickets.get(row.get("symbol", ""))
+                else path
+            ),
             required_record=(
                 "repeat paper ticket, fill/funding/depth refresh, stop/adverse excursion, "
                 "and cross-asset false-positive check"
             ),
-            next_step=tickets.get(row.get("symbol", ""), {}).get("next_step") or row.get("next_step", ""),
+            next_step=(
+                outcomes.get(row.get("symbol", ""), {}).get("next_step")
+                or tickets.get(row.get("symbol", ""), {}).get("next_step")
+                or row.get("next_step", "")
+            ),
         )
         for row in selected
     )
 
 
-def _market_breadth_status(*, row: dict[str, str], ticket: dict[str, str]) -> str:
+def _market_breadth_action(
+    *,
+    row: dict[str, str],
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+) -> str:
+    if outcome.get("checkpoint_status") == "ready":
+        return outcome.get("outcome", "")
+    if ticket:
+        return "paper_execution_probe_opened"
+    return row.get("action", "")
+
+
+def _market_breadth_status(
+    *,
+    row: dict[str, str],
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+) -> str:
+    if outcome:
+        return f"{row.get('label_status', '')}:paper_ticket_opened:{outcome.get('checkpoint_status', '')}:{outcome.get('outcome', '')}"
     if ticket:
         return f"{row.get('label_status', '')}:paper_ticket_opened"
     return row.get("label_status", "")
+
+
+def _market_breadth_score(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+    if outcome.get("checkpoint_status") == "ready":
+        return _fmt(outcome.get("directional_return_bps"))
+    return _fmt(row.get("conservative_net_4h_bps"))
 
 
 def _market_breadth_size_or_risk(*, row: dict[str, str], ticket: dict[str, str]) -> str:
