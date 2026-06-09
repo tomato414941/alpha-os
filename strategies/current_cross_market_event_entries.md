@@ -40,3 +40,25 @@ Observed at `2026-06-09T16:25:00+00:00`.
 - Reject equity-beta entries if they are only generic QQQ or BTC beta.
 - Reject oil/Hormuz entries if oil remains weak or shipping-normalization
   evidence improves.
+
+## Follow-Up
+
+Checked at `2026-06-09T22:35:39+00:00`.
+
+| instrument | anchor | follow-up | move bps | read |
+| --- | ---: | ---: | ---: | --- |
+| QQQ | 693.1900 | 707.8300 | 211.05 | risk beta rebounded |
+| SMH | 563.6000 | 591.0100 | 486.34 | semis outperformed QQQ from the anchor |
+| NVDA | 201.4400 | 208.1900 | 335.09 | AI beta rebounded |
+| AVGO | 376.3800 | 392.1600 | 419.26 | AI beta rebounded |
+| TLT | 85.1150 | 85.1200 | 0.59 | rates proxy flat from the anchor |
+| GLD | 391.1800 | 390.7800 | -10.23 | gold did not confirm stress |
+| USO | 128.8800 | 131.3000 | 187.77 | oil rebounded |
+| COIN | 152.2100 | 155.5000 | 216.15 | roughly QQQ-like from the anchor |
+| HOOD | 80.4000 | 83.7700 | 419.15 | outperformed QQQ from the anchor |
+| MSTR | 115.8800 | 117.0200 | 98.38 | still weaker than QQQ from the anchor |
+
+Pre-event read: the semiconductor breakdown continuation is not supported from
+the anchor. Hormuz/oil remains worth watching because USO rebounded, but it
+still needs independent shipping or prediction-market evidence. Crypto-equity
+residual weakness is only visible in MSTR, not broadly in COIN/HOOD.
