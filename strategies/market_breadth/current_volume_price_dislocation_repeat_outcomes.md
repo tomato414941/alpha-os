@@ -4,4 +4,4 @@ These mark open market-breadth dislocation paper probes against current prices. 
 
 | ticket | symbol | status | elapsed | entry | current | directional bps | outcome | next step |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
-| market-breadth-repeat-hype-long-reversal | HYPE | pending | 0.00 | 63.914000000000 | 63.924000000000 |  | pending | wait for HYPE first checkpoint and refresh marks |
+| market-breadth-repeat-hype-long-reversal | HYPE | ready | 15.07 | 63.914000000000 | 62.941000000000 | -152.23581688 | paper_mark_loss | do not promote HYPE without another fresh positive dislocation label |

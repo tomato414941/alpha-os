@@ -4,36 +4,36 @@ This scans broad CoinGecko market data for volume-backed reversal, continuation,
 
 | symbol | name | status | side | score | rank | vol/mcap | 24h | 7d | 30d | next step |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| HOME | HOME | capitulation_reversal_watch | watch_reversal_trigger | 55.3500 | 253 | 1.4789 | -5.46 | -43.05 | 94.77 | wait for HOME reversal trigger, then label capitulation rebound |
-| CHZ | Chiliz | volume_reversal_candidate | long_reversal | 54.8344 | 138 | 0.2802 | 4.92 | -27.76 | -41.95 | paper-label CHZ volume-backed reversal over 1h, 4h, 12h, and 24h |
-| WLD | Worldcoin | chase_risk | wait_or_fade_watch | 51.6025 | 47 | 0.5129 | 5.35 | 15.82 | 83.81 | avoid chasing WLD; label pullback or fade setup first |
-| BCH | Bitcoin Cash | capitulation_reversal_watch | watch_reversal_trigger | 50.5595 | 26 | 0.1459 | -9.26 | -28.11 | -53.61 | wait for BCH reversal trigger, then label capitulation rebound |
-| NEAR | NEAR Protocol | volume_reversal_candidate | long_reversal | 49.5604 | 37 | 0.2150 | 4.54 | -18.97 | 36.03 | paper-label NEAR volume-backed reversal over 1h, 4h, 12h, and 24h |
-| VELVET | Velvet | chase_risk | wait_or_fade_watch | 47.8296 | 221 | 0.2313 | 24.20 | 238.94 | 248.86 | avoid chasing VELVET; label pullback or fade setup first |
-| SEI | Sei | capitulation_reversal_watch | watch_reversal_trigger | 47.7811 | 128 | 0.1503 | -0.48 | -30.16 | -30.27 | wait for SEI reversal trigger, then label capitulation rebound |
-| IP | Story | capitulation_reversal_watch | watch_reversal_trigger | 47.3452 | 259 | 0.2429 | -2.90 | -30.72 | -47.96 | wait for IP reversal trigger, then label capitulation rebound |
-| ADA | Cardano | volume_reversal_candidate | long_reversal | 46.9398 | 17 | 0.0711 | 3.52 | -26.05 | -37.48 | paper-label ADA volume-backed reversal over 1h, 4h, 12h, and 24h |
-| BTW | Bitway | chase_risk | wait_or_fade_watch | 44.7460 | 222 | 0.1808 | -2.89 | 398.06 | 340.00 | avoid chasing BTW; label pullback or fade setup first |
-| INJ | Injective | volume_reversal_candidate | long_reversal | 44.6504 | 94 | 0.1852 | 3.66 | -19.58 | 33.55 | paper-label INJ volume-backed reversal over 1h, 4h, 12h, and 24h |
-| BILL | Billions Network | capitulation_reversal_watch | watch_reversal_trigger | 44.1728 | 190 | 0.2514 | -6.64 | -23.59 | -42.79 | wait for BILL reversal trigger, then label capitulation rebound |
-| OP | Optimism | capitulation_reversal_watch | watch_reversal_trigger | 43.4573 | 171 | 0.2395 | -1.19 | -22.64 | -41.60 | wait for OP reversal trigger, then label capitulation rebound |
-| ZEC | Zcash | volume_reversal_candidate | long_reversal | 42.6109 | 15 | 0.1246 | 4.84 | -16.04 | -23.45 | paper-label ZEC volume-backed reversal over 1h, 4h, 12h, and 24h |
-| FET | Artificial Superintelligence Alliance | capitulation_reversal_watch | watch_reversal_trigger | 42.6068 | 106 | 0.1710 | -1.34 | -22.65 | -10.45 | wait for FET reversal trigger, then label capitulation rebound |
-| ZRO | LayerZero | capitulation_reversal_watch | watch_reversal_trigger | 42.0467 | 169 | 0.1576 | -6.41 | -26.04 | -42.22 | wait for ZRO reversal trigger, then label capitulation rebound |
-| AAVE | Aave | capitulation_reversal_watch | watch_reversal_trigger | 41.1238 | 71 | 0.1451 | -0.35 | -20.97 | -34.04 | wait for AAVE reversal trigger, then label capitulation rebound |
-| NIGHT | Midnight | volume_reversal_candidate | long_reversal | 39.0464 | 97 | 0.0589 | 9.11 | -16.25 | 0.42 | paper-label NIGHT volume-backed reversal over 1h, 4h, 12h, and 24h |
-| HYPE | Hyperliquid | volume_reversal_candidate | long_reversal | 38.6459 | 10 | 0.0663 | 6.92 | -13.25 | 48.20 | paper-label HYPE volume-backed reversal over 1h, 4h, 12h, and 24h |
-| RENDER | Render | capitulation_reversal_watch | watch_reversal_trigger | 38.3693 | 78 | 0.0803 | -1.94 | -22.45 | -17.97 | wait for RENDER reversal trigger, then label capitulation rebound |
-| SAND | The Sandbox | capitulation_reversal_watch | watch_reversal_trigger | 36.6912 | 214 | 0.1305 | -1.82 | -24.56 | -34.71 | wait for SAND reversal trigger, then label capitulation rebound |
-| BAT | Basic Attention | volume_reversal_candidate | long_reversal | 36.1690 | 213 | 0.1087 | 10.47 | -14.83 | -12.19 | paper-label BAT volume-backed reversal over 1h, 4h, 12h, and 24h |
-| PUMP | Pump.fun | volume_reversal_candidate | long_reversal | 35.8282 | 93 | 0.1190 | 6.63 | -11.72 | -24.21 | paper-label PUMP volume-backed reversal over 1h, 4h, 12h, and 24h |
-| NXPC | Nexpace | volume_reversal_candidate | long_reversal | 34.9751 | 266 | 0.1381 | 9.35 | -15.64 | 6.18 | paper-label NXPC volume-backed reversal over 1h, 4h, 12h, and 24h |
-| ZK | ZKsync | capitulation_reversal_watch | watch_reversal_trigger | 34.4186 | 269 | 0.0992 | -0.55 | -26.92 | -45.16 | wait for ZK reversal trigger, then label capitulation rebound |
-| LUNC | Terra Luna Classic | volume_reversal_candidate | long_reversal | 34.0769 | 117 | 0.1061 | 7.23 | -11.33 | -24.37 | paper-label LUNC volume-backed reversal over 1h, 4h, 12h, and 24h |
-| GWEI | ETHGas | chase_risk | wait_or_fade_watch | 33.7677 | 124 | 0.1271 | 33.21 | 69.37 | 33.54 | avoid chasing GWEI; label pullback or fade setup first |
-| APE | ApeCoin | volume_reversal_candidate | long_reversal | 30.5449 | 232 | 0.1555 | 3.37 | -14.45 | -22.63 | paper-label APE volume-backed reversal over 1h, 4h, 12h, and 24h |
-| MANA | Decentraland | capitulation_reversal_watch | watch_reversal_trigger | 29.7885 | 224 | 0.0864 | -0.83 | -20.80 | -31.25 | wait for MANA reversal trigger, then label capitulation rebound |
-| TWT | Trust Wallet | volume_reversal_candidate | long_reversal | 25.5387 | 197 | 0.0474 | 3.57 | -13.98 | -17.71 | paper-label TWT volume-backed reversal over 1h, 4h, 12h, and 24h |
+| HOME | HOME | capitulation_reversal_watch | watch_reversal_trigger | 55.3500 | 253 | 1.4821 | -5.81 | -43.79 | 92.25 | wait for HOME reversal trigger, then label capitulation rebound |
+| CHZ | Chiliz | volume_reversal_candidate | long_reversal | 53.3693 | 138 | 0.2820 | 3.35 | -28.85 | -42.82 | paper-label CHZ volume-backed reversal over 1h, 4h, 12h, and 24h |
+| BCH | Bitcoin Cash | capitulation_reversal_watch | watch_reversal_trigger | 51.5674 | 26 | 0.1510 | -10.09 | -28.81 | -54.06 | wait for BCH reversal trigger, then label capitulation rebound |
+| WLD | Worldcoin | chase_risk | wait_or_fade_watch | 51.4480 | 48 | 0.3741 | 3.08 | 15.56 | 83.39 | avoid chasing WLD; label pullback or fade setup first |
+| IP | Story | capitulation_reversal_watch | watch_reversal_trigger | 50.4036 | 258 | 0.2937 | -4.82 | -30.68 | -47.92 | wait for IP reversal trigger, then label capitulation rebound |
+| XPL | Plasma | capitulation_reversal_watch | watch_reversal_trigger | 49.3486 | 182 | 0.2953 | -1.76 | -25.73 | -35.31 | wait for XPL reversal trigger, then label capitulation rebound |
+| SEI | Sei | capitulation_reversal_watch | watch_reversal_trigger | 48.7590 | 129 | 0.1521 | -2.37 | -31.08 | -31.19 | wait for SEI reversal trigger, then label capitulation rebound |
+| VELVET | Velvet | chase_risk | wait_or_fade_watch | 47.5771 | 217 | 0.2238 | 30.02 | 256.40 | 266.82 | avoid chasing VELVET; label pullback or fade setup first |
+| APT | Aptos | capitulation_reversal_watch | watch_reversal_trigger | 46.3042 | 96 | 0.1144 | -1.12 | -29.24 | -40.32 | wait for APT reversal trigger, then label capitulation rebound |
+| VIRTUAL | Virtuals Protocol | capitulation_reversal_watch | watch_reversal_trigger | 45.7286 | 121 | 0.2398 | -1.72 | -22.39 | -38.54 | wait for VIRTUAL reversal trigger, then label capitulation rebound |
+| BILL | Billions Network | capitulation_reversal_watch | watch_reversal_trigger | 44.7300 | 189 | 0.2499 | -8.03 | -24.19 | -43.24 | wait for BILL reversal trigger, then label capitulation rebound |
+| BTW | Bitway | chase_risk | wait_or_fade_watch | 44.6161 | 222 | 0.1786 | -1.36 | 393.82 | 336.26 | avoid chasing BTW; label pullback or fade setup first |
+| OP | Optimism | capitulation_reversal_watch | watch_reversal_trigger | 44.3312 | 171 | 0.2415 | -2.40 | -23.39 | -42.17 | wait for OP reversal trigger, then label capitulation rebound |
+| ZRO | LayerZero | capitulation_reversal_watch | watch_reversal_trigger | 43.2603 | 168 | 0.1606 | -8.56 | -27.02 | -42.99 | wait for ZRO reversal trigger, then label capitulation rebound |
+| FET | Artificial Superintelligence Alliance | capitulation_reversal_watch | watch_reversal_trigger | 42.9255 | 107 | 0.1705 | -2.38 | -23.05 | -10.91 | wait for FET reversal trigger, then label capitulation rebound |
+| ZEC | Zcash | volume_reversal_candidate | long_reversal | 42.2695 | 15 | 0.1264 | 3.26 | -17.18 | -24.48 | paper-label ZEC volume-backed reversal over 1h, 4h, 12h, and 24h |
+| AAVE | Aave | capitulation_reversal_watch | watch_reversal_trigger | 41.9415 | 71 | 0.1464 | -1.74 | -21.71 | -34.65 | wait for AAVE reversal trigger, then label capitulation rebound |
+| BAT | Basic Attention | volume_reversal_candidate | long_reversal | 38.5966 | 213 | 0.1506 | 10.75 | -14.46 | -11.81 | paper-label BAT volume-backed reversal over 1h, 4h, 12h, and 24h |
+| NIGHT | Midnight | volume_reversal_candidate | long_reversal | 38.1486 | 98 | 0.0544 | 7.04 | -17.74 | -1.37 | paper-label NIGHT volume-backed reversal over 1h, 4h, 12h, and 24h |
+| SAND | The Sandbox | capitulation_reversal_watch | watch_reversal_trigger | 37.6131 | 216 | 0.1335 | -3.27 | -25.40 | -35.44 | wait for SAND reversal trigger, then label capitulation rebound |
+| FARTCOIN | Fartcoin | capitulation_reversal_watch | watch_reversal_trigger | 37.2483 | 241 | 0.1583 | -0.21 | -24.80 | -54.99 | wait for FARTCOIN reversal trigger, then label capitulation rebound |
+| ARB | Arbitrum | capitulation_reversal_watch | watch_reversal_trigger | 35.5921 | 102 | 0.0874 | -2.42 | -20.45 | -42.96 | wait for ARB reversal trigger, then label capitulation rebound |
+| TIA | Celestia | capitulation_reversal_watch | watch_reversal_trigger | 35.4620 | 134 | 0.0989 | -1.45 | -21.23 | -29.33 | wait for TIA reversal trigger, then label capitulation rebound |
+| PUMP | Pump.fun | volume_reversal_candidate | long_reversal | 34.9089 | 93 | 0.1213 | 4.24 | -13.04 | -25.35 | paper-label PUMP volume-backed reversal over 1h, 4h, 12h, and 24h |
+| LDO | Lido DAO | capitulation_reversal_watch | watch_reversal_trigger | 33.6125 | 159 | 0.1002 | -3.26 | -20.55 | -34.10 | wait for LDO reversal trigger, then label capitulation rebound |
+| LUNC | Terra Luna Classic | volume_reversal_candidate | long_reversal | 33.2095 | 117 | 0.1087 | 5.21 | -12.32 | -25.22 | paper-label LUNC volume-backed reversal over 1h, 4h, 12h, and 24h |
+| GWEI | ETHGas | chase_risk | wait_or_fade_watch | 32.8865 | 124 | 0.1076 | 31.63 | 70.52 | 34.45 | avoid chasing GWEI; label pullback or fade setup first |
+| AXS | Axie Infinity | capitulation_reversal_watch | watch_reversal_trigger | 32.2860 | 192 | 0.1123 | -0.93 | -20.15 | -35.15 | wait for AXS reversal trigger, then label capitulation rebound |
+| NXPC | Nexpace | volume_reversal_candidate | long_reversal | 30.8541 | 266 | 0.1028 | 7.61 | -15.38 | 6.51 | paper-label NXPC volume-backed reversal over 1h, 4h, 12h, and 24h |
+| MANA | Decentraland | capitulation_reversal_watch | watch_reversal_trigger | 30.7100 | 227 | 0.0877 | -2.53 | -21.80 | -32.11 | wait for MANA reversal trigger, then label capitulation rebound |
 
 ## Interpretation
 
