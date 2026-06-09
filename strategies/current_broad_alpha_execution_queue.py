@@ -32,6 +32,7 @@ def build_broad_alpha_execution_queue(*, root: Path = ROOT) -> tuple[BroadAlphaE
     rows.extend(_liquidation_intensity_queue(root))
     rows.extend(_l2_imbalance_queue(root))
     rows.extend(_market_breadth_queue(root))
+    rows.extend(_market_breadth_repeat_queue(root))
     rows.extend(_options_volatility_queue(root))
     rows.extend(_funding_dislocation_queue(root))
     rows.extend(_wallet_flow_queue(root))
@@ -341,6 +342,137 @@ def _market_breadth_evidence(
         f"funding={row.get('annualized_funding', '')}; "
         f"reason={row.get('reason', '')}"
     )
+
+
+def _market_breadth_repeat_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
+    ticket_path = root / "market_breadth/current_volume_price_dislocation_repeat_tickets.csv"
+    outcome_path = root / "market_breadth/current_volume_price_dislocation_repeat_outcomes.csv"
+    risk_path = root / "market_breadth/current_volume_price_dislocation_repeat_fill_risk_check.csv"
+    outcomes = {row.get("symbol", ""): row for row in _read_rows(outcome_path)}
+    risks = {row.get("symbol", ""): row for row in _read_rows(risk_path)}
+    return tuple(
+        BroadAlphaExecutionQueueItem(
+            queue_id=f"market-breadth-repeat-{_slug(row.get('symbol', ''))}",
+            lane="market_breadth_second_repeat",
+            subject=f"{row.get('symbol', '')}/{row.get('name', '')}",
+            side=row.get("setup", ""),
+            action=_market_breadth_repeat_action(
+                ticket=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
+            status=_market_breadth_repeat_status(
+                ticket=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
+            score=_market_breadth_repeat_score(
+                ticket=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
+            size_or_risk=_market_breadth_repeat_size_or_risk(
+                ticket=row,
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
+            evidence=_market_breadth_repeat_evidence(
+                ticket=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
+            ),
+            checkpoints="15m,1h,4h,repeat",
+            source_path=_relative(
+                risk_path
+                if risks.get(row.get("symbol", ""))
+                else outcome_path
+                if outcomes.get(row.get("symbol", ""))
+                else ticket_path
+            ),
+            required_record=(
+                "second-repeat mark outcome, fill/funding/depth refresh, stop/adverse excursion, "
+                "and trigger persistence"
+            ),
+            next_step=(
+                risks.get(row.get("symbol", ""), {}).get("next_step")
+                or outcomes.get(row.get("symbol", ""), {}).get("next_step")
+                or row.get("next_step", "")
+            ),
+        )
+        for row in _read_rows(ticket_path)
+    )
+
+
+def _market_breadth_repeat_action(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return risk.get("risk_action", "")
+    if outcome.get("checkpoint_status") == "ready":
+        return outcome.get("outcome", "")
+    return "repeat_probe_opened"
+
+
+def _market_breadth_repeat_status(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return f"{ticket.get('status', '')}:{outcome.get('outcome', '')}:{risk.get('risk_action', '')}"
+    if outcome:
+        return f"{ticket.get('status', '')}:{outcome.get('checkpoint_status', '')}:{outcome.get('outcome', '')}"
+    return ticket.get("status", "")
+
+
+def _market_breadth_repeat_score(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return _fmt(risk.get("estimated_net_after_cost_bps"))
+    if outcome.get("checkpoint_status") == "ready":
+        return _fmt(outcome.get("directional_return_bps"))
+    return _fmt(ticket.get("conservative_net_4h_bps"))
+
+
+def _market_breadth_repeat_size_or_risk(*, ticket: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return (
+            f"notional={risk.get('notional_usd', '')}; "
+            f"depth10={risk.get('near_depth_10bps_notional', '')}; "
+            f"usage={risk.get('visible_depth_usage', '')}; "
+            f"cost={risk.get('round_trip_cost_bps', '')}; "
+            f"stop50={risk.get('stop_50bps_survived', '')}"
+        )
+    return f"notional={ticket.get('candidate_size_usd', '')}; entry={ticket.get('entry_mark', '')}"
+
+
+def _market_breadth_repeat_evidence(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return (
+            f"dir_bps={risk.get('directional_return_bps', '')}; "
+            f"net_bps={risk.get('estimated_net_after_cost_bps', '')}; "
+            f"reason={risk.get('reason', '')}"
+        )
+    if outcome:
+        return (
+            f"entry={outcome.get('entry_mark', '')}; "
+            f"current={outcome.get('current_mark', '')}; "
+            f"dir_bps={outcome.get('directional_return_bps', '')}; "
+            f"outcome={outcome.get('outcome', '')}"
+        )
+    return f"prior_net_bps={ticket.get('conservative_net_4h_bps', '')}"
 
 
 def _options_volatility_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
@@ -1002,6 +1134,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "liquidation_intensity": 30.0,
         "l2_imbalance_microstructure": 25.0,
         "market_breadth_dislocation": 22.0,
+        "market_breadth_second_repeat": 21.0,
         "options_volatility": 20.0,
         "cross_exchange_funding_dislocation": 18.0,
         "wallet_entity_flow": 16.0,
