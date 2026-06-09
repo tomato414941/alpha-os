@@ -13,20 +13,20 @@ pass. They should be refreshed before any real order.
 
 | asset | mark | 24h bps | annualized funding | spread bps | depth10 notional |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| ZEC | 446.550000000000 | 545.52 | -1.89514891 | 0.68918779 | 105924.68530000 |
-| HYPE | 62.274000000000 | 457.26 | 0.10950000 | 3.57589844 | 224227.76050500 |
-| ADA | 0.166700000000 | 290.76 | -0.53864890 | 4.91611872 | 39229.64656000 |
-| ZRO | 0.838650000000 | -640.48 | 0.10950000 | 2.53477775 | 6147.94728000 |
-| BTC | 62751.000000000000 | -8.44 | 0.10777165 | 0.16384713 | 2954690.13187500 |
-| ETH | 1668.900000000000 | -28.68 | 0.06065074 | 0.61182661 | 8775275.42415000 |
-| SOL | 65.763000000000 | 41.23 | -0.15207185 | 1.24525247 | 224478.81504000 |
+| ZEC | 429.650000000000 | -278.09 | -1.10489179 | 0.23276113 | 80477.35500000 |
+| HYPE | 59.011000000000 | -833.81 | 0.10950000 | 0.16945850 | 148842.34599000 |
+| ADA | 0.162640000000 | -450.92 | -0.08034847 | 1.84484826 | 62427.89850000 |
+| ZRO | 0.821610000000 | -630.20 | 0.10950000 | 3.16532749 | 5457.05304000 |
+| BTC | 61028.000000000000 | -431.63 | 0.06916721 | 0.16387935 | 925580.91138000 |
+| ETH | 1630.100000000000 | -378.92 | 0.00914982 | 0.61347811 | 7682006.40114000 |
+| SOL | 64.044000000000 | -492.00 | -0.23747309 | 0.15616094 | 562686.80440500 |
 
 ## Highest Priority
 
 | id | market | candidate | why now | first check |
 | --- | --- | --- | --- | --- |
 | zec-carry-strength | crypto perp | Long ZEC perp | ZEC has strong 24h relative strength, large Hyperliquid OI/volume, negative funding, and acceptable current spread/depth. | Fix entry and score 15m/1h/4h net of spread, taker fee, funding, and stop/adverse excursion. |
-| hype-relative-strength | crypto perp | Long HYPE vs BTC/ETH basket | HYPE remains a major Hyperliquid OI center and is outperforming BTC/ETH, but this is not a carry trade. | Compare HYPE long to BTC/ETH hedge over 15m/1h/4h after funding and spread. |
+| hype-relative-weakness | crypto perp | Short HYPE vs BTC/ETH basket | The fresh snapshot invalidated the earlier HYPE long idea: HYPE is now materially weaker than BTC/ETH, while short funding is not hostile. | Compare HYPE short to BTC/ETH hedge over 15m/1h/4h after funding and spread. |
 | cpi-hot-risk-off | prediction/macro | Hot CPI: short BTC/ETH beta, short QQQ/SMH, long oil/gold or short TLT | CPI/FOMC is the immediate macro catalyst and crypto is already sensitive to rate-cut repricing. | Before CPI, record prediction-market odds and liquid proxies; after release, compare realized move vs implied odds. |
 | hormuz-oil-inflation | commodities/macro | Long oil or oil-call proxy if Hormuz disruption persists | Hormuz/shipping risk feeds oil and inflation expectations, which can pressure risk assets. | Track Hormuz normal-traffic odds, Brent/USO move, BTC/QQQ response, and whether oil move leads crypto risk-off. |
 | prediction-market-hormuz | prediction market | Trade Hormuz normal-traffic mispricing only if public shipping evidence diverges from odds | The market has concrete resolution criteria and links directly to oil/inflation paths. | Compare odds to PortWatch/shipping evidence; avoid if no independent evidence edge. |
