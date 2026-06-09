@@ -4,9 +4,6 @@ These are current paper-observation tickets opened from the cross-lane probe pla
 
 | ticket | rank | opportunity | side | asset | venue | size USD | entry mark | checkpoints | decision | required record |
 | --- | ---: | --- | --- | --- | --- | ---: | ---: | --- | --- | --- |
-| ofi-paper-01-eth-short | 1 | ofi_execution_survival:imbalance_1pct/bottom_20/paper_short:short_horizon_maker_probe_only | short | ETH |  | 100 | 1711.700000000000 | 5m,15m | paper_short | 5m/15m mark move, spread/depth, maker fill assumption, queue/cancel note, adverse selection |
-| ofi-paper-02-sui-short | 2 | ofi_execution_survival:imbalance_1pct/bottom_20/paper_short:short_horizon_maker_probe_only | short | SUI |  | 100 | 0.767800000000 | 5m,15m | paper_short | 5m/15m mark move, spread/depth, maker fill assumption, queue/cancel note, adverse selection |
-| ofi-paper-03-bnb-short | 3 | ofi_execution_survival:imbalance_1pct/bottom_20/paper_short:short_horizon_maker_probe_only | short | BNB |  | 100 | 609.590000000000 | 5m,15m | paper_short | 5m/15m mark move, spread/depth, maker fill assumption, queue/cancel note, adverse selection |
 
 ## Rule
 
