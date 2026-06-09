@@ -70,6 +70,7 @@ DEFAULT_COMMANDS = (
         "--md-output-path",
         "strategies/protocol_fundamentals/current_protocol_fee_repeat_outcomes.md",
     ),
+    ("strategies.protocol_fundamentals.current_protocol_fee_repeat_fill_risk_check",),
     ("strategies.protocol_fundamentals.current_protocol_fee_paper_tickets",),
     ("strategies.protocol_activity.current_coingecko_protocol_activity",),
     ("strategies.protocol_activity.current_protocol_activity_market_join",),
