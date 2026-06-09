@@ -34,6 +34,7 @@ def build_broad_alpha_execution_queue(*, root: Path = ROOT) -> tuple[BroadAlphaE
     rows.extend(_market_breadth_queue(root))
     rows.extend(_options_volatility_queue(root))
     rows.extend(_funding_dislocation_queue(root))
+    rows.extend(_wallet_flow_queue(root))
     rows.extend(_stablecoin_flow_queue(root))
     rows.extend(_protocol_fee_queue(root))
     rows.extend(_token_unlock_queue(root))
@@ -346,6 +347,44 @@ def _funding_dislocation_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem
                 "and net carry after hedge slippage"
             ),
             next_step=_funding_next_step(row),
+        )
+        for row in selected
+    )
+
+
+def _wallet_flow_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
+    path = root / "wallet_entity_flow/current_seed_wallet_flow_actionability.csv"
+    selected = tuple(
+        row
+        for row in _read_rows(path)
+        if row.get("status") in {"wallet_position_follow_candidate", "wallet_recent_flow_candidate"}
+    )[:8]
+    return tuple(
+        BroadAlphaExecutionQueueItem(
+            queue_id=f"wallet-flow-{_slug(row.get('wallet_label', ''))}-{_slug(row.get('execution_asset', ''))}",
+            lane="wallet_entity_flow",
+            subject=f"{row.get('wallet_label', '')}/{row.get('execution_asset', '')}",
+            side=row.get("side", ""),
+            action=row.get("action", ""),
+            status=row.get("status", ""),
+            score=_fmt(str(_float(row.get("score")) / 2.0)),
+            size_or_risk=(
+                f"fills={row.get('fills', '')}; "
+                f"net_buy={row.get('net_buy_notional', '')}; "
+                f"position_usd={row.get('current_position_notional', '')}; "
+                f"mark={row.get('mark_price', '')}"
+            ),
+            evidence=(
+                f"net_pnl_after_fees={row.get('net_closed_pnl_after_fees', '')}; "
+                f"reason={row.get('reason', '')}"
+            ),
+            checkpoints="15m,1h,4h,copycat_risk",
+            source_path=_relative(path),
+            required_record=(
+                "fresh wallet state, public-source caveat, fill/funding/depth, copycat-risk control, "
+                "and market-wide false-positive check"
+            ),
+            next_step=row.get("next_step", ""),
         )
         for row in selected
     )
@@ -906,6 +945,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "market_breadth_dislocation": 22.0,
         "options_volatility": 20.0,
         "cross_exchange_funding_dislocation": 18.0,
+        "wallet_entity_flow": 16.0,
         "defi_lending_yield": 15.0,
         "stablecoin_chain_liquidity_proxy": 10.0,
         "protocol_fee_growth_lag": 8.0,
@@ -920,6 +960,9 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "paper_8h_monitor": 45.0,
         "paper_24h_monitor": 45.0,
         "paper_check_pure_probability": 35.0,
+        "watch_wallet_long_pressure": 18.0,
+        "watch_recent_wallet_buy_flow": 12.0,
+        "watch_recent_wallet_sell_flow": 12.0,
         "cost_adjusted_event_window_probe": 30.0,
         "thin_event_window_support": 5.0,
         "event_window_label_opened": 12.0,
