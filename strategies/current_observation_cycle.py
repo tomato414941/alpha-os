@@ -98,6 +98,7 @@ DEFAULT_COMMANDS = (
     ("strategies.market_breadth.current_volume_price_dislocation_execution_gate",),
     ("strategies.market_breadth.current_volume_price_dislocation_tickets", "--preserve-opened-at"),
     ("strategies.market_breadth.current_volume_price_dislocation_outcomes",),
+    ("strategies.market_breadth.current_volume_price_dislocation_fill_risk_check",),
     ("strategies.perp_market_map.current_hyperliquid_dislocation_candidates",),
     ("strategies.perp_market_map.current_hyperliquid_dislocation_forward_labels",),
     ("strategies.perp_market_map.current_hyperliquid_dislocation_execution_check",),

@@ -176,8 +176,10 @@ def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...
     path = root / "market_breadth/current_volume_price_dislocation_execution_gate.csv"
     ticket_path = root / "market_breadth/current_volume_price_dislocation_tickets.csv"
     outcome_path = root / "market_breadth/current_volume_price_dislocation_outcomes.csv"
+    risk_path = root / "market_breadth/current_volume_price_dislocation_fill_risk_check.csv"
     tickets = {row.get("symbol", ""): row for row in _read_rows(ticket_path)}
     outcomes = {row.get("symbol", ""): row for row in _read_rows(outcome_path)}
+    risks = {row.get("symbol", ""): row for row in _read_rows(risk_path)}
     selected = tuple(
         row
         for row in _read_rows(path)
@@ -194,29 +196,34 @@ def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...
                 row=row,
                 ticket=tickets.get(row.get("symbol", ""), {}),
                 outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
             ),
             status=_market_breadth_status(
                 row=row,
                 ticket=tickets.get(row.get("symbol", ""), {}),
                 outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
             ),
             score=_market_breadth_score(
                 row=row,
                 outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
             ),
             size_or_risk=_market_breadth_size_or_risk(
                 row=row,
                 ticket=tickets.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
             ),
-            evidence=(
-                f"dir4h={row.get('directional_return_4h', '')}; "
-                f"dir1h={row.get('directional_return_1h', '')}; "
-                f"funding={row.get('annualized_funding', '')}; "
-                f"reason={row.get('reason', '')}"
+            evidence=_market_breadth_evidence(
+                row=row,
+                outcome=outcomes.get(row.get("symbol", ""), {}),
+                risk=risks.get(row.get("symbol", ""), {}),
             ),
             checkpoints="15m,1h,4h,repeat",
             source_path=_relative(
-                outcome_path
+                risk_path
+                if risks.get(row.get("symbol", ""))
+                else outcome_path
                 if outcomes.get(row.get("symbol", ""))
                 else ticket_path
                 if tickets.get(row.get("symbol", ""))
@@ -227,6 +234,8 @@ def _market_breadth_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...
                 "and cross-asset false-positive check"
             ),
             next_step=(
+                risks.get(row.get("symbol", ""), {}).get("next_step")
+                or
                 outcomes.get(row.get("symbol", ""), {}).get("next_step")
                 or tickets.get(row.get("symbol", ""), {}).get("next_step")
                 or row.get("next_step", "")
@@ -241,7 +250,10 @@ def _market_breadth_action(
     row: dict[str, str],
     ticket: dict[str, str],
     outcome: dict[str, str],
+    risk: dict[str, str],
 ) -> str:
+    if risk:
+        return risk.get("risk_action", "")
     if outcome.get("checkpoint_status") == "ready":
         return outcome.get("outcome", "")
     if ticket:
@@ -254,7 +266,14 @@ def _market_breadth_status(
     row: dict[str, str],
     ticket: dict[str, str],
     outcome: dict[str, str],
+    risk: dict[str, str],
 ) -> str:
+    if risk:
+        return (
+            f"{row.get('label_status', '')}:paper_ticket_opened:"
+            f"{outcome.get('checkpoint_status', '')}:{outcome.get('outcome', '')}:"
+            f"{risk.get('risk_action', '')}"
+        )
     if outcome:
         return f"{row.get('label_status', '')}:paper_ticket_opened:{outcome.get('checkpoint_status', '')}:{outcome.get('outcome', '')}"
     if ticket:
@@ -262,13 +281,23 @@ def _market_breadth_status(
     return row.get("label_status", "")
 
 
-def _market_breadth_score(*, row: dict[str, str], outcome: dict[str, str]) -> str:
+def _market_breadth_score(*, row: dict[str, str], outcome: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return _fmt(risk.get("estimated_net_after_cost_bps"))
     if outcome.get("checkpoint_status") == "ready":
         return _fmt(outcome.get("directional_return_bps"))
     return _fmt(row.get("conservative_net_4h_bps"))
 
 
-def _market_breadth_size_or_risk(*, row: dict[str, str], ticket: dict[str, str]) -> str:
+def _market_breadth_size_or_risk(*, row: dict[str, str], ticket: dict[str, str], risk: dict[str, str]) -> str:
+    if risk:
+        return (
+            f"notional={risk.get('notional_usd', '')}; "
+            f"depth10={risk.get('near_depth_10bps_notional', '')}; "
+            f"usage={risk.get('visible_depth_usage', '')}; "
+            f"cost={risk.get('round_trip_cost_bps', '')}; "
+            f"stop50={risk.get('stop_50bps_survived', '')}"
+        )
     if ticket:
         return (
             f"notional={ticket.get('candidate_size_usd', '')}; "
@@ -281,6 +310,36 @@ def _market_breadth_size_or_risk(*, row: dict[str, str], ticket: dict[str, str])
         f"depth10={row.get('near_depth_10bps_notional', '')}; "
         f"usage250={row.get('visible_depth_usage_250', '')}; "
         f"spread={row.get('spread_bps', '')}"
+    )
+
+
+def _market_breadth_evidence(
+    *,
+    row: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return (
+            f"dir_bps={risk.get('directional_return_bps', '')}; "
+            f"net_bps={risk.get('estimated_net_after_cost_bps', '')}; "
+            f"MAE={risk.get('max_adverse_excursion_bps', '')}; "
+            f"MFE={risk.get('max_favorable_excursion_bps', '')}; "
+            f"reason={risk.get('reason', '')}"
+        )
+    if outcome:
+        return (
+            f"dir4h={row.get('directional_return_4h', '')}; "
+            f"entry={outcome.get('entry_mark', '')}; "
+            f"current={outcome.get('current_mark', '')}; "
+            f"dir_bps={outcome.get('directional_return_bps', '')}; "
+            f"outcome={outcome.get('outcome', '')}"
+        )
+    return (
+        f"dir4h={row.get('directional_return_4h', '')}; "
+        f"dir1h={row.get('directional_return_1h', '')}; "
+        f"funding={row.get('annualized_funding', '')}; "
+        f"reason={row.get('reason', '')}"
     )
 
 
@@ -953,6 +1012,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
     }.get(row.lane, 0.0)
     action_bonus = {
         "cost_adjusted_repeat_probe": 80.0,
+        "cost_adjusted_probe_survived": 78.0,
         "repeat_probe_opened": 75.0,
         "repeat_paper_probe": 70.0,
         "paper_execution_probe_opened": 65.0,
@@ -971,6 +1031,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "wait_for_forward_label": 0.0,
         "current_funding_monitor": -20.0,
         "event_window_label_not_supported": -80.0,
+        "depth_too_thin_for_250_probe": -250.0,
         "cost_adjusted_event_window_failed": -120.0,
         "collateral_review_required": -50.0,
         "exit_liquidity_watch": -50.0,
