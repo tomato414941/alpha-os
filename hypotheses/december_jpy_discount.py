@@ -15,7 +15,7 @@ TEST:       bitbank XRP/JPY x Binance XRP/USDT x USDJPY, 2018-2025.
 REVIVAL:    Re-run only if JPY/USD venue connectivity degrades
             (structural widening of cross-venue spreads).
 
-Run: PYTHONPATH=src python hypotheses/2026_december_jpy_discount.py
+Run: PYTHONPATH=src python hypotheses/december_jpy_discount.py
 The VERDICT above is a copy of this script's output; re-running
 re-derives it from public APIs (bitbank, Binance data mirror, ECB FX).
 """
