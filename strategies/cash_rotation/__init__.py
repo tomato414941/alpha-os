@@ -1,1 +1,0 @@
-"""Cash rotation strategy candidates."""

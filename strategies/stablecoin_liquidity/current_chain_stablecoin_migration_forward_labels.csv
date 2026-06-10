@@ -1,7 +1,0 @@
-observed_at,chain,token_symbol,migration_status,side,expected_direction,week_change_usd,week_change_pct,start_price,raw_return_1h,raw_return_4h,raw_return_12h,directional_return_1h,directional_return_4h,directional_return_12h,label_status,next_step
-2026-06-09T00:59:10.069850+00:00,Ethereum,ETH,chain_stablecoin_flow_reversal_watch,collect_label,-1,-2367417074.51000023,-0.01580022,1661.600000000000,,,,,,,pending_4h,wait for ETH 4h label
-2026-06-09T00:59:10.069850+00:00,Solana,SOL,paper_chain_stablecoin_inflow_watch,long_chain_beta_or_activity,1,798085983.92999995,0.06557335,65.349000000000,,,,,,,pending_4h,wait for SOL 4h label
-2026-06-09T00:59:10.069850+00:00,Tron,TRX,chain_stablecoin_flow_reversal_watch,collect_label,-1,-449545785.30000001,-0.00500441,0.325600000000,,,,,,,pending_4h,wait for TRX 4h label
-2026-06-09T00:59:10.069850+00:00,Polygon,POL,paper_chain_stablecoin_outflow_watch,short_chain_beta_or_reduce_exposure,-1,-198600917.22000000,-0.05443936,0.076504000000,,,,,,,pending_4h,wait for POL 4h label
-2026-06-09T00:59:10.069850+00:00,Hyperliquid L1,HYPE,chain_stablecoin_flow_reversal_watch,collect_label,1,141303949.22000000,0.02155005,62.162000000000,,,,,,,pending_4h,wait for HYPE 4h label
-2026-06-09T00:59:10.069850+00:00,Arbitrum,ARB,paper_chain_stablecoin_outflow_watch,short_chain_beta_or_reduce_exposure,-1,-119397590.81000000,-0.03167156,0.080160000000,,,,,,,pending_4h,wait for ARB 4h label

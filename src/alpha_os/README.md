@@ -18,7 +18,6 @@ Repository roles:
 
 - `src/alpha_os/`: maintained package contracts
 - `examples/`: possible strategy shapes, not public API
-- `strategies/`: concrete profit-seeking strategy implementations
 
 Do not promote strategy-local code into `alpha_os` just because it is useful
 once. Promote only when the shared shape is clear enough to be a package

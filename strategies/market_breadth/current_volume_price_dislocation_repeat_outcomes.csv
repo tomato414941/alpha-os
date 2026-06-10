@@ -1,2 +1,0 @@
-ticket_id,opened_at,checked_at,elapsed_minutes,checkpoint_status,opportunity,decision,symbol,venue,entry_mark,current_mark,current_source,raw_return_bps,directional_return_bps,outcome,missing_evidence,next_step
-market-breadth-repeat-hype-long-reversal,2026-06-09T00:20:37+00:00,2026-06-09T00:35:40+00:00,15.07,ready,volume_price_dislocation_repeat:HYPE,paper_long,HYPE,hyperliquid,63.914000000000,62.941000000000,hl_execution_context,-152.23581688,-152.23581688,paper_mark_loss,,do not promote HYPE without another fresh positive dislocation label

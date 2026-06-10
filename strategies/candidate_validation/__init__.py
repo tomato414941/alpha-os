@@ -1,1 +1,0 @@
-"""Current candidate validation probes."""

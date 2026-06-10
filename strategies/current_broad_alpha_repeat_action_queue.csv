@@ -1,3 +1,0 @@
-priority,ticket_id,action,asset,opportunity,decision,directional_return_bps,outcome,reason,next_step
--38.84739069,broad-repeat-hype-long-broad-paper-hype-paper-long,deprioritize_or_repeat_once,HYPE,broad_fill_audit_repeat:broad-fill-audit-hype-long-50bps-stop:1h,paper_long,-63.84739069,paper_mark_loss,paper mark moved against the ticket direction,repeat only if the original hypothesis has independent support; otherwise deprioritize
--80.90809628,broad-repeat-chip-long-broad-paper-chip-paper-long,deprioritize_or_repeat_once,CHIP,broad_fill_audit_repeat:broad-fill-audit-chip-long-50bps-stop:1h,paper_long,-105.90809628,paper_mark_loss,paper mark moved against the ticket direction,repeat only if the original hypothesis has independent support; otherwise deprioritize

@@ -16,8 +16,6 @@
   - maintained package code
 - `examples/`
   - concrete trading strategy sketches; not package API
-- `strategies/`
-  - concrete profit-seeking strategy candidates; not package API
 - `experiments/`
   - frozen historical research snapshot; do not add new experiments
 

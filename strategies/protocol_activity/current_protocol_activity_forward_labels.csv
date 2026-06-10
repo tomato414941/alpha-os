@@ -1,3 +1,0 @@
-timestamp,symbol,action,direction_hint,score,raw_return_15m,raw_return_1h,directional_return_15m,directional_return_1h,label_status
-2026-06-08T15:14:54.453785+00:00,ZEC,protocol_activity_funding_overlap,1,50.57973878,0.00698463,-0.00103978,0.00698463,-0.00103978,labeled
-2026-06-08T15:14:54.453785+00:00,NEAR,protocol_activity_watch,1,30.24838347,-0.01300005,0.01687725,-0.01300005,0.01687725,labeled

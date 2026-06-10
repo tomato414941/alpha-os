@@ -1,2 +1,0 @@
-rule_key,trades,skipped_overlap_signals,total_return,mean_net_return_5d,hit_rate_5d,max_drawdown,fee_bps_per_side,action
-large_5d_outflow_start_funding_aligned_5d_hold,21,22,0.78885853,0.02961324,0.61904762,-0.07880819,5.0000,paper_rule_candidate

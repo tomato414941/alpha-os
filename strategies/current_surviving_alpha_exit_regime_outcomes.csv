@@ -1,1 +1,0 @@
-ticket_id,opened_at,checked_at,checkpoint_status,outcome,candidate_id,asset,decision,side,entry_mark,exit_horizon_minutes,stop_bps,first_candle_at,last_candle_at,candle_count,max_favorable_bps,max_adverse_bps,close_return_bps,stop_status,evidence,next_step

@@ -1,2 +1,0 @@
-asset,etf_action,latest_date,latest_flow_btc,rolling_5d_flow_btc,annualized_funding,open_interest_notional,day_notional_volume,action,score
-BTC,btc_etf_outflow_context,2026-06-05,-220.00000000,-37984.00000000,0.10599600,1960071143.87139988,3349751910.35210466,etf_outflow_vs_long_perp_divergence_watch,28.05347253

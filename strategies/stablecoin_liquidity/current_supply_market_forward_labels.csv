@@ -1,6 +1,0 @@
-timestamp,liquidity_group,total_supply_usd,week_change_usd,week_change_pct,expected_risk_direction,asset,raw_return_1h,raw_return_4h,raw_return_12h,directional_return_1h,directional_return_4h,directional_return_12h,action
-2026-06-09T00:59:08.411931+00:00,major_stablecoins,298874026771.35,-2109038410.23,-0.00705661,-1,BTC,,,,,,,pending_4h
-2026-06-09T00:59:08.411931+00:00,major_stablecoins,298874026771.35,-2109038410.23,-0.00705661,-1,ETH,,,,,,,pending_4h
-2026-06-09T00:59:08.411931+00:00,major_stablecoins,298874026771.35,-2109038410.23,-0.00705661,-1,SOL,,,,,,,pending_4h
-2026-06-09T00:59:08.411931+00:00,major_stablecoins,298874026771.35,-2109038410.23,-0.00705661,-1,HYPE,,,,,,,pending_4h
-2026-06-09T00:59:08.411931+00:00,major_stablecoins,298874026771.35,-2109038410.23,-0.00705661,-1,BASKET,,,,,,,pending_4h

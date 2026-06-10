@@ -1,3 +1,0 @@
-generated_at,venue,asset,side,target_notional,best_bid,best_ask,mid_price,top_level_notional,filled_notional,average_fill_price,slippage_bps,levels_consumed,fully_filled,combined_taker_slippage_bps,notes
-2026-06-08T00:31:03.805442+00:00,OkxSwap,MON,buy,1000,0.02234,0.02235,0.022345,424.65,1000,0.02235575,4.81199689,2,True,9.27546334,"paper size fills, but consumes multiple visible levels"
-2026-06-08T00:31:03.805442+00:00,HlPerp,MON,sell,1000,0.022408,0.022419,0.0224135,250.095688,1000,0.0224035,4.46346646,2,True,9.27546334,"paper size fills, but consumes multiple visible levels"

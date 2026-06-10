@@ -1,6 +1,0 @@
-asset,score,lanes,positive_sources,negative_sources,positive_count,negative_count,action,next_test
-MEGA,3.4940,okx_pressure;exchange_catalyst;on_chain_flow,exchange_catalyst;on_chain_flow,exchange_catalyst,3,1,isolate_positive_source,repeat the positive label source separately
-ADA,2.9842,okx_pressure;l2_imbalance_monitor;on_chain_flow,on_chain_flow,l2_imbalance,2,1,isolate_positive_source,repeat the positive label source separately
-BTC,2.5455,okx_pressure;okx_liquidation;protocol_activity;on_chain_flow,on_chain_flow,liquidation,2,1,isolate_positive_source,repeat the positive label source separately
-HYPE,2.1935,okx_pressure;okx_liquidation;on_chain_flow,on_chain_flow,liquidation,2,1,isolate_positive_source,repeat the positive label source separately
-POL,1.7572,sector_perp_context;exchange_catalyst;on_chain_flow,sector_perp_context;on_chain_flow,exchange_catalyst,3,1,isolate_positive_source,repeat the positive label source separately

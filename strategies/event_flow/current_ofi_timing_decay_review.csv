@@ -1,4 +1,0 @@
-asset,decision,initial_paper_bps,initial_fill_audit_15m_bps,first_repeat_5m_bps,repeat_fill_audit_15m_bps,second_repeat_5m_bps,lifecycle_status,interpretation,next_step
-BNB,paper_short,50.68980790,13.37317770,20.77493817,16.05242690,-8.10909211,second_repeat_decay,"The signal survived paper, repeat, and fill audit, then failed when immediately chased again.",treat OFI as timing-sensitive; learn entry cooldown/state filters before opening another repeat
-ETH,paper_short,96.39539639,2.95037470,15.33742331,-16.51527663,,repeat_fill_audit_decay,The first mark wins did not survive the later fill-audit window.,do not promote; require a fresh independent OFI state before any new label
-SUI,paper_short,84.39697838,3.41628781,31.78689644,24.83421838,-9.90465122,second_repeat_decay,"The signal survived paper, repeat, and fill audit, then failed when immediately chased again.",treat OFI as timing-sensitive; learn entry cooldown/state filters before opening another repeat

@@ -1,6 +1,0 @@
-asset,scenario,paper_notional,mean_net_8h_proxy,mean_net_24h_proxy,fee_round_trip_rate,fee_round_trip_usdt,net_8h_after_fee_rate,net_8h_after_fee_usdt,net_24h_after_fee_rate,net_24h_after_fee_usdt,survives_8h,survives_24h
-BTC,very_low_fee,1000,0.00009284,0.00033603,0.00008,0.08,0.00001284,0.01284,0.00025603,0.25603,True,True
-BTC,low_fee,1000,0.00009284,0.00033603,0.0002,0.2,-0.00010716,-0.10716,0.00013603,0.13603,False,True
-BTC,one_bps_each,1000,0.00009284,0.00033603,0.0004,0.4,-0.00030716,-0.30716,-0.00006397,-0.06397,False,False
-BTC,two_bps_each,1000,0.00009284,0.00033603,0.0008,0.8,-0.00070716,-0.70716,-0.00046397,-0.46397,False,False
-BTC,five_bps_each,1000,0.00009284,0.00033603,0.002,2,-0.00190716,-1.90716,-0.00166397,-1.66397,False,False

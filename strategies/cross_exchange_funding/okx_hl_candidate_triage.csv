@@ -1,5 +1,0 @@
-asset,action,long_venue,short_venue,observations,capacity,very_low_fee_net_8h,low_fee_net_24h,one_bps_each_net_24h,max_entry_slippage_bps,reason
-BTC,paper_8h_candidate,OkxSwap,HlPerp,12,422448.80855333,0.00001547,0.00012195,-0.00007805,0.08887218,8h survives only under very low fee assumptions; verify real fees and maker fills
-JTO,active_24h_monitor,OkxSwap,HlPerp,12,54543.56750198,-0.00089255,0.00037376,0.00017376,7.52849755,24h survives one-bps-each assumption with enough visible capacity for monitoring
-ZEC,fee_dependent_24h_monitor,OkxSwap,HlPerp,12,106210.05564167,-0.00037931,0.00015978,-0.00004022,3.14430447,24h survives low-fee assumption but not one-bps-each
-BABY,thin_or_unstable_watch,HlPerp,OkxSwap,12,18182.63949194,-0.00135982,0.00114052,0.00094052,12.94997144,"24h can be positive, but capacity, slippage, or fee assumptions are weak"

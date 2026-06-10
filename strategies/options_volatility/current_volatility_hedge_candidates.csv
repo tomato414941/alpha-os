@@ -1,1 +1,0 @@
-candidate_id,currency,expiry,structure,hedge_profile,decision,score,days_to_expiry,iv_premium_24h,max_loss_pct,max_loss_usd,realized_move_pct,premium_to_realized_move,quote_spread_pct,top_ask_premium_depth_usd,hedge_interval,reason,next_step

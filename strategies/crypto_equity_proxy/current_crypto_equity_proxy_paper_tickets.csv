@@ -1,6 +1,0 @@
-name,status,side,score,reason
-mstr_btc_dislocation,paper_relative_value_watch,long_mstr_short_btc,-0.14041900,MSTR strongly underperforms BTC; check announcement/news and equity-market risk before action
-crypto_equity_proxy_lead_short,paper_short_candidate,short_btc_eth,-0.09168052,crypto-linked equities underperform BTC while BTC has not repriced much
-miner_stress_vs_btc,paper_risk_context,de_risk_alt_beta,-0.08123147,"miners materially underperform BTC, which can indicate equity-market stress around crypto beta"
-exchange_beta_lead,paper_short_candidate,short_btc_eth,-0.07710683,COIN/HOOD underperform BTC while BTC has not repriced much
-eth_treasury_proxy_lead,eth_treasury_proxy_watch,eth_treasury_vs_eth_context,-0.03228654,ETH treasury equities are a current institutional demand proxy; strongest=BTBT vs_eth_5d=-0.0983
