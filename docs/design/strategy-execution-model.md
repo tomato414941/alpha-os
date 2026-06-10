@@ -1,7 +1,10 @@
 # Strategy Run Model
 
-This file is the source of truth for how a `strategy spec` runs across different
-engines.
+Legacy design note. Do not treat this file as the current source of truth.
+
+The current maintained contract is `TradingStrategy.decide(input) -> output`.
+This note may contain old evaluation, spec, and engine concepts kept only as
+historical context.
 
 It separates:
 
