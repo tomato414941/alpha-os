@@ -2,8 +2,8 @@
 
 Do not modify this file unless the user explicitly asks to change `AGENTS.md`.
 
-Alpha work must prioritize finding real candidates over building tracking
-or research infrastructure.
+Prioritize finding real candidates over building tracking or research
+infrastructure.
 
 ## Repository Safety
 
