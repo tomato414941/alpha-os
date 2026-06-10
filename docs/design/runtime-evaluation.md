@@ -1,5 +1,11 @@
 # Runtime And Evaluation
 
+Legacy design note. Do not treat this file as the current source of truth.
+
+The current maintained contract is `TradingStrategy.decide(input) -> output`.
+Evaluation, target, prediction, and portfolio concepts in this note are
+historical design context, not package-level contracts.
+
 ## Current Evaluation Job Shapes
 
 The current mainline uses explicit evaluation job inputs rather than a generic
