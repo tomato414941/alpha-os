@@ -4,8 +4,8 @@ This labels the current major-stablecoin liquidity snapshot against subsequent m
 
 | asset | week change USD | week change % | expected dir | raw 1h | dir 1h | raw 4h | dir 4h | raw 12h | dir 12h | action |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| BTC | -2187299156 | -0.007321 | -1 |  |  |  |  |  |  | pending_4h |
-| ETH | -2187299156 | -0.007321 | -1 |  |  |  |  |  |  | pending_4h |
-| SOL | -2187299156 | -0.007321 | -1 |  |  |  |  |  |  | pending_4h |
-| HYPE | -2187299156 | -0.007321 | -1 |  |  |  |  |  |  | pending_4h |
-| BASKET | -2187299156 | -0.007321 | -1 |  |  |  |  |  |  | pending_4h |
+| BTC | -2109038410 | -0.007057 | -1 |  |  |  |  |  |  | pending_4h |
+| ETH | -2109038410 | -0.007057 | -1 |  |  |  |  |  |  | pending_4h |
+| SOL | -2109038410 | -0.007057 | -1 |  |  |  |  |  |  | pending_4h |
+| HYPE | -2109038410 | -0.007057 | -1 |  |  |  |  |  |  | pending_4h |
+| BASKET | -2109038410 | -0.007057 | -1 |  |  |  |  |  |  | pending_4h |

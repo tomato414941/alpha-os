@@ -4,10 +4,10 @@ This labels whether the visible 10 bps book imbalance matched subsequent Hyperli
 
 | asset | spread bps | imbalance10 | dir | raw 15m | dir 15m | raw 1h | dir 1h |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| BTC | 0.1584 | 0.2567 | 1 |  |  |  |  |
-| ETH | 0.5893 | -0.2573 | -1 |  |  |  |  |
-| SOL | 0.1495 | 0.0284 | 1 |  |  |  |  |
-| HYPE | 1.4219 | 0.3753 | 1 |  |  |  |  |
+| BTC | 0.1599 | 0.6875 | 1 |  |  |  |  |
+| ETH | 0.6016 | 0.0231 | 1 |  |  |  |  |
+| SOL | 0.1529 | -0.3960 | -1 |  |  |  |  |
+| HYPE | 0.1606 | 0.1703 | 1 |  |  |  |  |
 
 ## Interpretation
 

@@ -4,6 +4,7 @@ This checks pair-ratio mark wins against rough two-leg spread, taker fee, fundin
 
 | ticket | pair | dir bps | cost bps | funding 1h | net bps | action | reason |
 | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
-| pair-spread-eth-hype-mean-reversion | ETH/HYPE | 17.50423490 | 16.74809508 | -0.23893800 | 0.51720182 | pair_cost_adjusted_edge_failed | pair mark win does not survive conservative two-leg taker cost |
-| pair-spread-eth-sol-mean-reversion | ETH/SOL | 11.93882652 | 16.73931901 | -0.05387800 | -4.85437049 | pair_cost_adjusted_edge_failed | pair mark win does not survive conservative two-leg taker cost |
-| pair-spread-sol-hype-mean-reversion | SOL/HYPE | 5.55877186 | 16.30764709 | -0.18506000 | -10.93393523 | pair_cost_adjusted_edge_failed | pair mark win does not survive conservative two-leg taker cost |
+| pair-spread-btc-sol-mean-reversion | BTC/SOL | 103.06080227 | 16.31277928 | 0.30602000 | 87.05404299 | cost_adjusted_pair_probe | pair mark win survives conservative two-leg taker cost |
+| pair-spread-eth-sol-mean-reversion | ETH/SOL | 63.03134898 | 17.35493629 | 0.12922600 | 45.80563869 | cost_adjusted_pair_probe | pair mark win survives conservative two-leg taker cost |
+| pair-spread-btc-eth-mean-reversion | BTC/ETH | 39.77872264 | 17.36226713 | 0.17679400 | 22.59324951 | cost_adjusted_pair_probe | pair mark win survives conservative two-leg taker cost |
+| pair-spread-btc-hype-mean-reversion | BTC/HYPE | 22.56721289 | 16.48104113 | -0.04957500 | 6.03659676 | cost_adjusted_pair_probe | pair mark win survives conservative two-leg taker cost |

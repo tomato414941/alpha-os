@@ -33,12 +33,15 @@ def build_broad_alpha_execution_queue(*, root: Path = ROOT) -> tuple[BroadAlphaE
     rows.extend(_l2_imbalance_queue(root))
     rows.extend(_market_breadth_queue(root))
     rows.extend(_market_breadth_repeat_queue(root))
+    rows.extend(_crypto_pair_spread_queue(root))
+    rows.extend(_crypto_pair_spread_repeat_queue(root))
     rows.extend(_options_volatility_queue(root))
     rows.extend(_funding_dislocation_queue(root))
     rows.extend(_wallet_flow_queue(root))
     rows.extend(_stablecoin_flow_queue(root))
     rows.extend(_protocol_fee_queue(root))
     rows.extend(_token_unlock_queue(root))
+    rows.extend(_token_unlock_repeat_queue(root))
     rows.extend(_defi_lending_queue(root))
     return tuple(sorted(rows, key=_sort_key, reverse=True))
 
@@ -473,6 +476,151 @@ def _market_breadth_repeat_evidence(
             f"outcome={outcome.get('outcome', '')}"
         )
     return f"prior_net_bps={ticket.get('conservative_net_4h_bps', '')}"
+
+
+def _crypto_pair_spread_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
+    risk_path = root / "crypto_pair_spread/current_crypto_pair_spread_fill_risk_check.csv"
+    return tuple(
+        BroadAlphaExecutionQueueItem(
+            queue_id=row.get("ticket_id", ""),
+            lane="crypto_pair_spread",
+            subject=row.get("pair", ""),
+            side=row.get("decision", ""),
+            action=row.get("risk_action", ""),
+            status=row.get("risk_action", ""),
+            score=_fmt(row.get("estimated_net_after_cost_bps")),
+            size_or_risk=(
+                f"base_depth10={row.get('base_depth_10bps_notional', '')}; "
+                f"quote_depth10={row.get('quote_depth_10bps_notional', '')}"
+            ),
+            evidence=(
+                f"dir_bps={row.get('directional_return_bps', '')}; "
+                f"cost={row.get('estimated_round_trip_cost_bps', '')}; "
+                f"funding1h={row.get('estimated_funding_1h_bps', '')}; "
+                f"reason={row.get('reason', '')}"
+            ),
+            checkpoints="5m,15m,repeat",
+            source_path=_relative(risk_path),
+            required_record="both-leg execution, hedge ratio, funding carry, stop, and adverse excursion",
+            next_step=row.get("next_step", ""),
+        )
+        for row in _read_rows(risk_path)
+        if row.get("risk_action") == "cost_adjusted_pair_probe"
+    )
+
+
+def _crypto_pair_spread_repeat_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
+    ticket_path = root / "crypto_pair_spread/current_crypto_pair_spread_repeat_tickets.csv"
+    outcome_path = root / "crypto_pair_spread/current_crypto_pair_spread_repeat_outcomes.csv"
+    risk_path = root / "crypto_pair_spread/current_crypto_pair_spread_repeat_fill_risk_check.csv"
+    outcomes = {row.get("ticket_id", ""): row for row in _read_rows(outcome_path)}
+    risks = {row.get("ticket_id", ""): row for row in _read_rows(risk_path)}
+    return tuple(
+        BroadAlphaExecutionQueueItem(
+            queue_id=row.get("ticket_id", ""),
+            lane="crypto_pair_spread_repeat",
+            subject=row.get("pair", ""),
+            side=row.get("decision", ""),
+            action=_crypto_pair_spread_repeat_action(
+                ticket=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
+            status=_crypto_pair_spread_repeat_status(
+                ticket=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
+            score=_crypto_pair_spread_repeat_score(
+                ticket=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
+            size_or_risk=f"entry_ratio={row.get('entry_ratio', '')}; rank={row.get('rank', '')}",
+            evidence=_crypto_pair_spread_repeat_evidence(
+                ticket=row,
+                outcome=outcomes.get(row.get("ticket_id", ""), {}),
+                risk=risks.get(row.get("ticket_id", ""), {}),
+            ),
+            checkpoints="5m,15m,repeat",
+            source_path=_relative(
+                risk_path
+                if risks.get(row.get("ticket_id", ""))
+                else outcome_path
+                if outcomes.get(row.get("ticket_id", ""))
+                else ticket_path
+            ),
+            required_record="repeat pair-ratio move, both-leg execution, funding carry, hedge ratio, stop, and adverse excursion",
+            next_step=(
+                risks.get(row.get("ticket_id", ""), {}).get("next_step")
+                or outcomes.get(row.get("ticket_id", ""), {}).get("next_step")
+                or row.get("next_step", "")
+            ),
+        )
+        for row in _read_rows(ticket_path)
+    )
+
+
+def _crypto_pair_spread_repeat_action(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return risk.get("risk_action", "")
+    if outcome.get("checkpoint_status") == "ready":
+        return outcome.get("outcome", "")
+    return "repeat_probe_opened"
+
+
+def _crypto_pair_spread_repeat_status(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return f"{outcome.get('outcome', '')}:{risk.get('risk_action', '')}"
+    if outcome:
+        return f"{outcome.get('checkpoint_status', '')}:{outcome.get('outcome', '')}"
+    return ticket.get("rank", "")
+
+
+def _crypto_pair_spread_repeat_score(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return _fmt(risk.get("estimated_net_after_cost_bps"))
+    if outcome.get("checkpoint_status") == "ready":
+        return _fmt(outcome.get("directional_return_bps"))
+    return f"{max(0.0, 100.0 - _float(ticket.get('rank'))):.4f}"
+
+
+def _crypto_pair_spread_repeat_evidence(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return (
+            f"repeat_dir_bps={risk.get('directional_return_bps', '')}; "
+            f"repeat_net_bps={risk.get('estimated_net_after_cost_bps', '')}; "
+            f"cost={risk.get('estimated_round_trip_cost_bps', '')}; "
+            f"reason={risk.get('reason', '')}"
+        )
+    if outcome:
+        return (
+            f"entry_ratio={outcome.get('entry_mark', '')}; "
+            f"current_ratio={outcome.get('current_mark', '')}; "
+            f"dir_bps={outcome.get('directional_return_bps', '')}; "
+            f"outcome={outcome.get('outcome', '')}"
+        )
+    return f"dislocation_bps={ticket.get('dislocation_bps', '')}"
 
 
 def _options_volatility_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
@@ -1048,6 +1196,128 @@ def _token_unlock_next_step(*, row: dict[str, str], outcome: dict[str, str], ris
     return row.get("next_step", "")
 
 
+def _token_unlock_repeat_queue(root: Path) -> tuple[BroadAlphaExecutionQueueItem, ...]:
+    ticket_path = root / "token_unlocks/current_token_unlock_event_window_repeat_tickets.csv"
+    outcome_path = root / "token_unlocks/current_token_unlock_event_window_repeat_outcomes.csv"
+    risk_path = root / "token_unlocks/current_token_unlock_event_window_repeat_risk_check.csv"
+    outcomes = {row.get("asset", ""): row for row in _read_rows(outcome_path)}
+    risks = {row.get("asset", ""): row for row in _read_rows(risk_path)}
+    return tuple(
+        BroadAlphaExecutionQueueItem(
+            queue_id=row.get("ticket_id", ""),
+            lane="token_unlock_event_window_repeat",
+            subject=row.get("asset", ""),
+            side=row.get("decision", ""),
+            action=_token_unlock_repeat_action(
+                ticket=row,
+                outcome=outcomes.get(row.get("asset", ""), {}),
+                risk=risks.get(row.get("asset", ""), {}),
+            ),
+            status=_token_unlock_repeat_status(
+                ticket=row,
+                outcome=outcomes.get(row.get("asset", ""), {}),
+                risk=risks.get(row.get("asset", ""), {}),
+            ),
+            score=_token_unlock_repeat_score(
+                ticket=row,
+                outcome=outcomes.get(row.get("asset", ""), {}),
+                risk=risks.get(row.get("asset", ""), {}),
+            ),
+            size_or_risk=_token_unlock_repeat_size_or_risk(ticket=row),
+            evidence=_token_unlock_repeat_evidence(
+                ticket=row,
+                outcome=outcomes.get(row.get("asset", ""), {}),
+                risk=risks.get(row.get("asset", ""), {}),
+            ),
+            checkpoints="15m,1h,4h,repeat",
+            source_path=_relative(
+                risk_path
+                if risks.get(row.get("asset", ""))
+                else outcome_path
+                if outcomes.get(row.get("asset", ""))
+                else ticket_path
+            ),
+            required_record="fresh repeat mark move, funding, spread, stop, and adverse excursion",
+            next_step=(
+                risks.get(row.get("asset", ""), {}).get("next_step")
+                or outcomes.get(row.get("asset", ""), {}).get("next_step")
+                or row.get("next_step", "")
+            ),
+        )
+        for row in _read_rows(ticket_path)
+    )
+
+
+def _token_unlock_repeat_action(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return risk.get("risk_action", "")
+    if outcome.get("checkpoint_status") == "ready":
+        return outcome.get("outcome", "")
+    return "repeat_probe_opened"
+
+
+def _token_unlock_repeat_status(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return f"{ticket.get('previous_ticket_id', '')}:{outcome.get('outcome', '')}:{risk.get('risk_action', '')}"
+    if outcome:
+        return f"{ticket.get('previous_ticket_id', '')}:{outcome.get('checkpoint_status', '')}:{outcome.get('outcome', '')}"
+    return ticket.get("previous_ticket_id", "")
+
+
+def _token_unlock_repeat_score(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return _fmt(risk.get("net_directional_bps"))
+    if outcome.get("checkpoint_status") == "ready":
+        return _fmt(outcome.get("directional_return_bps"))
+    return _fmt(ticket.get("estimated_net_after_cost_bps"))
+
+
+def _token_unlock_repeat_size_or_risk(*, ticket: dict[str, str]) -> str:
+    return (
+        f"size_usd={ticket.get('candidate_size_usd', '')}; "
+        f"entry={ticket.get('entry_mark', '')}; "
+        f"prior_net={ticket.get('estimated_net_after_cost_bps', '')}"
+    )
+
+
+def _token_unlock_repeat_evidence(
+    *,
+    ticket: dict[str, str],
+    outcome: dict[str, str],
+    risk: dict[str, str],
+) -> str:
+    if risk:
+        return (
+            f"repeat_dir_bps={risk.get('directional_return_bps', '')}; "
+            f"repeat_net_bps={risk.get('net_directional_bps', '')}; "
+            f"cost={risk.get('round_trip_cost_bps', '')}; "
+            f"reason={risk.get('reason', '')}"
+        )
+    if outcome:
+        return (
+            f"entry={outcome.get('entry_mark', '')}; "
+            f"current={outcome.get('current_mark', '')}; "
+            f"dir_bps={outcome.get('directional_return_bps', '')}; "
+            f"outcome={outcome.get('outcome', '')}"
+        )
+    return f"prior_dir_bps={ticket.get('prior_directional_bps', '')}"
+
+
 def _protocol_fee_action(
     *,
     row: dict[str, str],
@@ -1213,12 +1483,14 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "l2_imbalance_microstructure": 25.0,
         "market_breadth_dislocation": 22.0,
         "market_breadth_second_repeat": 21.0,
+        "crypto_pair_spread": 20.0,
         "options_volatility": 20.0,
         "cross_exchange_funding_dislocation": 18.0,
         "wallet_entity_flow": 16.0,
         "defi_lending_yield": 15.0,
         "stablecoin_chain_liquidity_proxy": 10.0,
         "protocol_fee_growth_lag": 8.0,
+        "token_unlock_event_window_repeat": 7.0,
         "token_unlock_event_window": 5.0,
     }.get(row.lane, 0.0)
     action_bonus = {
@@ -1236,6 +1508,7 @@ def _sort_key(row: BroadAlphaExecutionQueueItem) -> tuple[float, float]:
         "watch_recent_wallet_buy_flow": 12.0,
         "watch_recent_wallet_sell_flow": 12.0,
         "cost_adjusted_event_window_probe": 30.0,
+        "cost_adjusted_pair_probe": 25.0,
         "thin_event_window_support": 5.0,
         "event_window_label_opened": 12.0,
         "refresh_execution_gate": 10.0,
