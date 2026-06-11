@@ -82,10 +82,6 @@ The system must distinguish these questions:
 - Is the evaluation too narrow?
 - Is the implementation buggy?
 
-Aggregate Sharpe or return is not enough. Evaluation should preserve enough
-trace and attribution to separate signal direction, allocation, costs,
-turnover, long/short behavior, and asset-class contribution.
-
 ## System Boundaries
 
 ### signal-noise
