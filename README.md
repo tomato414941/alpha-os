@@ -2,7 +2,7 @@
 
 `alpha_os` is a small package for defining trading strategy contracts.
 
-## Current Mainline
+## Package Scope
 
 - package: `src/alpha_os/`
 - focus:
