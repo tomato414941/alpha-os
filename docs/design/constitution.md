@@ -85,17 +85,6 @@ turnover, long/short behavior, and asset-class contribution.
 
 ## System Boundaries
 
-### alpha-os
-
-alpha-os owns:
-
-- strategy lifecycle
-- signal and portfolio recipes
-- evaluation specs
-- strict OOS reports
-- decision traces
-- promotion and rejection evidence
-
 ### signal-noise
 
 signal-noise is a separate data service.
