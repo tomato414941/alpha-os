@@ -37,19 +37,6 @@ Before promotion to strict OOS, it must have:
 - a baseline to beat
 - a decision rule that can reject it
 
-### Backtest OOS Evaluation
-
-Backtest OOS is the adoption gate, not the first place every idea must run.
-
-Backtest OOS requires:
-
-- fixed folds and date ranges
-- reproducible inputs
-- explicit portfolio construction
-- cost, funding, roll, borrow, and multiplier treatment when relevant
-- run result and decision trace persistence
-- enough diagnostics to explain failure, not only aggregate metrics
-
 ### Promotion Or Rejection
 
 Promotion requires evidence against the current baseline, not just positive
