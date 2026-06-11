@@ -44,7 +44,6 @@ Prefer:
 
 Prefer:
 
-- [`docs/design/constitution.md`](./design/constitution.md)
 - [`docs/design/README.md`](./design/README.md)
 
 ### "How should this scale to many assets?"
@@ -73,10 +72,6 @@ Prefer:
 
 - [`docs/design/README.md`](./design/README.md)
   - design note map
-- [`constitution.md`](./design/constitution.md)
-  - north star
-  - lifecycle stages
-  - rigor levels and non-negotiables
 - [`glossary.md`](./glossary.md)
   - current terminology entrypoint
 - [`glossary.old.md`](./design/glossary.old.md)
