@@ -75,21 +75,6 @@ default alternative.
 Changing the baseline requires evidence. Adding complexity without beating the
 baseline is not progress.
 
-## Rigor Levels
-
-alpha-os should support multiple rigor levels as first-class states, not as
-side exits.
-
-```text
-exploratory  -> fast, rough, disposable
-candidate    -> fixed assumptions, comparable
-backtest_oos   -> reproducible adoption evidence
-operational  -> live or paper-runtime eligible
-```
-
-The mistake to avoid is forcing exploratory work through strict OOS too early,
-or allowing strict OOS claims to rest on exploratory shortcuts.
-
 ## Strategy Research Principles
 
 Do not search for a single magic strategy.
