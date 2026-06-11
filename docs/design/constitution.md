@@ -94,19 +94,6 @@ or allowing strict OOS claims to rest on exploratory shortcuts.
 
 Do not search for a single magic strategy.
 
-Systematic macro and managed futures research should compare families:
-
-- trend across multiple horizons
-- carry
-- value
-- defensive or volatility-aware overlays
-- cross-sectional momentum
-- blended sleeves
-- portfolio construction variants
-
-The system should make it easy to compare these families under shared metrics
-and baselines.
-
 Parameter search is allowed only when robustness is checked. A strategy that
 works only at one fragile parameter setting should be treated as unproven.
 
