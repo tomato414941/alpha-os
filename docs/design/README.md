@@ -21,8 +21,6 @@ Use these files by question:
    - strategy hierarchy
 4. [`strategy-execution-model.md`](./strategy-execution-model.md)
    - strategy vs engine boundary
-   - current mainline workflow
-   - target execution workflow
 5. [`runtime-evaluation.md`](./runtime-evaluation.md)
    - evaluation principles
    - targets
