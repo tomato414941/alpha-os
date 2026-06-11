@@ -1,20 +1,5 @@
 # alpha-os Constitution
 
-## North Star
-
-alpha-os is a research-to-evaluation OS for trading strategies.
-
-Its job is to move an investment idea through a reproducible lifecycle:
-
-```text
-idea -> exploratory research -> candidate -> strict OOS evaluation
-     -> promotion or rejection -> baseline
-```
-
-alpha-os should not be only a backtester, only a signal generator, only a
-runtime trader, or only a document archive. Those are components. The system is
-the lifecycle that turns uncertain market ideas into evaluated decisions.
-
 ## Lifecycle Stages
 
 ### Idea
