@@ -1,5 +1,8 @@
 # alpha-os Constitution
 
+Do not modify this file unless the user explicitly asks to change
+`constitution.md`.
+
 ## Lifecycle Stages
 
 ### Idea
