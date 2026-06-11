@@ -1,5 +1,8 @@
 # Portfolio Decision
 
+Do not modify this file unless the user explicitly asks to change
+`portfolio-decision.md`.
+
 ## Purpose
 
 The portfolio decision layer maps predictive objects into desired portfolio

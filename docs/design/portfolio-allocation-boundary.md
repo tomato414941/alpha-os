@@ -1,5 +1,8 @@
 # Portfolio Allocation Boundary
 
+Do not modify this file unless the user explicitly asks to change
+`portfolio-allocation-boundary.md`.
+
 ## Decision
 
 Do not model portfolio allocation as one generic configurable object that can do

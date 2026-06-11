@@ -1,5 +1,8 @@
 # Architecture
 
+Do not modify this file unless the user explicitly asks to change
+`architecture.md`.
+
 ## Producer-Consumer Separation
 
 The long-horizon target architecture should separate production from
