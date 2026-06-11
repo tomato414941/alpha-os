@@ -103,14 +103,6 @@ Research artifacts exist to speed decisions, not create process drag.
 The default should be lightweight. More structure is justified only when it
 prevents future ambiguity or makes a comparison reproducible.
 
-## Documentation Roles
-
-Design documents under `docs/design/` hold durable architectural decisions.
-
-Generated reports and committed manifests are factual records. Hand-written
-documents should not duplicate generated evidence unless they add interpretation
-or a decision.
-
 ## Non-Negotiables
 
 - Do not confuse exploration evidence with strict OOS evidence.
