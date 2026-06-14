@@ -10,7 +10,7 @@ lightweight experiment should be moved into the main package.
 This issue starts after a lightweight experiment has produced evidence.
 
 It is separate from
-`docs/issues/closed/lightweight-hypothesis-evaluation-path.md`, which is about
+`issues/closed/lightweight-hypothesis-evaluation-path.md`, which is about
 having a small way to test the hypothesis before using the heavier alpha-os
 runtime evaluation path.
 

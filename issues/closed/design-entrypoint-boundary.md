@@ -35,7 +35,7 @@ useful historical design context.
 It is not about rewriting all design notes, deleting historical context, or
 changing runtime behavior.
 
-New design content should go to `docs/design/`, `docs/issues/`, or
+New design content should go to `docs/design/`, `issues/`, or
 `docs/glossary.md`, depending on whether it is a durable design note, an open
 boundary issue, or a term definition.
 
