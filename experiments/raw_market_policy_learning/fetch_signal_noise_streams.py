@@ -1,0 +1,193 @@
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import urllib.parse
+import urllib.request
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+
+
+DEFAULT_BASE_URL = "https://signal-noise.taildd87b4.ts.net"
+
+
+def api_key() -> str:
+    for name in ("SIGNAL_NOISE_API_KEY", "ALPHA_OS_SIGNAL_NOISE_API_KEY"):
+        value = os.getenv(name, "").strip()
+        if value:
+            return value
+    secret = Path("~/.secrets/signal-noise-env").expanduser()
+    if secret.exists():
+        for line in secret.read_text(encoding="utf-8").splitlines():
+            if line.startswith("SIGNAL_NOISE_API_KEY="):
+                return line.split("=", 1)[1].strip()
+    raise RuntimeError("SIGNAL_NOISE_API_KEY not found")
+
+
+def request_json(
+    base_url: str,
+    path: str,
+    *,
+    method: str = "GET",
+    params: dict[str, str] | None = None,
+    body: dict[str, Any] | None = None,
+    timeout: int = 60,
+) -> Any:
+    url = f"{base_url.rstrip('/')}{path}"
+    if params:
+        url = f"{url}?{urllib.parse.urlencode(params)}"
+    data = None
+    headers = {
+        "X-API-Key": api_key(),
+        "Authorization": f"Bearer {api_key()}",
+        "User-Agent": "alpha-os-signal-noise-experiment/0.1",
+    }
+    if body is not None:
+        data = json.dumps(body).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        return json.loads(response.read())
+
+
+def list_signals(base_url: str) -> list[dict[str, Any]]:
+    payload = request_json(base_url, "/signals")
+    if not isinstance(payload, list):
+        raise TypeError(f"expected list from /signals, got {type(payload).__name__}")
+    return payload
+
+
+def batch_signal_data(
+    base_url: str,
+    names: list[str],
+    *,
+    since: str | None,
+    resolution: str | None,
+    columns: list[str] | None,
+) -> dict[str, list[dict[str, Any]]]:
+    payload = request_json(
+        base_url,
+        "/signals/batch",
+        method="POST",
+        body={
+            "names": names,
+            "since": since,
+            "resolution": resolution,
+            "columns": columns,
+        },
+        timeout=180,
+    )
+    if not isinstance(payload, dict):
+        raise TypeError(f"expected dict from /signals/batch, got {type(payload).__name__}")
+    return payload
+
+
+def write_catalog(signals: list[dict[str, Any]], output: Path) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    frame = pd.DataFrame(signals)
+    frame.to_csv(output, index=False)
+
+
+def write_long_frame(payload: dict[str, list[dict[str, Any]]], output: Path) -> None:
+    rows = []
+    for name, values in payload.items():
+        for row in values:
+            if not isinstance(row, dict):
+                continue
+            rows.append({"signal_name": name, **row})
+    output.parent.mkdir(parents=True, exist_ok=True)
+    frame = pd.DataFrame(rows)
+    if not frame.empty and "timestamp" in frame.columns:
+        frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True, format="mixed")
+        frame = frame.sort_values(["signal_name", "timestamp"])
+    frame.to_csv(output, index=False)
+
+
+def write_summary(
+    signals: list[dict[str, Any]],
+    payload: dict[str, list[dict[str, Any]]] | None,
+    output: Path,
+) -> None:
+    domains = Counter(str(s.get("domain", "")) for s in signals)
+    categories = Counter(str(s.get("category", "")) for s in signals)
+    types = Counter(str(s.get("signal_type", "")) for s in signals)
+    lines = [
+        "# Signal Noise Stream Probe",
+        "",
+        f"- signal_count: {len(signals)}",
+        "",
+        "## Domains",
+        "",
+        "```text",
+        "\n".join(f"{k}: {v}" for k, v in domains.most_common(30)),
+        "```",
+        "",
+        "## Categories",
+        "",
+        "```text",
+        "\n".join(f"{k}: {v}" for k, v in categories.most_common(30)),
+        "```",
+        "",
+        "## Signal Types",
+        "",
+        "```text",
+        "\n".join(f"{k}: {v}" for k, v in types.most_common(30)),
+        "```",
+    ]
+    if payload is not None:
+        lines.extend(
+            [
+                "",
+                "## Fetched Series",
+                "",
+                "```text",
+                "\n".join(f"{name}: {len(rows)} rows" for name, rows in sorted(payload.items())),
+                "```",
+            ]
+        )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--base-url", default=os.getenv("SIGNAL_NOISE_BASE_URL", DEFAULT_BASE_URL))
+    parser.add_argument("--catalog-output", type=Path, required=True)
+    parser.add_argument("--data-output", type=Path)
+    parser.add_argument("--summary", type=Path, required=True)
+    parser.add_argument("--name", action="append", default=[])
+    parser.add_argument("--since")
+    parser.add_argument("--resolution")
+    parser.add_argument("--column", action="append", default=[])
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    signals = list_signals(str(args.base_url))
+    write_catalog(signals, args.catalog_output)
+    payload = None
+    if args.name:
+        payload = batch_signal_data(
+            str(args.base_url),
+            list(args.name),
+            since=args.since,
+            resolution=args.resolution,
+            columns=list(args.column) if args.column else None,
+        )
+        if args.data_output is None:
+            raise ValueError("--data-output is required when --name is used")
+        write_long_frame(payload, args.data_output)
+    write_summary(signals, payload, args.summary)
+    print(f"wrote catalog: {args.catalog_output}")
+    if args.data_output:
+        print(f"wrote data: {args.data_output}")
+    print(f"wrote summary: {args.summary}")
+
+
+if __name__ == "__main__":
+    main()

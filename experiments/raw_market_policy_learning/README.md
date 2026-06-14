@@ -20,6 +20,10 @@ Generated datasets and model outputs are intentionally not committed.
   - trains a small fixed Transformer encoder over the raw windows
   - compares the learned argmax policy with always-long, always-short, and
     always-flat baselines
+- `fetch_signal_noise_streams.py`
+  - lists signal-noise streams
+  - fetches selected streams through the signal-noise batch API
+  - keeps this private data adapter scoped to the experiment
 
 ## Example
 
@@ -34,6 +38,14 @@ uv run python experiments/raw_market_policy_learning/build_raw_window_tensor.py 
 uv run --with torch python experiments/raw_market_policy_learning/run_transformer_probe.py \
   --input /tmp/alpha_os_raw_window_tensor.npz \
   --summary /tmp/alpha_os_transformer_probe.md
+
+uv run python experiments/raw_market_policy_learning/fetch_signal_noise_streams.py \
+  --catalog-output /tmp/alpha_os_signal_noise_catalog.csv \
+  --summary /tmp/alpha_os_signal_noise_probe.md \
+  --name btc_ohlcv \
+  --name funding_rate_btc \
+  --since 2026-01-01 \
+  --data-output /tmp/alpha_os_signal_noise_streams.csv
 ```
 
 ## Current Read
