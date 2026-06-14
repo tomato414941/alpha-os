@@ -6,6 +6,8 @@
 *.feather
 *.pkl
 *.jsonl
+*catalog*.csv
+*streams*.csv
 *_summary.md
 outputs/
 data/
