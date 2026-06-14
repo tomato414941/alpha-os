@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -30,6 +31,7 @@ RAW_FEATURES = [
     "log_trade_count",
     "taker_buy_quote_share",
 ]
+SIGNAL_NOISE_ID_COLUMNS = {"signal_name", "timestamp", "date", "name"}
 
 
 def fetch_json(url: str, timeout: int = 30):
@@ -100,11 +102,51 @@ def raw_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def feature_name(*parts: str) -> str:
+    raw = "_".join(part for part in parts if part)
+    return re.sub(r"[^0-9a-zA-Z_]+", "_", raw).strip("_").lower()
+
+
+def load_signal_noise_features(path: Path) -> pd.DataFrame:
+    frame = pd.read_csv(path)
+    if "signal_name" not in frame.columns:
+        raise ValueError("signal-noise streams CSV must contain signal_name")
+    timestamp_column = "timestamp" if "timestamp" in frame.columns else "date"
+    if timestamp_column not in frame.columns:
+        raise ValueError("signal-noise streams CSV must contain timestamp or date")
+
+    frame[timestamp_column] = pd.to_datetime(frame[timestamp_column], utc=True, format="mixed")
+    numeric_columns = []
+    for column in frame.columns:
+        if column in SIGNAL_NOISE_ID_COLUMNS:
+            continue
+        values = pd.to_numeric(frame[column], errors="coerce")
+        if values.notna().any():
+            frame[column] = values
+            numeric_columns.append(column)
+    if not numeric_columns:
+        raise ValueError(f"no numeric signal-noise stream columns found in {path}")
+
+    features: dict[str, pd.Series] = {}
+    for signal_name, group in frame.groupby("signal_name", sort=True):
+        group = group.sort_values(timestamp_column).set_index(timestamp_column)
+        group = group[~group.index.duplicated(keep="last")]
+        for column in numeric_columns:
+            series = group[column].dropna()
+            if series.empty:
+                continue
+            features[feature_name("signal_noise", str(signal_name), column)] = series
+    if not features:
+        raise ValueError(f"no usable signal-noise stream values found in {path}")
+    return pd.DataFrame(features).sort_index()
+
+
 def build_windows(
     feature_by_symbol: dict[str, pd.DataFrame],
     lookback: int,
     horizons: list[int],
     cost_bps: float,
+    signal_noise_features: pd.DataFrame | None = None,
 ):
     instruments = sorted(feature_by_symbol)
     common_index = None
@@ -115,11 +157,26 @@ def build_windows(
         raise RuntimeError("no index")
     common_index = common_index.sort_values()
 
+    aligned_signal_noise = None
+    signal_noise_feature_names: list[str] = []
+    if signal_noise_features is not None:
+        aligned_signal_noise = signal_noise_features.ffill().reindex(common_index, method="ffill")
+        signal_noise_feature_names = list(aligned_signal_noise.columns)
+
     panels = []
     closes = []
     for instrument in instruments:
         df = feature_by_symbol[instrument].reindex(common_index)
-        panels.append(df[RAW_FEATURES].to_numpy(np.float32))
+        instrument_features = df[RAW_FEATURES].to_numpy(np.float32)
+        if aligned_signal_noise is not None:
+            instrument_features = np.concatenate(
+                [
+                    instrument_features,
+                    aligned_signal_noise.to_numpy(np.float32),
+                ],
+                axis=1,
+            )
+        panels.append(instrument_features)
         closes.append(df["close"].to_numpy(np.float32))
     values = np.stack(panels, axis=0)  # instruments, time, raw_features
     close_values = np.stack(closes, axis=0)  # instruments, time
@@ -148,7 +205,10 @@ def build_windows(
         windows.append(window)
         rewards.append(reward.astype(np.float32))
 
-    return instruments, common_index, np.stack(windows), np.stack(rewards), valid_times
+    if not windows:
+        raise RuntimeError("no valid windows after aligning features and rewards")
+    feature_names = RAW_FEATURES + signal_noise_feature_names
+    return instruments, common_index, np.stack(windows), np.stack(rewards), valid_times, feature_names
 
 
 def main() -> None:
@@ -159,6 +219,7 @@ def main() -> None:
     parser.add_argument("--interval", default="1h")
     parser.add_argument("--horizons", default="1,4,24")
     parser.add_argument("--cost-bps", type=float, default=10.0)
+    parser.add_argument("--signal-noise-streams", type=Path)
     parser.add_argument("--output", required=True)
     parser.add_argument("--summary", required=True)
     args = parser.parse_args()
@@ -180,11 +241,21 @@ def main() -> None:
             failures.append((symbol, str(exc)))
             print(f"{i:03d}/{len(symbols)} {symbol} failed: {exc}", flush=True)
 
-    instruments, common_index, x, reward, sample_times = build_windows(
+    signal_noise_features = None
+    if args.signal_noise_streams is not None:
+        signal_noise_features = load_signal_noise_features(args.signal_noise_streams)
+        print(
+            f"loaded signal-noise features={len(signal_noise_features.columns)} "
+            f"rows={len(signal_noise_features)}",
+            flush=True,
+        )
+
+    instruments, common_index, x, reward, sample_times, feature_names = build_windows(
         feature_by_symbol,
         args.lookback,
         horizons,
         args.cost_bps,
+        signal_noise_features,
     )
     action_names = np.array(["long", "short", "flat"])
     output = Path(args.output)
@@ -195,7 +266,7 @@ def main() -> None:
         reward=reward,
         sample_times=np.array([str(t) for t in sample_times]),
         instruments=np.array(instruments),
-        raw_features=np.array(RAW_FEATURES),
+        raw_features=np.array(feature_names),
         horizons=np.array(horizons),
         actions=action_names,
         created_at=np.array([created_at.isoformat()]),
@@ -222,7 +293,9 @@ def main() -> None:
                 f"- instruments: {len(instruments)}",
                 f"- days: {args.days}",
                 f"- lookback_steps: {args.lookback}",
-                f"- raw_features: {len(RAW_FEATURES)}",
+                f"- raw_features: {len(feature_names)}",
+                f"- signal_noise_streams: {args.signal_noise_streams or 'none'}",
+                f"- signal_noise_features: {0 if signal_noise_features is None else len(signal_noise_features.columns)}",
                 f"- horizons_hours: {', '.join(map(str, horizons))}",
                 f"- cost_bps: {args.cost_bps}",
                 f"- samples: {x.shape[0]}",
@@ -233,6 +306,10 @@ def main() -> None:
                 "## Instruments",
                 "",
                 ", ".join(instruments),
+                "",
+                "## Features",
+                "",
+                ", ".join(feature_names),
                 "",
                 "## Mean Reward",
                 "",
@@ -251,6 +328,8 @@ def main() -> None:
                 "",
                 "This dataset keeps raw-ish rolling market windows for sequence models.",
                 "It is not a strategy and does not define alpha rules.",
+                "Signal-noise streams are aligned by timestamp with forward fill; this",
+                "experiment does not yet have signal-level available_at metadata.",
                 "",
             ]
         ),

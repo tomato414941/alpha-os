@@ -16,6 +16,7 @@ Generated datasets and model outputs are intentionally not committed.
   - fetches public Binance hourly market data
   - builds `x = samples x instruments x lookback x raw_features`
   - builds `reward = samples x instruments x horizons x actions`
+  - can append numeric signal-noise streams as timestamp-aligned raw features
 - `run_transformer_probe.py`
   - trains a small fixed Transformer encoder over the raw windows
   - compares the learned argmax policy with always-long, always-short, and
@@ -32,6 +33,7 @@ uv run python experiments/raw_market_policy_learning/build_raw_window_tensor.py 
   --symbols 30 \
   --days 90 \
   --lookback 72 \
+  --signal-noise-streams /tmp/alpha_os_signal_noise_streams.csv \
   --output /tmp/alpha_os_raw_window_tensor.npz \
   --summary /tmp/alpha_os_raw_window_tensor.md
 
@@ -51,6 +53,6 @@ uv run python experiments/raw_market_policy_learning/fetch_signal_noise_streams.
 ## Current Read
 
 The first `/tmp` probe produced a valid tensor dataset and a working Transformer
-training run, but the fixed model did not beat simple baselines. The next useful
-step is to add more raw observable streams, such as funding, open interest,
-liquidations, and order book state, rather than tuning this model.
+training run, but the fixed model did not beat simple baselines. The current
+builder can append signal-noise streams to widen the observation space before
+tuning models or thresholds.
