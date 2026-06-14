@@ -18,8 +18,8 @@
   - concrete trading strategy sketches; not package API
 - `hypotheses/`
   - tested trading hypotheses with verdicts; one runnable file each
-- `experiments/`
-  - frozen historical research snapshot; do not add new experiments
+- `experiments_archive/`
+  - frozen historical research snapshot
 
 ## Development
 
