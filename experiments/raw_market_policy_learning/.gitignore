@@ -1,0 +1,11 @@
+*.csv
+*.npz
+*.pt
+*.pth
+*.parquet
+*.feather
+*.pkl
+*.jsonl
+*_summary.md
+outputs/
+data/
