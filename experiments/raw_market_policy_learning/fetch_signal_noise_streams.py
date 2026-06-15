@@ -86,6 +86,69 @@ def batch_signal_data(
     return payload
 
 
+def selected_signal_names(
+    signals: list[dict[str, Any]],
+    *,
+    explicit_names: list[str],
+    domains: set[str],
+    categories: set[str],
+    signal_types: set[str],
+    active_only: bool,
+    min_row_count: int | None,
+    max_signals: int | None,
+) -> list[str]:
+    if explicit_names:
+        return explicit_names
+
+    selected = []
+    for signal in signals:
+        if active_only and not bool(signal.get("is_active", False)):
+            continue
+        if domains and str(signal.get("domain", "")) not in domains:
+            continue
+        if categories and str(signal.get("category", "")) not in categories:
+            continue
+        if signal_types and str(signal.get("signal_type", "")) not in signal_types:
+            continue
+        if min_row_count is not None and int(signal.get("row_count") or 0) < min_row_count:
+            continue
+        name = str(signal.get("name", "")).strip()
+        if name:
+            selected.append(name)
+        if max_signals is not None and len(selected) >= max_signals:
+            break
+    return selected
+
+
+def batch_signal_data_many(
+    base_url: str,
+    names: list[str],
+    *,
+    since: str | None,
+    resolution: str | None,
+    columns: list[str] | None,
+    batch_size: int,
+) -> dict[str, list[dict[str, Any]]]:
+    if batch_size <= 0:
+        raise ValueError("--batch-size must be positive")
+    merged: dict[str, list[dict[str, Any]]] = {}
+    for start in range(0, len(names), batch_size):
+        chunk = names[start : start + batch_size]
+        payload = batch_signal_data(
+            base_url,
+            chunk,
+            since=since,
+            resolution=resolution,
+            columns=columns,
+        )
+        merged.update(payload)
+        print(
+            f"fetched signals {start + 1}-{start + len(chunk)} of {len(names)}",
+            flush=True,
+        )
+    return merged
+
+
 def write_catalog(signals: list[dict[str, Any]], output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     frame = pd.DataFrame(signals)
@@ -110,6 +173,7 @@ def write_long_frame(payload: dict[str, list[dict[str, Any]]], output: Path) -> 
 def write_summary(
     signals: list[dict[str, Any]],
     payload: dict[str, list[dict[str, Any]]] | None,
+    selected_names: list[str],
     output: Path,
 ) -> None:
     domains = Counter(str(s.get("domain", "")) for s in signals)
@@ -119,6 +183,7 @@ def write_summary(
         "# Signal Noise Stream Probe",
         "",
         f"- signal_count: {len(signals)}",
+        f"- selected_signal_count: {len(selected_names)}",
         "",
         "## Domains",
         "",
@@ -139,8 +204,21 @@ def write_summary(
         "```",
     ]
     if payload is not None:
+        missing_names = [name for name in selected_names if name not in payload]
         lines.extend(
             [
+                "",
+                "## Selected Signals",
+                "",
+                "```text",
+                "\n".join(selected_names[:500]),
+                "```",
+                "",
+                "## Missing Fetched Signals",
+                "",
+                "```text",
+                "\n".join(missing_names) if missing_names else "none",
+                "```",
                 "",
                 "## Fetched Series",
                 "",
@@ -160,6 +238,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data-output", type=Path)
     parser.add_argument("--summary", type=Path, required=True)
     parser.add_argument("--name", action="append", default=[])
+    parser.add_argument("--domain", action="append", default=[])
+    parser.add_argument("--category", action="append", default=[])
+    parser.add_argument("--signal-type", action="append", default=[])
+    parser.add_argument("--include-inactive", action="store_true")
+    parser.add_argument("--min-row-count", type=int)
+    parser.add_argument("--max-signals", type=int)
+    parser.add_argument("--batch-size", type=int, default=50)
     parser.add_argument("--since")
     parser.add_argument("--resolution")
     parser.add_argument("--column", action="append", default=[])
@@ -170,19 +255,30 @@ def main() -> None:
     args = parse_args()
     signals = list_signals(str(args.base_url))
     write_catalog(signals, args.catalog_output)
+    selected_names = selected_signal_names(
+        signals,
+        explicit_names=list(args.name),
+        domains=set(args.domain),
+        categories=set(args.category),
+        signal_types=set(args.signal_type),
+        active_only=not bool(args.include_inactive),
+        min_row_count=args.min_row_count,
+        max_signals=args.max_signals,
+    )
     payload = None
-    if args.name:
-        payload = batch_signal_data(
+    if selected_names:
+        payload = batch_signal_data_many(
             str(args.base_url),
-            list(args.name),
+            selected_names,
             since=args.since,
             resolution=args.resolution,
             columns=list(args.column) if args.column else None,
+            batch_size=args.batch_size,
         )
         if args.data_output is None:
-            raise ValueError("--data-output is required when --name is used")
+            raise ValueError("--data-output is required when fetching signal data")
         write_long_frame(payload, args.data_output)
-    write_summary(signals, payload, args.summary)
+    write_summary(signals, payload, selected_names, args.summary)
     print(f"wrote catalog: {args.catalog_output}")
     if args.data_output:
         print(f"wrote data: {args.data_output}")
