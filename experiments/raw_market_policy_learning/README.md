@@ -13,7 +13,7 @@ Generated datasets and model outputs are intentionally not committed.
 ## Scripts
 
 - `build_raw_window_tensor.py`
-  - fetches public Binance hourly market data
+  - fetches public Binance hourly market data from the exchange symbol inventory
   - builds `x = samples x instruments x lookback x raw_features`
   - builds `reward = samples x instruments x horizons x actions`
   - can append numeric signal-noise streams as timestamp-aligned raw features
@@ -32,7 +32,6 @@ Generated datasets and model outputs are intentionally not committed.
 
 ```bash
 uv run python experiments/raw_market_policy_learning/build_raw_window_tensor.py \
-  --symbols 30 \
   --days 90 \
   --lookback 72 \
   --signal-noise-streams /tmp/alpha_os_signal_noise_streams.csv \
@@ -53,7 +52,8 @@ uv run python experiments/raw_market_policy_learning/fetch_signal_noise_streams.
   --data-output /tmp/alpha_os_signal_noise_streams.csv
 ```
 
-For smoke runs, add `--sample-signals 50 --sample-seed 0`.
+For smoke runs, add `--sample-symbols 30 --sample-seed 0` to the tensor builder
+and `--sample-signals 50 --sample-seed 0` to the signal-noise dumper.
 
 ## Current Read
 
