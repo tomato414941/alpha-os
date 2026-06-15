@@ -154,7 +154,7 @@ def batch_signal_data_many(
     return merged
 
 
-def write_catalog(signals: list[dict[str, Any]], output: Path) -> None:
+def write_inventory(signals: list[dict[str, Any]], output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     frame = pd.DataFrame(signals)
     frame.to_csv(output, index=False)
@@ -241,7 +241,7 @@ def write_summary(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default=os.getenv("SIGNAL_NOISE_BASE_URL", DEFAULT_BASE_URL))
-    parser.add_argument("--catalog-output", type=Path, required=True)
+    parser.add_argument("--inventory-output", type=Path, required=True)
     parser.add_argument("--data-output", type=Path)
     parser.add_argument("--summary", type=Path, required=True)
     parser.add_argument("--name", action="append", default=[])
@@ -262,7 +262,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     signals = list_signals(str(args.base_url))
-    write_catalog(signals, args.catalog_output)
+    write_inventory(signals, args.inventory_output)
     selected_names = selected_signal_names(
         signals,
         explicit_names=list(args.name),
@@ -291,7 +291,7 @@ def main() -> None:
             raise ValueError("--data-output is required when fetching signal data")
         write_long_frame(payload, args.data_output)
     write_summary(signals, payload, selected_names, selection_note, args.summary)
-    print(f"wrote catalog: {args.catalog_output}")
+    print(f"wrote inventory: {args.inventory_output}")
     if args.data_output:
         print(f"wrote data: {args.data_output}")
     print(f"wrote summary: {args.summary}")

@@ -24,7 +24,7 @@ Generated datasets and model outputs are intentionally not committed.
 - `fetch_signal_noise_streams.py`
   - lists signal-noise streams
   - fetches explicit or metadata-eligible streams through the signal-noise batch API
-  - treats the signal catalog as an unordered inventory, not as a ranked list
+  - treats the signal inventory as unordered, not as a ranked list
   - keeps this private data adapter scoped to the experiment
 
 ## Example
@@ -43,7 +43,7 @@ uv run --with torch python experiments/raw_market_policy_learning/run_transforme
   --summary /tmp/alpha_os_transformer_probe.md
 
 uv run python experiments/raw_market_policy_learning/fetch_signal_noise_streams.py \
-  --catalog-output /tmp/alpha_os_signal_noise_catalog.csv \
+  --inventory-output /tmp/alpha_os_signal_noise_inventory.csv \
   --summary /tmp/alpha_os_signal_noise_probe.md \
   --domain markets \
   --signal-type scalar \
