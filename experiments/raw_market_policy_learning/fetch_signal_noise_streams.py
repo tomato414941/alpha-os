@@ -87,7 +87,7 @@ def batch_signal_data(
     return payload
 
 
-def selected_signal_names(
+def eligible_signal_names(
     signals: list[dict[str, Any]],
     *,
     explicit_names: list[str],
@@ -96,8 +96,6 @@ def selected_signal_names(
     signal_types: set[str],
     active_only: bool,
     min_row_count: int | None,
-    max_signals: int | None,
-    sample_seed: int,
 ) -> list[str]:
     if explicit_names:
         return explicit_names
@@ -118,11 +116,19 @@ def selected_signal_names(
         if name:
             eligible.add(name)
 
-    names = sorted(eligible)
-    if max_signals is None or max_signals >= len(names):
-        return names
+    return sorted(eligible)
+
+
+def requested_signal_names(
+    eligible_names: list[str],
+    *,
+    sample_signals: int | None,
+    sample_seed: int,
+) -> list[str]:
+    if sample_signals is None or sample_signals >= len(eligible_names):
+        return eligible_names
     rng = random.Random(sample_seed)
-    return sorted(rng.sample(names, max_signals))
+    return sorted(rng.sample(eligible_names, sample_signals))
 
 
 def batch_signal_data_many(
@@ -133,25 +139,47 @@ def batch_signal_data_many(
     resolution: str | None,
     columns: list[str] | None,
     batch_size: int,
-) -> dict[str, list[dict[str, Any]]]:
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, str]]:
     if batch_size <= 0:
         raise ValueError("--batch-size must be positive")
     merged: dict[str, list[dict[str, Any]]] = {}
+    failed: dict[str, str] = {}
     for start in range(0, len(names), batch_size):
         chunk = names[start : start + batch_size]
-        payload = batch_signal_data(
-            base_url,
-            chunk,
-            since=since,
-            resolution=resolution,
-            columns=columns,
-        )
+        try:
+            payload = batch_signal_data(
+                base_url,
+                chunk,
+                since=since,
+                resolution=resolution,
+                columns=columns,
+            )
+        except Exception as exc:
+            print(
+                f"batch failed for signals {start + 1}-{start + len(chunk)} "
+                f"of {len(names)}: {exc}",
+                flush=True,
+            )
+            for name in chunk:
+                try:
+                    payload = batch_signal_data(
+                        base_url,
+                        [name],
+                        since=since,
+                        resolution=resolution,
+                        columns=columns,
+                    )
+                except Exception as single_exc:
+                    failed[name] = str(single_exc)
+                    continue
+                merged.update(payload)
+            continue
         merged.update(payload)
         print(
             f"fetched signals {start + 1}-{start + len(chunk)} of {len(names)}",
             flush=True,
         )
-    return merged
+    return merged, failed
 
 
 def write_inventory(signals: list[dict[str, Any]], output: Path) -> None:
@@ -178,19 +206,32 @@ def write_long_frame(payload: dict[str, list[dict[str, Any]]], output: Path) -> 
 def write_summary(
     signals: list[dict[str, Any]],
     payload: dict[str, list[dict[str, Any]]] | None,
-    selected_names: list[str],
-    selection_note: str,
+    eligible_names: list[str],
+    requested_names: list[str],
+    failed_names: dict[str, str],
+    dump_note: str,
     output: Path,
 ) -> None:
     domains = Counter(str(s.get("domain", "")) for s in signals)
     categories = Counter(str(s.get("category", "")) for s in signals)
     types = Counter(str(s.get("signal_type", "")) for s in signals)
+    fetched_count = len(payload or {})
+    fetched_rows = sum(len(rows) for rows in (payload or {}).values())
+    missing_names = [
+        name for name in requested_names
+        if payload is not None and name not in payload and name not in failed_names
+    ]
     lines = [
         "# Signal Noise Stream Probe",
         "",
         f"- signal_count: {len(signals)}",
-        f"- selected_signal_count: {len(selected_names)}",
-        f"- selection: {selection_note}",
+        f"- eligible_signal_count: {len(eligible_names)}",
+        f"- requested_signal_count: {len(requested_names)}",
+        f"- fetched_signal_count: {fetched_count}",
+        f"- fetched_row_count: {fetched_rows}",
+        f"- missing_payload_signal_count: {len(missing_names)}",
+        f"- failed_signal_count: {len(failed_names)}",
+        f"- dump: {dump_note}",
         "",
         "## Domains",
         "",
@@ -211,20 +252,26 @@ def write_summary(
         "```",
     ]
     if payload is not None:
-        missing_names = [name for name in selected_names if name not in payload]
         lines.extend(
             [
                 "",
-                "## Selected Signals",
+                "## Requested Signals",
                 "",
                 "```text",
-                "\n".join(selected_names[:500]),
+                "\n".join(requested_names[:500]),
                 "```",
                 "",
-                "## Missing Fetched Signals",
+                "## Missing Payload Signals",
                 "",
                 "```text",
                 "\n".join(missing_names) if missing_names else "none",
+                "```",
+                "",
+                "## Failed Signals",
+                "",
+                "```text",
+                "\n".join(f"{name}: {error}" for name, error in sorted(failed_names.items()))
+                if failed_names else "none",
                 "```",
                 "",
                 "## Fetched Series",
@@ -250,7 +297,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--signal-type", action="append", default=[])
     parser.add_argument("--include-inactive", action="store_true")
     parser.add_argument("--min-row-count", type=int)
-    parser.add_argument("--max-signals", type=int)
+    parser.add_argument("--sample-signals", type=int)
     parser.add_argument("--sample-seed", type=int, default=0)
     parser.add_argument("--batch-size", type=int, default=50)
     parser.add_argument("--since")
@@ -263,7 +310,7 @@ def main() -> None:
     args = parse_args()
     signals = list_signals(str(args.base_url))
     write_inventory(signals, args.inventory_output)
-    selected_names = selected_signal_names(
+    eligible_names = eligible_signal_names(
         signals,
         explicit_names=list(args.name),
         domains=set(args.domain),
@@ -271,17 +318,21 @@ def main() -> None:
         signal_types=set(args.signal_type),
         active_only=not bool(args.include_inactive),
         min_row_count=args.min_row_count,
-        max_signals=args.max_signals,
+    )
+    requested_names = requested_signal_names(
+        eligible_names,
+        sample_signals=args.sample_signals,
         sample_seed=args.sample_seed,
     )
-    selection_note = "explicit names" if args.name else "unordered eligible set"
-    if args.max_signals is not None and not args.name:
-        selection_note = f"{selection_note}; seed={args.sample_seed}; max={args.max_signals}"
+    dump_note = "explicit names" if args.name else "all eligible streams"
+    if args.sample_signals is not None and not args.name:
+        dump_note = f"sample of eligible streams; seed={args.sample_seed}; n={args.sample_signals}"
     payload = None
-    if selected_names:
-        payload = batch_signal_data_many(
+    failed_names: dict[str, str] = {}
+    if requested_names:
+        payload, failed_names = batch_signal_data_many(
             str(args.base_url),
-            selected_names,
+            requested_names,
             since=args.since,
             resolution=args.resolution,
             columns=list(args.column) if args.column else None,
@@ -290,7 +341,15 @@ def main() -> None:
         if args.data_output is None:
             raise ValueError("--data-output is required when fetching signal data")
         write_long_frame(payload, args.data_output)
-    write_summary(signals, payload, selected_names, selection_note, args.summary)
+    write_summary(
+        signals,
+        payload,
+        eligible_names,
+        requested_names,
+        failed_names,
+        dump_note,
+        args.summary,
+    )
     print(f"wrote inventory: {args.inventory_output}")
     if args.data_output:
         print(f"wrote data: {args.data_output}")
