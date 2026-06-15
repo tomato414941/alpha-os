@@ -4,6 +4,7 @@ import argparse
 import datetime as dt
 import json
 import re
+import random
 import time
 import urllib.parse
 import urllib.request
@@ -14,22 +15,16 @@ import pandas as pd
 
 
 API = "https://data-api.binance.vision/api/v3"
-DEFAULT_SYMBOLS = [
-    "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT",
-    "ADAUSDT", "TRXUSDT", "LINKUSDT", "AVAXUSDT", "SUIUSDT", "LTCUSDT",
-    "BCHUSDT", "DOTUSDT", "UNIUSDT", "AAVEUSDT", "NEARUSDT", "APTUSDT",
-    "ICPUSDT", "ETCUSDT", "FILUSDT", "ARBUSDT", "OPUSDT", "INJUSDT",
-    "ATOMUSDT", "TIAUSDT", "SEIUSDT", "WIFUSDT", "PEPEUSDT", "FETUSDT",
-    "RENDERUSDT", "TONUSDT", "HBARUSDT", "XLMUSDT", "ALGOUSDT",
-    "VETUSDT", "GRTUSDT", "ENAUSDT", "WLDUSDT",
-]
-RAW_FEATURES = [
-    "log_return",
-    "high_rel_close",
-    "low_rel_close",
-    "log_quote_volume",
-    "log_trade_count",
-    "taker_buy_quote_share",
+RAW_KLINE_FEATURES = [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "quote_volume",
+    "trade_count",
+    "taker_buy_base",
+    "taker_buy_quote",
 ]
 SIGNAL_NOISE_ID_COLUMNS = {"signal_name", "timestamp", "date", "name"}
 
@@ -38,6 +33,29 @@ def fetch_json(url: str, timeout: int = 30):
     req = urllib.request.Request(url, headers={"User-Agent": "alpha-os-raw-window/0.1"})
     with urllib.request.urlopen(req, timeout=timeout) as res:
         return json.loads(res.read())
+
+
+def fetch_exchange_symbols(quote_asset: str) -> list[str]:
+    payload = fetch_json(f"{API}/exchangeInfo", timeout=30)
+    symbols = []
+    for row in payload.get("symbols", []):
+        if row.get("status") != "TRADING":
+            continue
+        if row.get("quoteAsset") != quote_asset:
+            continue
+        if not bool(row.get("isSpotTradingAllowed", False)):
+            continue
+        symbol = str(row.get("symbol", "")).strip()
+        if symbol:
+            symbols.append(symbol)
+    return sorted(set(symbols))
+
+
+def requested_symbols(symbols: list[str], sample_symbols: int | None, sample_seed: int) -> list[str]:
+    if sample_symbols is None or sample_symbols >= len(symbols):
+        return symbols
+    rng = random.Random(sample_seed)
+    return sorted(rng.sample(symbols, sample_symbols))
 
 
 def fetch_klines(symbol: str, interval: str, start: dt.datetime, end: dt.datetime) -> pd.DataFrame:
@@ -82,7 +100,16 @@ def fetch_klines(symbol: str, interval: str, start: dt.datetime, end: dt.datetim
             "ignore",
         ],
     )
-    for col in ["open", "high", "low", "close", "quote_volume", "taker_buy_quote"]:
+    for col in [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "quote_volume",
+        "taker_buy_base",
+        "taker_buy_quote",
+    ]:
         df[col] = df[col].astype(float)
     df["trade_count"] = df["trade_count"].astype(float)
     df["timestamp"] = pd.to_datetime(df["open_time"], unit="ms", utc=True)
@@ -90,15 +117,9 @@ def fetch_klines(symbol: str, interval: str, start: dt.datetime, end: dt.datetim
 
 
 def raw_features(df: pd.DataFrame) -> pd.DataFrame:
-    close = df["close"]
     out = pd.DataFrame(index=df.index)
-    out["close"] = close
-    out["log_return"] = np.log(close / close.shift(1))
-    out["high_rel_close"] = np.log(df["high"] / close)
-    out["low_rel_close"] = np.log(df["low"] / close)
-    out["log_quote_volume"] = np.log1p(df["quote_volume"])
-    out["log_trade_count"] = np.log1p(df["trade_count"])
-    out["taker_buy_quote_share"] = df["taker_buy_quote"] / df["quote_volume"].replace(0, np.nan)
+    for column in RAW_KLINE_FEATURES:
+        out[column] = df[column]
     return out
 
 
@@ -167,7 +188,7 @@ def build_windows(
     closes = []
     for instrument in instruments:
         df = feature_by_symbol[instrument].reindex(common_index)
-        instrument_features = df[RAW_FEATURES].to_numpy(np.float32)
+        instrument_features = df[RAW_KLINE_FEATURES].to_numpy(np.float32)
         if aligned_signal_noise is not None:
             instrument_features = np.concatenate(
                 [
@@ -207,13 +228,15 @@ def build_windows(
 
     if not windows:
         raise RuntimeError("no valid windows after aligning features and rewards")
-    feature_names = RAW_FEATURES + signal_noise_feature_names
+    feature_names = RAW_KLINE_FEATURES + signal_noise_feature_names
     return instruments, common_index, np.stack(windows), np.stack(rewards), valid_times, feature_names
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--symbols", type=int, default=30)
+    parser.add_argument("--quote-asset", default="USDT")
+    parser.add_argument("--sample-symbols", type=int)
+    parser.add_argument("--sample-seed", type=int, default=0)
     parser.add_argument("--days", type=int, default=90)
     parser.add_argument("--lookback", type=int, default=72)
     parser.add_argument("--interval", default="1h")
@@ -228,7 +251,13 @@ def main() -> None:
     horizons = [int(x) for x in args.horizons.split(",")]
     end = created_at - dt.timedelta(hours=max(horizons))
     start = end - dt.timedelta(days=args.days + 5)
-    symbols = DEFAULT_SYMBOLS[: args.symbols]
+    symbol_inventory = fetch_exchange_symbols(args.quote_asset)
+    symbols = requested_symbols(symbol_inventory, args.sample_symbols, args.sample_seed)
+    print(
+        f"loaded exchange symbols quote_asset={args.quote_asset} "
+        f"inventory={len(symbol_inventory)} requested={len(symbols)}",
+        flush=True,
+    )
 
     feature_by_symbol = {}
     failures = []
@@ -290,6 +319,11 @@ def main() -> None:
                 "",
                 f"- created_at: {created_at.isoformat()}",
                 f"- interval: {args.interval}",
+                f"- quote_asset: {args.quote_asset}",
+                f"- symbol_inventory: {len(symbol_inventory)}",
+                f"- requested_symbols: {len(symbols)}",
+                f"- sample_symbols: {args.sample_symbols or 'none'}",
+                f"- sample_seed: {args.sample_seed}",
                 f"- instruments: {len(instruments)}",
                 f"- days: {args.days}",
                 f"- lookback_steps: {args.lookback}",
