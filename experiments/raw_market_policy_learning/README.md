@@ -23,7 +23,8 @@ Generated datasets and model outputs are intentionally not committed.
     always-flat baselines
 - `fetch_signal_noise_streams.py`
   - lists signal-noise streams
-  - fetches explicit or catalog-selected streams through the signal-noise batch API
+  - fetches explicit or metadata-eligible streams through the signal-noise batch API
+  - treats the signal catalog as an unordered inventory, not as a ranked list
   - keeps this private data adapter scoped to the experiment
 
 ## Example
@@ -48,6 +49,7 @@ uv run python experiments/raw_market_policy_learning/fetch_signal_noise_streams.
   --signal-type scalar \
   --min-row-count 100 \
   --max-signals 50 \
+  --sample-seed 0 \
   --since 2026-01-01 \
   --data-output /tmp/alpha_os_signal_noise_streams.csv
 ```

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 import urllib.parse
 import urllib.request
 from collections import Counter
@@ -96,11 +97,12 @@ def selected_signal_names(
     active_only: bool,
     min_row_count: int | None,
     max_signals: int | None,
+    sample_seed: int,
 ) -> list[str]:
     if explicit_names:
         return explicit_names
 
-    selected = []
+    eligible = set()
     for signal in signals:
         if active_only and not bool(signal.get("is_active", False)):
             continue
@@ -114,10 +116,13 @@ def selected_signal_names(
             continue
         name = str(signal.get("name", "")).strip()
         if name:
-            selected.append(name)
-        if max_signals is not None and len(selected) >= max_signals:
-            break
-    return selected
+            eligible.add(name)
+
+    names = sorted(eligible)
+    if max_signals is None or max_signals >= len(names):
+        return names
+    rng = random.Random(sample_seed)
+    return sorted(rng.sample(names, max_signals))
 
 
 def batch_signal_data_many(
@@ -174,6 +179,7 @@ def write_summary(
     signals: list[dict[str, Any]],
     payload: dict[str, list[dict[str, Any]]] | None,
     selected_names: list[str],
+    selection_note: str,
     output: Path,
 ) -> None:
     domains = Counter(str(s.get("domain", "")) for s in signals)
@@ -184,6 +190,7 @@ def write_summary(
         "",
         f"- signal_count: {len(signals)}",
         f"- selected_signal_count: {len(selected_names)}",
+        f"- selection: {selection_note}",
         "",
         "## Domains",
         "",
@@ -244,6 +251,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--include-inactive", action="store_true")
     parser.add_argument("--min-row-count", type=int)
     parser.add_argument("--max-signals", type=int)
+    parser.add_argument("--sample-seed", type=int, default=0)
     parser.add_argument("--batch-size", type=int, default=50)
     parser.add_argument("--since")
     parser.add_argument("--resolution")
@@ -264,7 +272,11 @@ def main() -> None:
         active_only=not bool(args.include_inactive),
         min_row_count=args.min_row_count,
         max_signals=args.max_signals,
+        sample_seed=args.sample_seed,
     )
+    selection_note = "explicit names" if args.name else "unordered eligible set"
+    if args.max_signals is not None and not args.name:
+        selection_note = f"{selection_note}; seed={args.sample_seed}; max={args.max_signals}"
     payload = None
     if selected_names:
         payload = batch_signal_data_many(
@@ -278,7 +290,7 @@ def main() -> None:
         if args.data_output is None:
             raise ValueError("--data-output is required when fetching signal data")
         write_long_frame(payload, args.data_output)
-    write_summary(signals, payload, selected_names, args.summary)
+    write_summary(signals, payload, selected_names, selection_note, args.summary)
     print(f"wrote catalog: {args.catalog_output}")
     if args.data_output:
         print(f"wrote data: {args.data_output}")
