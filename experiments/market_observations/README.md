@@ -13,6 +13,7 @@ Generated observation files are intentionally not committed.
 - `collect_binance_market_observations.py`
   - fetches public Binance market observations from the spot symbol inventory
   - uses `data-api.binance.vision` for spot observations
+  - paginates spot aggregate trades across the requested time range
   - attempts USD-M futures observations unless `--skip-futures` is set
   - uses `--sample-symbols` only for smoke runs
   - writes raw-ish JSONL files under `runs/<collection_run_id>/`
