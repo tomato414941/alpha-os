@@ -17,6 +17,9 @@ Generated datasets and model outputs are intentionally not committed.
   - builds `x = samples x instruments x lookback x raw_features`
   - builds `reward = samples x instruments x horizons x actions`
   - can append numeric signal-noise streams as timestamp-aligned raw features
+- `build_sparse_signal_stream_store.py`
+  - converts dumped signal-noise streams into timestamped sparse values
+  - does not expand global streams across instruments or lookback windows
 - `run_transformer_probe.py`
   - trains a small fixed Transformer encoder over the raw windows
   - compares the learned argmax policy with always-long, always-short, and
@@ -50,6 +53,12 @@ uv run python experiments/raw_market_policy_learning/fetch_signal_noise_streams.
   --min-row-count 100 \
   --since 2026-01-01 \
   --data-output /tmp/alpha_os_signal_noise_streams.csv
+
+uv run python experiments/raw_market_policy_learning/build_sparse_signal_stream_store.py \
+  --streams /tmp/alpha_os_signal_noise_streams.csv \
+  --price-tensor /tmp/alpha_os_raw_window_tensor.npz \
+  --output /tmp/alpha_os_sparse_signal_stream_store.npz \
+  --summary /tmp/alpha_os_sparse_signal_stream_store.md
 ```
 
 For smoke runs, add `--sample-symbols 30 --sample-seed 0` to the tensor builder
@@ -59,5 +68,6 @@ and `--sample-signals 50 --sample-seed 0` to the signal-noise dumper.
 
 The first `/tmp` probe produced a valid tensor dataset and a working Transformer
 training run, but the fixed model did not beat simple baselines. The current
-builder can append signal-noise streams to widen the observation space before
-tuning models or thresholds.
+builder can append small signal-noise stream sets, but broad signal-noise dumps
+must stay sparse. Dense expansion across all samples, instruments, and streams
+is not viable.
