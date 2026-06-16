@@ -15,7 +15,8 @@ Generated observation files are intentionally not committed.
   - uses `data-api.binance.vision` for spot observations
   - attempts USD-M futures observations unless `--skip-futures` is set
   - uses `--sample-symbols` only for smoke runs
-  - writes raw-ish JSONL files under an output directory
+  - writes raw-ish JSONL files under `runs/<collection_run_id>/`
+  - records `collection_run_id` and `observed_at` on every row
   - keeps feature engineering and strategy logic out of the collector
 
 ## Example
