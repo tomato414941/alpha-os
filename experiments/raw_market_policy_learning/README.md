@@ -20,6 +20,9 @@ Generated datasets and model outputs are intentionally not committed.
 - `build_sparse_signal_stream_store.py`
   - converts dumped signal-noise streams into timestamped sparse values
   - does not expand global streams across instruments or lookback windows
+- `profile_sparse_event_windows.py`
+  - builds per-sample slice indexes from price sample times into the sparse store
+  - profiles event counts before wiring sparse events into a model
 - `run_transformer_probe.py`
   - trains a small fixed Transformer encoder over the raw windows
   - compares the learned argmax policy with always-long, always-short, and
@@ -59,6 +62,12 @@ uv run python experiments/raw_market_policy_learning/build_sparse_signal_stream_
   --price-tensor /tmp/alpha_os_raw_window_tensor.npz \
   --output /tmp/alpha_os_sparse_signal_stream_store.npz \
   --summary /tmp/alpha_os_sparse_signal_stream_store.md
+
+uv run python experiments/raw_market_policy_learning/profile_sparse_event_windows.py \
+  --price-tensor /tmp/alpha_os_raw_window_tensor.npz \
+  --sparse-store /tmp/alpha_os_sparse_signal_stream_store.npz \
+  --output /tmp/alpha_os_sparse_event_windows.npz \
+  --summary /tmp/alpha_os_sparse_event_windows.md
 ```
 
 For smoke runs, add `--sample-symbols 30 --sample-seed 0` to the tensor builder
