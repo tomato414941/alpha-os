@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import random
 import time
 import urllib.parse
 import urllib.request
@@ -17,7 +18,10 @@ FAPI = "https://fapi.binance.com"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--symbols", required=True, help="Comma-separated Binance symbols")
+    parser.add_argument("--symbols", help="Comma-separated Binance symbols; overrides inventory")
+    parser.add_argument("--quote-asset", default="USDT")
+    parser.add_argument("--sample-symbols", type=int)
+    parser.add_argument("--sample-seed", type=int, default=0)
     parser.add_argument("--days", type=int, default=7)
     parser.add_argument("--interval", default="1h")
     parser.add_argument("--limit", type=int, default=500)
@@ -75,6 +79,51 @@ def rows_with_source(
         }
 
 
+def fetch_spot_exchange_info(symbol: str | None = None) -> dict[str, Any]:
+    params = {"symbol": symbol} if symbol is not None else None
+    return fetch_json(SPOT_DATA_API, "/api/v3/exchangeInfo", params)
+
+
+def fetch_spot_symbols(quote_asset: str) -> list[str]:
+    payload = fetch_spot_exchange_info()
+    symbols = []
+    for row in payload.get("symbols", []):
+        if row.get("status") != "TRADING":
+            continue
+        if row.get("quoteAsset") != quote_asset:
+            continue
+        if not bool(row.get("isSpotTradingAllowed", False)):
+            continue
+        symbol = str(row.get("symbol", "")).strip()
+        if symbol:
+            symbols.append(symbol)
+    return sorted(set(symbols))
+
+
+def requested_symbols(
+    *,
+    explicit_symbols: str | None,
+    quote_asset: str,
+    sample_symbols: int | None,
+    sample_seed: int,
+) -> tuple[list[str], int, str]:
+    if explicit_symbols:
+        symbols = [symbol.strip().upper() for symbol in explicit_symbols.split(",") if symbol.strip()]
+        if not symbols:
+            raise ValueError("--symbols must contain at least one symbol when provided")
+        return sorted(set(symbols)), len(symbols), "explicit"
+
+    inventory = fetch_spot_symbols(quote_asset)
+    if not inventory:
+        raise RuntimeError(f"no spot symbols found for quote asset {quote_asset}")
+    if sample_symbols is None or sample_symbols >= len(inventory):
+        return inventory, len(inventory), "inventory"
+    if sample_symbols <= 0:
+        raise ValueError("--sample-symbols must be positive")
+    rng = random.Random(sample_seed)
+    return sorted(rng.sample(inventory, sample_symbols)), len(inventory), "inventory_sample"
+
+
 def spot_kline_rows(symbol: str, interval: str, start: dt.datetime, end: dt.datetime, limit: int):
     return fetch_json(
         SPOT_DATA_API,
@@ -107,7 +156,7 @@ def spot_depth_row(symbol: str):
 
 
 def spot_exchange_info_row(symbol: str):
-    return fetch_json(SPOT_DATA_API, "/api/v3/exchangeInfo", {"symbol": symbol})
+    return fetch_spot_exchange_info(symbol)
 
 
 def futures_kline_rows(
@@ -205,9 +254,12 @@ def main() -> None:
     if args.limit <= 0:
         raise ValueError("--limit must be positive")
 
-    symbols = [symbol.strip().upper() for symbol in args.symbols.split(",") if symbol.strip()]
-    if not symbols:
-        raise ValueError("--symbols must contain at least one symbol")
+    symbols, symbol_inventory_count, symbol_selection = requested_symbols(
+        explicit_symbols=args.symbols,
+        quote_asset=args.quote_asset,
+        sample_symbols=args.sample_symbols,
+        sample_seed=args.sample_seed,
+    )
 
     end = utc_now_hour()
     start = end - dt.timedelta(days=args.days)
@@ -288,7 +340,14 @@ def main() -> None:
                 "# Binance Market Observation Collection",
                 "",
                 f"- created_at: {dt.datetime.now(dt.UTC).isoformat()}",
-                f"- symbols: {', '.join(symbols)}",
+                f"- quote_asset: {args.quote_asset}",
+                f"- symbol_selection: {symbol_selection}",
+                f"- symbol_inventory_count: {symbol_inventory_count}",
+                f"- requested_symbol_count: {len(symbols)}",
+                f"- sample_symbols: {args.sample_symbols}",
+                f"- sample_seed: {args.sample_seed}",
+                f"- symbols: {', '.join(symbols[:50])}",
+                f"- symbols_truncated: {len(symbols) > 50}",
                 f"- start: {start.isoformat()}",
                 f"- end: {end.isoformat()}",
                 f"- interval: {args.interval}",
