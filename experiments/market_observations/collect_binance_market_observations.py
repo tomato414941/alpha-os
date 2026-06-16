@@ -24,7 +24,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-seed", type=int, default=0)
     parser.add_argument("--days", type=int, default=7)
     parser.add_argument("--interval", default="1h")
-    parser.add_argument("--limit", type=int, default=500)
+    parser.add_argument("--limit", type=int, default=1000)
     parser.add_argument("--skip-futures", action="store_true")
     parser.add_argument("--run-id")
     parser.add_argument("--output-dir", type=Path, required=True)
@@ -146,16 +146,36 @@ def spot_kline_rows(symbol: str, interval: str, start: dt.datetime, end: dt.date
 
 
 def spot_agg_trade_rows(symbol: str, start: dt.datetime, end: dt.datetime, limit: int):
-    return fetch_json(
-        SPOT_DATA_API,
-        "/api/v3/aggTrades",
-        {
-            "symbol": symbol,
-            "startTime": ms(start),
-            "endTime": ms(end),
-            "limit": limit,
-        },
-    )
+    start_ms = ms(start)
+    end_ms = ms(end)
+    from_id: int | None = None
+    while True:
+        params: dict[str, Any] = {"symbol": symbol, "limit": limit}
+        if from_id is None:
+            params["startTime"] = start_ms
+            params["endTime"] = end_ms
+        else:
+            params["fromId"] = from_id
+        batch = fetch_json(SPOT_DATA_API, "/api/v3/aggTrades", params)
+        if not batch:
+            break
+
+        last_id = None
+        reached_end = False
+        for row in batch:
+            trade_time = int(row["T"])
+            last_id = int(row["a"])
+            if trade_time < start_ms:
+                continue
+            if trade_time > end_ms:
+                reached_end = True
+                continue
+            yield row
+
+        if reached_end or last_id is None or len(batch) < limit:
+            break
+        from_id = last_id + 1
+        time.sleep(0.03)
 
 
 def spot_depth_row(symbol: str):
@@ -341,7 +361,15 @@ def main() -> None:
             for index, symbol in enumerate(symbols, start=1):
                 symbol_count = 0
                 try:
-                    payload = fetcher(symbol)
+                    for record in rows_with_source(
+                        source=source,
+                        symbol=symbol,
+                        run_id=run_id,
+                        observed_at=observed_at,
+                        rows=fetcher(symbol),
+                    ):
+                        write_jsonl_record(handle, record)
+                        symbol_count += 1
                 except Exception as exc:  # noqa: BLE001
                     errors.append(f"{source}:{symbol}: {exc}")
                     print(
@@ -349,15 +377,6 @@ def main() -> None:
                         flush=True,
                     )
                     continue
-                for record in rows_with_source(
-                    source=source,
-                    symbol=symbol,
-                    run_id=run_id,
-                    observed_at=observed_at,
-                    rows=payload,
-                ):
-                    write_jsonl_record(handle, record)
-                    symbol_count += 1
                 count += symbol_count
                 print(
                     f"{source} {index}/{len(symbols)} {symbol} rows={symbol_count}",
@@ -386,6 +405,7 @@ def main() -> None:
                 f"- start: {start.isoformat()}",
                 f"- end: {end.isoformat()}",
                 f"- interval: {args.interval}",
+                f"- request_limit: {args.limit}",
                 f"- skip_futures: {args.skip_futures}",
                 f"- output_dir: {args.output_dir}",
                 f"- run_output_dir: {run_output_dir}",
