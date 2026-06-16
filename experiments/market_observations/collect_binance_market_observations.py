@@ -63,15 +63,9 @@ def fetch_json(
         return json.loads(response.read())
 
 
-def write_jsonl(path: Path, records: Iterable[dict[str, Any]]) -> int:
-    count = 0
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record, sort_keys=True, separators=(",", ":")))
-            handle.write("\n")
-            count += 1
-    return count
+def write_jsonl_record(handle, record: dict[str, Any]) -> None:
+    handle.write(json.dumps(record, sort_keys=True, separators=(",", ":")))
+    handle.write("\n")
 
 
 def rows_with_source(
@@ -341,24 +335,36 @@ def main() -> None:
         )
 
     for source, fetcher in sources:
-        rows = []
-        for symbol in symbols:
-            try:
-                payload = fetcher(symbol)
-            except Exception as exc:  # noqa: BLE001
-                errors.append(f"{source}:{symbol}: {exc}")
-                continue
-            rows.extend(
-                rows_with_source(
+        count = 0
+        output_path = run_output_dir / f"{source}.jsonl"
+        with output_path.open("w", encoding="utf-8") as handle:
+            for index, symbol in enumerate(symbols, start=1):
+                symbol_count = 0
+                try:
+                    payload = fetcher(symbol)
+                except Exception as exc:  # noqa: BLE001
+                    errors.append(f"{source}:{symbol}: {exc}")
+                    print(
+                        f"{source} {index}/{len(symbols)} {symbol} error={exc}",
+                        flush=True,
+                    )
+                    continue
+                for record in rows_with_source(
                     source=source,
                     symbol=symbol,
                     run_id=run_id,
                     observed_at=observed_at,
                     rows=payload,
+                ):
+                    write_jsonl_record(handle, record)
+                    symbol_count += 1
+                count += symbol_count
+                print(
+                    f"{source} {index}/{len(symbols)} {symbol} rows={symbol_count}",
+                    flush=True,
                 )
-            )
-            time.sleep(0.1)
-        counts[source] = write_jsonl(run_output_dir / f"{source}.jsonl", rows)
+                time.sleep(0.1)
+        counts[source] = count
 
     args.summary.parent.mkdir(parents=True, exist_ok=True)
     args.summary.write_text(
