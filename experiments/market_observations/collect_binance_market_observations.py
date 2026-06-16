@@ -26,6 +26,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--interval", default="1h")
     parser.add_argument("--limit", type=int, default=500)
     parser.add_argument("--skip-futures", action="store_true")
+    parser.add_argument("--run-id")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--summary", type=Path, required=True)
     return parser.parse_args()
@@ -33,6 +34,14 @@ def parse_args() -> argparse.Namespace:
 
 def utc_now_hour() -> dt.datetime:
     return dt.datetime.now(dt.UTC).replace(minute=0, second=0, microsecond=0)
+
+
+def utc_now() -> dt.datetime:
+    return dt.datetime.now(dt.UTC)
+
+
+def default_run_id(timestamp: dt.datetime) -> str:
+    return timestamp.strftime("%Y%m%dT%H%M%SZ")
 
 
 def ms(timestamp: dt.datetime) -> int:
@@ -69,10 +78,14 @@ def rows_with_source(
     *,
     source: str,
     symbol: str,
+    run_id: str,
+    observed_at: str,
     rows: Iterable[Any],
 ) -> Iterable[dict[str, Any]]:
     for row in rows:
         yield {
+            "collection_run_id": run_id,
+            "observed_at": observed_at,
             "source": source,
             "symbol": symbol,
             "payload": row,
@@ -261,9 +274,15 @@ def main() -> None:
         sample_seed=args.sample_seed,
     )
 
+    observed_at_dt = utc_now()
+    observed_at = observed_at_dt.isoformat()
+    run_id = args.run_id or default_run_id(observed_at_dt)
     end = utc_now_hour()
     start = end - dt.timedelta(days=args.days)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    run_output_dir = args.output_dir / "runs" / run_id
+    if run_output_dir.exists():
+        raise SystemExit(f"collection run already exists: {run_output_dir}")
+    run_output_dir.mkdir(parents=True, exist_ok=False)
 
     counts: dict[str, int] = {}
     errors: list[str] = []
@@ -329,9 +348,17 @@ def main() -> None:
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"{source}:{symbol}: {exc}")
                 continue
-            rows.extend(rows_with_source(source=source, symbol=symbol, rows=payload))
+            rows.extend(
+                rows_with_source(
+                    source=source,
+                    symbol=symbol,
+                    run_id=run_id,
+                    observed_at=observed_at,
+                    rows=payload,
+                )
+            )
             time.sleep(0.1)
-        counts[source] = write_jsonl(args.output_dir / f"{source}.jsonl", rows)
+        counts[source] = write_jsonl(run_output_dir / f"{source}.jsonl", rows)
 
     args.summary.parent.mkdir(parents=True, exist_ok=True)
     args.summary.write_text(
@@ -340,6 +367,8 @@ def main() -> None:
                 "# Binance Market Observation Collection",
                 "",
                 f"- created_at: {dt.datetime.now(dt.UTC).isoformat()}",
+                f"- collection_run_id: {run_id}",
+                f"- observed_at: {observed_at}",
                 f"- quote_asset: {args.quote_asset}",
                 f"- symbol_selection: {symbol_selection}",
                 f"- symbol_inventory_count: {symbol_inventory_count}",
@@ -353,6 +382,7 @@ def main() -> None:
                 f"- interval: {args.interval}",
                 f"- skip_futures: {args.skip_futures}",
                 f"- output_dir: {args.output_dir}",
+                f"- run_output_dir: {run_output_dir}",
                 "",
                 "## Row Counts",
                 "",
@@ -371,7 +401,7 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
-    print(f"wrote {args.output_dir}")
+    print(f"wrote {run_output_dir}")
     print(f"wrote {args.summary}")
 
 
