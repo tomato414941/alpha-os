@@ -13,20 +13,21 @@ from typing import Any
 import pandas as pd
 
 
-DEFAULT_BASE_URL = "<signal-noise-url>"
+def signal_noise_setting(name: str, *env_names: str) -> str:
+    for env_name in (name, *env_names):
+        value = os.getenv(env_name, "").strip()
+        if value:
+            return value
+    secret = Path("~/.config/signal-noise/env").expanduser()
+    if secret.exists():
+        for line in secret.read_text(encoding="utf-8").splitlines():
+            if line.startswith(f"{name}="):
+                return line.split("=", 1)[1].strip()
+    raise RuntimeError(f"{name} not found")
 
 
 def api_key() -> str:
-    for name in ("SIGNAL_NOISE_API_KEY", "ALPHA_OS_SIGNAL_NOISE_API_KEY"):
-        value = os.getenv(name, "").strip()
-        if value:
-            return value
-    secret = Path("~/.secrets/signal-noise-env").expanduser()
-    if secret.exists():
-        for line in secret.read_text(encoding="utf-8").splitlines():
-            if line.startswith("SIGNAL_NOISE_API_KEY="):
-                return line.split("=", 1)[1].strip()
-    raise RuntimeError("SIGNAL_NOISE_API_KEY not found")
+    return signal_noise_setting("SIGNAL_NOISE_API_KEY", "ALPHA_OS_SIGNAL_NOISE_API_KEY")
 
 
 def request_json(
@@ -287,7 +288,7 @@ def write_summary(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base-url", default=os.getenv("SIGNAL_NOISE_BASE_URL", DEFAULT_BASE_URL))
+    parser.add_argument("--base-url")
     parser.add_argument("--inventory-output", type=Path, required=True)
     parser.add_argument("--data-output", type=Path)
     parser.add_argument("--summary", type=Path, required=True)
@@ -308,7 +309,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    signals = list_signals(str(args.base_url))
+    base_url = args.base_url or signal_noise_setting("SIGNAL_NOISE_BASE_URL")
+    signals = list_signals(base_url)
     write_inventory(signals, args.inventory_output)
     eligible_names = eligible_signal_names(
         signals,
@@ -331,7 +333,7 @@ def main() -> None:
     failed_names: dict[str, str] = {}
     if requested_names:
         payload, failed_names = batch_signal_data_many(
-            str(args.base_url),
+            base_url,
             requested_names,
             since=args.since,
             resolution=args.resolution,

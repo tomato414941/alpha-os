@@ -25,7 +25,8 @@ RULES FIXED IN ADVANCE: thresholds (0.9 / 3min / 30bps / 30min /
             not be tuned post hoc. A different parameterization is a
             NEW hypothesis requiring fresh registration.
 DATA:       (1) own liquidation-side-ratio stream via signal-noise
-            API (private; SIGNAL_NOISE_API_KEY + Tailscale required);
+            API (private; Tailscale required, with SIGNAL_NOISE_BASE_URL
+            and SIGNAL_NOISE_API_KEY in ~/.config/signal-noise/env);
             magnitudes were discarded at collection - only the
             per-minute long/(long+short) ratio survives.
             (2) Binance USD-M futures 1m klines via fapi.binance.com
@@ -57,7 +58,6 @@ HORIZON_MIN = 30
 FRICTION = 0.0010
 SYMS = {"btc": "BTCUSDT", "eth": "ETHUSDT", "sol": "SOLUSDT",
         "xrp": "XRPUSDT", "bnb": "BNBUSDT"}
-SN_BASE = "<signal-noise-url>"
 
 # ---------- contract types ----------
 
@@ -103,18 +103,19 @@ def fetch_json(req: urllib.request.Request, timeout: int, retries: int = 5):
             time.sleep(5 * (i + 1))
 
 
-def sn_api_key() -> str:
-    path = os.path.expanduser("~/.secrets/signal-noise-env")
+def sn_setting(name: str) -> str:
+    path = os.path.expanduser("~/.config/signal-noise/env")
     for line in open(path):
-        if line.startswith("SIGNAL_NOISE_API_KEY="):
+        if line.startswith(f"{name}="):
             return line.strip().split("=", 1)[1]
-    raise RuntimeError("SIGNAL_NOISE_API_KEY not found")
+    raise RuntimeError(f"{name} not found")
 
 
 def liq_minutes(key: str) -> dict[dt.datetime, float]:
+    base_url = sn_setting("SIGNAL_NOISE_BASE_URL")
     req = urllib.request.Request(
-        f"{SN_BASE}/signals/liq_stream_{key}/data?limit=200000",
-        headers={"X-API-Key": sn_api_key()},
+        f"{base_url}/signals/liq_stream_{key}/data?limit=200000",
+        headers={"X-API-Key": sn_setting("SIGNAL_NOISE_API_KEY")},
     )
     rows = fetch_json(req, timeout=180)
     out = {}

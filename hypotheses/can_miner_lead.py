@@ -21,7 +21,8 @@ RULE-DESIGN CONFESSION: the pre-registered sibling rule was written
             had to be on partials too. Lesson: pre-register rules on
             the decisive statistic, or weak rules pass wrong things.
 DATA:       signal-noise API (private). Requires Tailscale access and
-            SIGNAL_NOISE_API_KEY in ~/.secrets/signal-noise-env.
+            SIGNAL_NOISE_BASE_URL and SIGNAL_NOISE_API_KEY in
+            ~/.config/signal-noise/env.
             First graveyard entry that depends on our own data.
 REVIVAL:    Only if a concrete mechanism for a CAN-specific channel is
             proposed, or the effect replicates on an independent
@@ -41,7 +42,6 @@ from dataclasses import dataclass
 
 from alpha_os.trading_strategy import TradingStrategy
 
-BASE = "<signal-noise-url>"
 MINERS = [
     "can", "mara", "riot", "clsk", "hut", "bitf",
     "wulf", "cifr", "btbt", "corz", "iren",
@@ -82,18 +82,19 @@ _CONTRACT_CHECK: TradingStrategy[MinerLeadInput, TargetPosition] = (
 # ---------- data (impure, private API) ----------
 
 
-def api_key() -> str:
-    path = os.path.expanduser("~/.secrets/signal-noise-env")
+def signal_noise_setting(name: str) -> str:
+    path = os.path.expanduser("~/.config/signal-noise/env")
     for line in open(path):
-        if line.startswith("SIGNAL_NOISE_API_KEY="):
+        if line.startswith(f"{name}="):
             return line.strip().split("=", 1)[1]
-    raise RuntimeError("SIGNAL_NOISE_API_KEY not found")
+    raise RuntimeError(f"{name} not found")
 
 
 def series(name: str, limit: int = 60000) -> dict[dt.date, float]:
+    base_url = signal_noise_setting("SIGNAL_NOISE_BASE_URL")
     req = urllib.request.Request(
-        f"{BASE}/signals/{name}/data?limit={limit}",
-        headers={"X-API-Key": api_key()},
+        f"{base_url}/signals/{name}/data?limit={limit}",
+        headers={"X-API-Key": signal_noise_setting("SIGNAL_NOISE_API_KEY")},
     )
     rows = json.loads(urllib.request.urlopen(req, timeout=60).read())
     out: dict[dt.date, float] = {}
